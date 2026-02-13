@@ -212,11 +212,22 @@ if __name__ == "__main__":
         action="store_true",
         help="Only start WebUI (no adapter)",
     )
+    parser.add_argument(
+        "--doctor",
+        action="store_true",
+        help="Run full system diagnostic (like 'openclaw doctor')",
+    )
     args = parser.parse_args()
 
     # Windows event loop policy
     if sys.platform == "win32":
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+    # Doctor mode - run diagnostic and exit
+    if args.doctor:
+        from core.doctor import run_doctor
+        ok = asyncio.run(run_doctor())
+        sys.exit(0 if ok else 1)
 
     asyncio.run(main(
         adapter_name=args.adapter,
