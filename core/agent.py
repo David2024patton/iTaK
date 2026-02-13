@@ -243,7 +243,7 @@ class Agent:
         self._load_extensions()
 
     async def startup(self):
-        """Async startup - connect stores, start heartbeat, MCP servers, Phase 6."""
+        """Async startup - fire agent_init extensions, connect stores, start heartbeat, MCP servers, Phase 6."""
         # Fire agent_init extensions
         await self._run_extensions("agent_init")
         if self.memory:
@@ -448,9 +448,12 @@ class Agent:
         the conversation flow by removing oldest messages first.
         """
         max_length = self.config.get("agent", {}).get("max_history_length")
-        if max_length and len(self.history) > max_length:
+        if max_length is not None and len(self.history) > max_length:
             # Keep only the most recent messages
-            self.history = self.history[-max_length:]
+            if max_length == 0:
+                self.history = []
+            else:
+                self.history = self.history[-max_length:]
             self.logger.log(
                 EventType.SYSTEM,
                 f"History trimmed to {max_length} messages to prevent unbounded growth"

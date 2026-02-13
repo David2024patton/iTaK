@@ -96,6 +96,28 @@ class TestAgent:
         # Should still have all 10 messages
         assert len(agent.history) == 10
 
+    @pytest.mark.asyncio
+    async def test_history_trim_with_zero_limit(self):
+        """History should be trimmed to 0 when max_history_length is 0."""
+        from core.agent import Agent
+
+        config = {
+            "agent": {"max_iterations": 5, "max_history_length": 0},
+            "models": {"chat": {"provider": "litellm", "model": "test"}},
+            "logging": {"jsonl_dir": "/tmp/test_logs", "sqlite_path": "/tmp/test.db"},
+        }
+        agent = Agent(config=config)
+
+        # Add messages to history
+        for i in range(5):
+            agent.history.append({"role": "user", "content": f"message {i}"})
+
+        # Trim history
+        agent._trim_history()
+
+        # Should have no messages
+        assert len(agent.history) == 0
+
     def test_untrusted_tool_namespaced(self):
         """Untrusted tool check should work with namespaced MCP tools."""
         UNTRUSTED_TOOLS = {"web_search", "browser_agent", "browser", "web_scrape", "crawl"}
