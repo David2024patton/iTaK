@@ -43,7 +43,21 @@
         "similarity_threshold": 0.7,
         "max_results": 10,
         "auto_memorize": true,
-        "consolidation_threshold": 0.85
+        "consolidation_threshold": 0.85,
+        "memu": {
+            "enabled": false,
+            "mode": "self-hosted",
+            "base_url": "http://localhost:8080",
+            "api_key": "${MEMU_API_KEY}",
+            "timeout": 30,
+            "memorize_endpoint": "/memory/memorize",
+            "min_conversation_length": 100,
+            "dedup_window_minutes": 15,
+            "cost_cap_per_hour": 1.0,
+            "max_turns": 5,
+            "memu_weight": 0.8,
+            "append_to_memory_md": true
+        }
     },
     "security": {
         "secret_store_path": "data/db/secrets.db",
