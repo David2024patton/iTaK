@@ -33,8 +33,13 @@ jobs:
 
       - name: Type check with mypy (if available)
         run: |
-          pip install mypy 2>/dev/null || echo "Skipping type check - mypy not available"
-          mypy core/ tools/ --ignore-missing-imports --no-strict-optional 2>&1 || echo "Type checking completed with warnings"
+          if pip install mypy 2>&1 | grep -q "Successfully installed"; then
+            echo "Running mypy type checks..."
+            mypy core/ tools/ --ignore-missing-imports --no-strict-optional 2>&1 || echo "Type checking completed with warnings"
+          else
+            echo "Skipping type check - mypy installation failed or already installed"
+            mypy core/ tools/ --ignore-missing-imports --no-strict-optional 2>&1 || echo "Type checking completed with warnings"
+          fi
         continue-on-error: true
 
       - name: Run tests

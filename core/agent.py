@@ -611,7 +611,7 @@ class Agent:
             
             # Keep system message if it exists, remove from position 1 onwards
             # This preserves the system message while trimming old conversation
-            if self.history[0].get("role") == "system":
+            if len(self.history) > 0 and self.history[0].get("role") == "system":
                 # Remove from position 1 (after system)
                 del self.history[1:overflow + 1]
             else:

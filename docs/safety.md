@@ -296,14 +296,16 @@ while agent._running:
 
 ### Recommended Settings
 
-```json
+```jsonc
+// Note: JSON with comments (JSONC) shown for clarity
+// Remove comments for actual config.json
 {
     "agent": {
-        "max_iterations": 25,          // Prevent infinite loops
-        "history_cap": 1000,            // Prevent unbounded memory
-        "timeout_seconds": 300,         // 5 minute timeout
-        "checkpoint_enabled": true,     // Enable crash recovery
-        "checkpoint_interval_steps": 3  // Checkpoint every 3 iterations
+        "max_iterations": 25,
+        "history_cap": 1000,
+        "timeout_seconds": 300,
+        "checkpoint_enabled": true,
+        "checkpoint_interval_steps": 3
     }
 }
 ```
@@ -311,23 +313,25 @@ while agent._running:
 ### Production vs Development
 
 **Development:**
-```json
+```jsonc
+// Development settings - remove comments for actual use
 {
     "agent": {
-        "max_iterations": 50,    // More room to experiment
-        "history_cap": 500,      // Smaller cap for faster testing
-        "repeat_detection": true // Catch LLM loops early
+        "max_iterations": 50,
+        "history_cap": 500,
+        "repeat_detection": true
     }
 }
 ```
 
 **Production:**
-```json
+```jsonc
+// Production settings - remove comments for actual use
 {
     "agent": {
-        "max_iterations": 25,     // Stricter limits
-        "history_cap": 2000,      // Larger cap for long conversations  
-        "timeout_seconds": 600,   // 10 minute timeout
+        "max_iterations": 25,
+        "history_cap": 2000,
+        "timeout_seconds": 600,
         "checkpoint_enabled": true
     }
 }
