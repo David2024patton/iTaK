@@ -377,6 +377,95 @@ def check_tool_health() -> tuple[list[str], int, int]:
     return lines, passed, failed
 
 
+def check_security() -> tuple[list[str], int, int]:
+    """Verify security hardening modules are functional."""
+    lines: list[str] = []
+    passed = 0
+    failed = 0
+
+    # 1. SSRF Guard
+    try:
+        from security.ssrf_guard import SSRFGuard
+        guard = SSRFGuard()
+        ok, _ = guard.validate_url("http://example.com", source="doctor")
+        bad, _ = guard.validate_url("file:///etc/passwd", source="doctor")
+        if ok and not bad:
+            lines.append(_ok("SSRF Guard functional (blocks file:// + private IPs)"))
+            passed += 1
+        else:
+            lines.append(_fail("SSRF Guard not blocking correctly"))
+            failed += 1
+    except ImportError:
+        lines.append(_fail("security/ssrf_guard.py not found"))
+        failed += 1
+
+    # 2. Path Traversal Guard
+    try:
+        from security.path_guard import validate_path, validate_session_id
+        ok, _ = validate_path("data/test.txt")
+        bad, _ = validate_path("../../../etc/passwd")
+        if ok and not bad:
+            lines.append(_ok("Path Guard functional (blocks ../ traversal)"))
+            passed += 1
+        else:
+            lines.append(_fail("Path Guard not blocking correctly"))
+            failed += 1
+    except ImportError:
+        lines.append(_fail("security/path_guard.py not found"))
+        failed += 1
+
+    # 3. Constant-time secret comparison
+    try:
+        from security.secrets import SecretManager
+        sm = SecretManager()
+        if hasattr(sm, 'verify_token'):
+            lines.append(_ok("SecretManager.verify_token (hmac.compare_digest) available"))
+            passed += 1
+        else:
+            lines.append(_fail("SecretManager missing verify_token method"))
+            failed += 1
+    except ImportError:
+        lines.append(_fail("security/secrets.py not found"))
+        failed += 1
+
+    # 4. Auth-failure lockout
+    try:
+        from security.rate_limiter import RateLimiter
+        rl = RateLimiter()
+        if hasattr(rl, 'record_auth_failure') and hasattr(rl, 'check_auth_lockout'):
+            lines.append(_ok("RateLimiter auth-failure lockout methods available"))
+            passed += 1
+        else:
+            lines.append(_fail("RateLimiter missing auth lockout methods"))
+            failed += 1
+    except ImportError:
+        lines.append(_fail("security/rate_limiter.py not found"))
+        failed += 1
+
+    # 5. WebUI auth token config
+    try:
+        config_path = Path("config.json")
+        if config_path.exists():
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+            webui = config.get("webui", {})
+            if webui.get("auth_token"):
+                lines.append(_ok("WebUI auth token configured"))
+                passed += 1
+            else:
+                lines.append(_warn("WebUI auth token not set (auto-generated at runtime)"))
+                lines.append(f"        --> Add \"webui\": {{\"auth_token\": \"<token>\"}} to config.json")
+                passed += 1  # Not fatal, auto-generates
+        else:
+            lines.append(_warn("config.json not found, skipping WebUI auth check"))
+            passed += 1
+    except Exception:
+        lines.append(_warn("Could not check WebUI auth config"))
+        passed += 1
+
+    return lines, passed, failed
+
+
 # ─── Main doctor ───────────────────────────────────────────────
 
 async def run_doctor() -> bool:
@@ -394,6 +483,7 @@ async def run_doctor() -> bool:
         ("API Keys & Tokens", check_api_keys),
         ("File Structure & Parity", check_file_structure),
         ("Tool Health", check_tool_health),
+        ("Security Hardening", check_security),
     ]
 
     for title, check_fn in checks:

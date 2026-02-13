@@ -96,8 +96,23 @@ class CodeExecutionTool(BaseTool):
         else:
             return ToolResult(output=f"Unknown runtime: {runtime}", error=True)
 
-        # Set working directory
+        # Set working directory with path traversal guard
         cwd = workdir or str(Path.cwd())
+        if workdir:
+            try:
+                from security.path_guard import validate_path
+                safe, reason = validate_path(
+                    workdir,
+                    allowed_roots=[str(Path.cwd())],
+                    allow_absolute=True,
+                )
+                if not safe:
+                    return ToolResult(
+                        output=f"Path guard blocked workdir: {reason}",
+                        error=True,
+                    )
+            except ImportError:
+                pass  # Guard not available, proceed without check
 
         # Run the process
         process = await asyncio.create_subprocess_exec(
@@ -118,6 +133,17 @@ class CodeExecutionTool(BaseTool):
                 output=f"Process killed after {timeout}s timeout.",
                 error=True,
             )
+        finally:
+            # Prevent file descriptor leaks (OpenClaw fix #13565)
+            if process.returncode is None:
+                try:
+                    process.kill()
+                except ProcessLookupError:
+                    pass
+                try:
+                    await process.communicate()
+                except Exception:
+                    pass
 
         exit_code = process.returncode
         stdout_text = stdout.decode("utf-8", errors="replace").strip()

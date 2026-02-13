@@ -28,6 +28,18 @@ class WebSearchTool(BaseTool):
         searxng_url = self.agent.config.get("searxng", {}).get("url", "")
 
         if searxng_url:
+            # SSRF guard: validate the SearXNG URL before fetching
+            try:
+                from security.ssrf_guard import SSRFGuard
+                guard = SSRFGuard(self.agent.config)
+                safe, reason = guard.validate_url(searxng_url, source="web_search")
+                if not safe:
+                    return ToolResult(
+                        output=f"SSRF blocked: {reason}",
+                        error=True,
+                    )
+            except ImportError:
+                pass  # Guard not available, proceed without check
             return await self._search_searxng(query, num_results, searxng_url)
         else:
             return await self._search_duckduckgo(query, num_results)

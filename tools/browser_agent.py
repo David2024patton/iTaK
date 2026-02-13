@@ -37,6 +37,20 @@ class BrowserAgentTool(BaseTool):
             from browser_use import BrowserSession, BrowserProfile
             from playwright.async_api import async_playwright
 
+            # SSRF guard: validate the target URL before browsing
+            if url:
+                try:
+                    from security.ssrf_guard import SSRFGuard
+                    guard = SSRFGuard(self.agent.config)
+                    safe, reason = guard.validate_url(url, source="browser_agent")
+                    if not safe:
+                        return ToolResult(
+                            output=f"SSRF blocked: {reason}",
+                            error=True,
+                        )
+                except ImportError:
+                    pass  # Guard not available, proceed without check
+
             # Configure browser profile
             profile = BrowserProfile(
                 headless=True,

@@ -31,8 +31,20 @@ class MemoryManager:
         # Layer 1: Markdown files
         self.memory_dir = Path("memory")
 
-        # Layer 2: SQLite
+        # Layer 2: SQLite (with path traversal guard)
         sqlite_path = config.get("sqlite_path", "data/db/memory.db")
+        try:
+            from security.path_guard import validate_path
+            safe, reason = validate_path(
+                sqlite_path,
+                allowed_roots=["data", "."],
+                allow_absolute=False,
+            )
+            if not safe:
+                logger.warning(f"Memory path blocked: {reason}, using default")
+                sqlite_path = "data/db/memory.db"
+        except ImportError:
+            pass
         self.sqlite = SQLiteStore(db_path=sqlite_path)
 
         # Layer 3: Neo4j

@@ -25,9 +25,19 @@ def create_app(agent: "Agent"):
 
     app = FastAPI(title="iTaK Dashboard", version="1.0.0")
 
+    # Extract WebUI config early (used by CORS, auth, etc.)
+    webui_config = agent.config.get("webui", {})
+
+    # CORS: locked to localhost by default, configurable for tunnel exposure
+    cors_origins = webui_config.get("cors_origins", [
+        "http://localhost:*",
+        "http://127.0.0.1:*",
+        "https://localhost:*",
+    ])
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -37,7 +47,6 @@ def create_app(agent: "Agent"):
     # Protects all API endpoints with a Bearer token.
     # Token is set via config.json webui.auth_token or auto-generated.
 
-    webui_config = agent.config.get("webui", {})
     auth_token = webui_config.get("auth_token", "")
 
     # Auto-generate token if not configured
@@ -432,6 +441,16 @@ def create_app(agent: "Agent"):
 
     @app.websocket("/ws")
     async def websocket_endpoint(ws: WebSocket):
+        # Validate token on WebSocket handshake (query param: ?token=xxx)
+        import hmac
+        ws_token = ws.query_params.get("token", "")
+        if not ws_token or not hmac.compare_digest(
+            ws_token.encode("utf-8"),
+            auth_token.encode("utf-8"),
+        ):
+            await ws.close(code=4001, reason="Invalid auth token")
+            return
+
         await ws.accept()
         ws_clients.append(ws)
         try:
