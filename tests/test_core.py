@@ -98,21 +98,22 @@ class TestAgent:
 
     def test_untrusted_tool_namespaced(self):
         """Untrusted tool check should work with namespaced MCP tools."""
-        # Test the logic for extracting base tool name
-        tool_name = "mcp_server::web_search"
-        base_tool_name = tool_name.split("::")[-1] if "::" in tool_name else tool_name
-        
         UNTRUSTED_TOOLS = {"web_search", "browser_agent", "browser", "web_scrape", "crawl"}
+        
+        def extract_base_tool_name(tool_name: str) -> str:
+            """Extract base tool name from namespaced format."""
+            return tool_name.split("::")[-1] if "::" in tool_name else tool_name
+        
+        # Test with namespaced MCP tool
+        base_tool_name = extract_base_tool_name("mcp_server::web_search")
         assert base_tool_name in UNTRUSTED_TOOLS
 
         # Test with non-namespaced tool
-        tool_name = "web_search"
-        base_tool_name = tool_name.split("::")[-1] if "::" in tool_name else tool_name
+        base_tool_name = extract_base_tool_name("web_search")
         assert base_tool_name in UNTRUSTED_TOOLS
 
-        # Test with safe tool
-        tool_name = "server::safe_tool"
-        base_tool_name = tool_name.split("::")[-1] if "::" in tool_name else tool_name
+        # Test with safe namespaced tool
+        base_tool_name = extract_base_tool_name("server::safe_tool")
         assert base_tool_name not in UNTRUSTED_TOOLS
 
 
