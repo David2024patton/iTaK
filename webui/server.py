@@ -33,6 +33,67 @@ def create_app(agent: "Agent"):
         allow_headers=["*"],
     )
 
+    # ── Auth middleware (OpenClaw-inspired) ────────────────────
+    # Protects all API endpoints with a Bearer token.
+    # Token is set via config.json webui.auth_token or auto-generated.
+
+    webui_config = agent.config.get("webui", {})
+    auth_token = webui_config.get("auth_token", "")
+
+    # Auto-generate token if not configured
+    if not auth_token:
+        import secrets as _secrets
+        auth_token = _secrets.token_hex(24)
+        logger.warning(
+            f"WebUI auth token auto-generated: {auth_token}\n"
+            f"Add this to config.json: \"webui\": {{ \"auth_token\": \"{auth_token}\" }}"
+        )
+
+    # Exempt paths that don't need auth
+    AUTH_EXEMPT = {"/api/health", "/docs", "/openapi.json"}
+
+    @app.middleware("http")
+    async def auth_middleware(request: Request, call_next):
+        path = request.url.path
+
+        # Skip auth for exempt paths and static files
+        if path in AUTH_EXEMPT or not path.startswith("/api/"):
+            return await call_next(request)
+
+        # Check auth-failure lockout
+        client_ip = request.client.host if request.client else "unknown"
+        if hasattr(agent, "rate_limiter") and agent.rate_limiter:
+            locked, retry_after = agent.rate_limiter.check_auth_lockout(client_ip)
+            if locked:
+                return JSONResponse(
+                    status_code=429,
+                    content={"error": "Too many auth failures. Try again later."},
+                    headers={"Retry-After": str(retry_after)},
+                )
+
+        # Validate Bearer token
+        import hmac
+        auth_header = request.headers.get("Authorization", "")
+        provided = auth_header.replace("Bearer ", "") if auth_header.startswith("Bearer ") else ""
+
+        if not provided or not hmac.compare_digest(
+            provided.encode("utf-8"),
+            auth_token.encode("utf-8"),
+        ):
+            # Record auth failure for lockout tracking
+            if hasattr(agent, "rate_limiter") and agent.rate_limiter:
+                agent.rate_limiter.record_auth_failure(client_ip)
+            return JSONResponse(
+                status_code=401,
+                content={"error": "Invalid or missing auth token"},
+            )
+
+        # Auth success - clear lockout history
+        if hasattr(agent, "rate_limiter") and agent.rate_limiter:
+            agent.rate_limiter.record_auth_success(client_ip)
+
+        return await call_next(request)
+
     # WebSocket connections for real-time updates
     ws_clients: list[WebSocket] = []
 

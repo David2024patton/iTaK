@@ -122,3 +122,58 @@ class RateLimiter:
             self.limits[category]["max_per_minute"] = max_per_minute
         if max_per_hour is not None:
             self.limits[category]["max_per_hour"] = max_per_hour
+
+    # ── Auth-failure lockout (OpenClaw-inspired) ──────────────
+
+    def record_auth_failure(self, client_id: str):
+        """Record a failed authentication attempt for a client.
+
+        After max_auth_failures within the lockout window, the client
+        is locked out and subsequent requests get 429 + Retry-After.
+        """
+        now = time.time()
+        if not hasattr(self, "_auth_failures"):
+            self._auth_failures: dict[str, list[float]] = defaultdict(list)
+            self._auth_lockout_attempts = 5
+            self._auth_lockout_seconds = 900  # 15 minutes
+
+        self._auth_failures[client_id].append(now)
+        # Keep only recent failures within the lockout window
+        cutoff = now - self._auth_lockout_seconds
+        self._auth_failures[client_id] = [
+            t for t in self._auth_failures[client_id] if t > cutoff
+        ]
+
+        count = len(self._auth_failures[client_id])
+        if count >= self._auth_lockout_attempts:
+            logger.warning(
+                f"AUTH_LOCKOUT client={client_id} failures={count} "
+                f"locked_for={self._auth_lockout_seconds}s"
+            )
+
+    def check_auth_lockout(self, client_id: str) -> tuple[bool, int]:
+        """Check if a client is locked out from auth failures.
+
+        Returns:
+            (locked_out: bool, retry_after_seconds: int)
+        """
+        if not hasattr(self, "_auth_failures"):
+            return False, 0
+
+        now = time.time()
+        cutoff = now - getattr(self, "_auth_lockout_seconds", 900)
+        failures = [t for t in self._auth_failures.get(client_id, []) if t > cutoff]
+
+        max_attempts = getattr(self, "_auth_lockout_attempts", 5)
+        if len(failures) >= max_attempts:
+            # Calculate retry-after from the oldest relevant failure
+            oldest = min(failures)
+            retry_after = int(getattr(self, "_auth_lockout_seconds", 900) - (now - oldest))
+            return True, max(retry_after, 1)
+
+        return False, 0
+
+    def record_auth_success(self, client_id: str):
+        """Clear auth failure history on successful authentication."""
+        if hasattr(self, "_auth_failures") and client_id in self._auth_failures:
+            del self._auth_failures[client_id]

@@ -114,3 +114,30 @@ class SecretManager:
     def has(self, key: str) -> bool:
         """Check if a secret is available."""
         return key in self._secrets or key in os.environ
+
+    def verify_token(self, provided: str, expected_key: str) -> bool:
+        """Verify a token/password using constant-time comparison.
+
+        Prevents timing attacks that could leak secrets byte-by-byte.
+        Uses hmac.compare_digest which takes the same time regardless
+        of where the first difference occurs.
+
+        Args:
+            provided: The token/password provided by the client.
+            expected_key: The key in the secret store to compare against.
+
+        Returns:
+            True if the provided value matches the stored secret.
+        """
+        import hmac
+
+        expected = self.get(expected_key)
+        if not expected:
+            # No secret stored - always fail but take the same time
+            hmac.compare_digest(provided.encode(), b"__no_secret_configured__")
+            return False
+
+        return hmac.compare_digest(
+            provided.encode("utf-8"),
+            expected.encode("utf-8"),
+        )
