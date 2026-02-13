@@ -88,6 +88,9 @@ class Agent:
         self.checkpoint = CheckpointManager(self)
         self.logger = Logger(self.config.get("logging", {}))
 
+        # Initialize subsystem status tracker before loading subsystems
+        self._subsystem_status: dict = {}
+
         # Phase 2: Security subsystem
         self.secrets = None
         self.scanner = None
@@ -282,7 +285,6 @@ class Agent:
         self._running: bool = False
         self._start_time: float = time.time()
         self._last_llm_meta: dict = {}
-        self._subsystem_status: dict = {}  # Track subsystem initialization status
 
         # Load tools and extensions
         self._load_tools()

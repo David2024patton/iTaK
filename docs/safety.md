@@ -133,9 +133,9 @@ All subsystem initialization is tracked and logged at startup:
 ✓ model_router: initialized
 ✓ logger: initialized  
 ✓ security: initialized
-⚠ neo4j: import_error (optional)
+⚠ swarm: import_error: No module named 'swarm_lib' (optional)
 ✓ memory: initialized
-✗ custom_module: error: Connection failed
+✗ webhooks: error: Connection failed
 ```
 
 ### Status Categories
