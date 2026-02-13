@@ -266,7 +266,28 @@ class Agent:
             await self.presence.set_state("idle")
 
     async def shutdown(self):
-        """Graceful shutdown."""
+        """Graceful shutdown with turn draining.
+
+        Waits for any active monologue to finish (up to drain_timeout)
+        before tearing down services. Prevents message loss on restart.
+        """
+        drain_timeout = self.config.get("agent", {}).get("drain_timeout_seconds", 30)
+
+        # Signal the monologue loop to stop
+        self._running = False
+
+        # Wait for active turn to complete
+        if getattr(self, "_active_turn", False):
+            logger.info(f"Draining active turn (up to {drain_timeout}s)...")
+            deadline = time.time() + drain_timeout
+            while getattr(self, "_active_turn", False) and time.time() < deadline:
+                await asyncio.sleep(0.5)
+            if getattr(self, "_active_turn", False):
+                logger.warning("Drain timeout - forcing shutdown with active turn")
+            else:
+                logger.info("Active turn completed, proceeding with shutdown")
+
+        # Tear down services
         if self.heartbeat:
             await self.heartbeat.stop()
         if self.mcp_client:
@@ -276,6 +297,7 @@ class Agent:
         if self.memory:
             await self.memory.close()
         await self.checkpoint.save()
+        logger.info("Shutdown complete")
 
     def _load_config(self, config: Optional[dict] = None) -> dict:
         """Load config from dict or config.json."""
@@ -519,6 +541,13 @@ class Agent:
             if self.rate_limiter:
                 self.rate_limiter.record(category=tool_name)
 
+            # Sanitize output: strip local file paths and sensitive patterns
+            try:
+                from security.output_sanitizer import sanitize_output
+                result_text = sanitize_output(result_text, self.config)
+            except ImportError:
+                pass  # Sanitizer not available
+
             return result_text, break_loop
 
         except RepairableException as e:
@@ -583,6 +612,7 @@ class Agent:
         - Only breaks when response tool sets break_loop=True
         """
         self._running = True
+        self._active_turn = True  # Turn-drain flag for graceful shutdown
         self.iteration_count = 0
         critical_retries = 0
 
@@ -710,6 +740,7 @@ class Agent:
 
         finally:
             self._running = False
+            self._active_turn = False  # Signal shutdown drain that the turn is done
             self._run_extensions("process_chain_end")
             self.logger.log(EventType.AGENT_COMPLETE, {
                 "iterations": self.iteration_count,

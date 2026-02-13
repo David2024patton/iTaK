@@ -4,6 +4,7 @@
         "version": "0.1.0",
         "max_iterations": 25,
         "timeout_seconds": 300,
+        "drain_timeout_seconds": 30,
         "repeat_detection": true,
         "checkpoint_enabled": true,
         "checkpoint_interval_steps": 3
@@ -48,6 +49,15 @@
         "secret_store_path": "data/db/secrets.db",
         "sandbox_enabled": true,
         "rate_limit_tokens_per_minute": 100000,
+        "block_private_ips": true,
+        "url_allowlist": [
+            "github.com",
+            "stackoverflow.com",
+            "pypi.org",
+            "docs.python.org",
+            "google.com",
+            "duckduckgo.com"
+        ],
         "allowed_domains": [
             "github.com",
             "stackoverflow.com",
@@ -56,6 +66,10 @@
             "google.com",
             "duckduckgo.com"
         ]
+    },
+    "output_guard": {
+        "strip_local_paths": true,
+        "strip_sensitive_patterns": true
     },
     "adapters": {
         "discord": {
@@ -80,7 +94,13 @@
         "enabled": true,
         "host": "0.0.0.0",
         "port": 0,
-        "auth_password": "${WEBUI_PASSWORD}"
+        "auth_token": "",
+        "auth_password": "${WEBUI_PASSWORD}",
+        "cors_origins": [
+            "http://localhost:*",
+            "http://127.0.0.1:*",
+            "https://localhost:*"
+        ]
     },
     "heartbeat": {
         "enabled": true,
@@ -88,6 +108,10 @@
         "integrations": [
             "discord"
         ]
+    },
+    "compaction": {
+        "threshold_tokens": 80000,
+        "cooldown_seconds": 60
     },
     "logging": {
         "level": "INFO",

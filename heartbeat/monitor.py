@@ -85,17 +85,25 @@ class Heartbeat:
                 if len(self._health_history) > 100:
                     self._health_history = self._health_history[-100:]
 
-                # Handle issues
+                # Handle issues - each isolated to prevent cascading failures
                 if not health["agent_alive"]:
-                    await self._handle_stall()
+                    try:
+                        await self._handle_stall()
+                    except Exception as e:
+                        logger.error(f"Stall handler error (isolated): {e}")
 
                 if not health["memory_healthy"]:
-                    await self._handle_memory_issues(health)
+                    try:
+                        await self._handle_memory_issues(health)
+                    except Exception as e:
+                        logger.error(f"Memory handler error (isolated): {e}")
 
             except asyncio.CancelledError:
                 break
             except Exception as e:
                 logger.error(f"Heartbeat error: {e}")
+                # Prevent immediate rerun loop on persistent errors
+                await asyncio.sleep(min(self.interval * 2, 120))
 
     async def check_health(self) -> dict:
         """Perform a comprehensive health check."""
