@@ -216,6 +216,17 @@ class Agent:
         except ImportError:
             pass
 
+        # Output Guard - PII/Secret redaction on all outbound text
+        self.output_guard = None
+        try:
+            from security.output_guard import OutputGuard
+            self.output_guard = OutputGuard(
+                config=self.config,
+                secret_manager=self.secrets
+            )
+        except ImportError:
+            pass
+
         # State
         self.history: list[dict] = []
         self.iteration_count: int = 0
@@ -744,6 +755,7 @@ class Agent:
             "user_registry": self.user_registry is not None,
             "presence": self.presence is not None,
             "media": self.media is not None,
+            "output_guard": self.output_guard is not None and self.output_guard.enabled,
             # Counts
             "tools": len(self._tools),
             "extensions": sum(len(v) for v in self._extensions.values()),

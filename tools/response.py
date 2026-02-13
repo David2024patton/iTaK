@@ -22,6 +22,11 @@ class ResponseTool(BaseTool):
         if not message:
             message = "Task completed."
 
+        # Run through output guard before delivering to user
+        if hasattr(self.agent, 'output_guard') and self.agent.output_guard:
+            result = self.agent.output_guard.sanitize(message)
+            message = result.sanitized_text
+
         await self.agent.progress.complete(message[:100])
 
         return ToolResult(
