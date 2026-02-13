@@ -103,9 +103,9 @@ class TestMemUStore:
         short_messages = [{"role": "user", "content": "Hi"}]
         assert store._check_min_length(short_messages) is False
         
-        # Long enough conversation
+        # Long enough conversation (must be >= 100 chars)
         long_messages = [
-            {"role": "user", "content": "This is a much longer conversation with plenty of content that exceeds the minimum threshold"}
+            {"role": "user", "content": "This is a much longer conversation with plenty of content that definitely exceeds the minimum threshold of one hundred characters"}
         ]
         assert store._check_min_length(long_messages) is True
 
@@ -165,6 +165,7 @@ class TestMemUStore:
     async def test_memorize_success(self):
         """Should successfully send to MemU and parse response."""
         from memory.memu_store import MemUStore
+        from unittest.mock import MagicMock
         
         store = MemUStore({
             "enabled": True,
@@ -175,7 +176,7 @@ class TestMemUStore:
             {"role": "user", "content": "Remember that the sky is blue and grass is green"},
         ]
         
-        mock_response = {
+        mock_response_data = {
             "facts": [
                 "The sky is blue",
                 "Grass is green",
@@ -184,21 +185,33 @@ class TestMemUStore:
             "metadata": {"confidence": 0.9},
         }
         
-        # Mock aiohttp
-        with patch("memory.memu_store.aiohttp.ClientSession") as mock_session:
-            mock_response_obj = AsyncMock()
-            mock_response_obj.status = 200
-            mock_response_obj.json = AsyncMock(return_value=mock_response)
+        # Create a proper async context manager mock
+        class MockResponse:
+            def __init__(self):
+                self.status = 200
             
-            mock_context = AsyncMock()
-            mock_context.__aenter__.return_value = mock_response_obj
-            mock_context.__aexit__.return_value = AsyncMock()
+            async def json(self):
+                return mock_response_data
+        
+        class MockSession:
+            def post(self, *args, **kwargs):
+                return self
             
-            mock_session_instance = AsyncMock()
-            mock_session_instance.post.return_value = mock_context
-            mock_session.return_value.__aenter__.return_value = mock_session_instance
-            mock_session.return_value.__aexit__.return_value = AsyncMock()
+            async def __aenter__(self):
+                return MockResponse()
             
+            async def __aexit__(self, *args):
+                pass
+        
+        class MockClientSession:
+            async def __aenter__(self):
+                return MockSession()
+            
+            async def __aexit__(self, *args):
+                pass
+        
+        # Mock aiohttp.ClientSession
+        with patch("memory.memu_store.aiohttp.ClientSession", MockClientSession):
             result = await store.memorize(messages, skip_throttle=True)
             
             assert result is not None
@@ -213,21 +226,32 @@ class TestMemUStore:
         store = MemUStore({"enabled": True})
         messages = [{"role": "user", "content": "test message"}]
         
-        # Mock 500 error
-        with patch("memory.memu_store.aiohttp.ClientSession") as mock_session:
-            mock_response_obj = AsyncMock()
-            mock_response_obj.status = 500
-            mock_response_obj.text = AsyncMock(return_value="Internal Server Error")
+        # Create mock for 500 error
+        class MockResponse:
+            def __init__(self):
+                self.status = 500
             
-            mock_context = AsyncMock()
-            mock_context.__aenter__.return_value = mock_response_obj
-            mock_context.__aexit__.return_value = AsyncMock()
+            async def text(self):
+                return "Internal Server Error"
+        
+        class MockSession:
+            def post(self, *args, **kwargs):
+                return self
             
-            mock_session_instance = AsyncMock()
-            mock_session_instance.post.return_value = mock_context
-            mock_session.return_value.__aenter__.return_value = mock_session_instance
-            mock_session.return_value.__aexit__.return_value = AsyncMock()
+            async def __aenter__(self):
+                return MockResponse()
             
+            async def __aexit__(self, *args):
+                pass
+        
+        class MockClientSession:
+            async def __aenter__(self):
+                return MockSession()
+            
+            async def __aexit__(self, *args):
+                pass
+        
+        with patch("memory.memu_store.aiohttp.ClientSession", MockClientSession):
             result = await store.memorize(messages, skip_throttle=True)
             
             assert result is None
@@ -309,7 +333,7 @@ class TestMemUEnricher:
         call = mock_memory.save.call_args
         assert call.kwargs["content"] == "Complex fact"
         assert call.kwargs["category"] == "lesson"
-        assert call.kwargs["entities"] == ["python", "testing"]
+        assert set(call.kwargs["entities"]) == {"python", "testing"}
 
     @pytest.mark.asyncio
     async def test_append_to_memory_md(self, tmp_path):

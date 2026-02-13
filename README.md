@@ -50,6 +50,7 @@
 - **Tier 2 - Recall Memory**: Recent conversation history (auto-managed FIFO)
 - **Tier 3 - Archival Memory**: Searchable long-term storage (SQLite + vector embeddings)
 - **Tier 4 - Knowledge Graph**: Neo4j-backed entity relationships with GraphRAG
+- **MemU Enrichment** (Optional): Self-hosted extraction pipeline that automatically extracts structured facts from conversations and routes them to existing memory layers (disabled by default, sovereignty-first)
 
 ### 🛡️ Security
 - **Secret management** - Auto-detect and mask API keys in logs and outputs
