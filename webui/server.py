@@ -289,6 +289,44 @@ def create_app(agent: "Agent"):
             return JSONResponse({"error": "Task not found"}, status_code=404)
         return JSONResponse({"error": "Task board not available"}, status_code=503)
 
+    @app.patch("/api/tasks/{task_id}")
+    async def update_task_status(task_id: str, payload: dict):
+        """Update a task's status (for Kanban drag-and-drop)."""
+        if hasattr(agent, "task_board") and agent.task_board:
+            new_status = payload.get("status")
+            valid = {"inbox", "in_progress", "review", "done", "failed"}
+            if new_status not in valid:
+                return JSONResponse(
+                    {"error": f"Invalid status. Must be one of: {valid}"},
+                    status_code=400,
+                )
+            # Use built-in transitions where possible
+            if new_status == "in_progress":
+                task = agent.task_board.start(task_id)
+                if not task:
+                    # Force status if not in inbox
+                    task = agent.task_board.get(task_id)
+                    if task:
+                        task.status = "in_progress"
+                        task.started_at = task.started_at or __import__("time").time()
+                        agent.task_board.update(task)
+            elif new_status == "review":
+                task = agent.task_board.set_review(task_id)
+            elif new_status == "done":
+                task = agent.task_board.complete(task_id)
+            elif new_status == "failed":
+                task = agent.task_board.fail(task_id)
+            else:
+                task = agent.task_board.get(task_id)
+                if task:
+                    task.status = new_status
+                    agent.task_board.update(task)
+
+            if task:
+                return task.to_dict()
+            return JSONResponse({"error": "Task not found"}, status_code=404)
+        return JSONResponse({"error": "Task board not available"}, status_code=503)
+
     @app.delete("/api/tasks/{task_id}")
     async def delete_task(task_id: str):
         """Delete a task."""
