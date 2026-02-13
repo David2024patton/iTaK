@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iTaK — Dashboard</title>
+    <meta name="description" content="iTaK Intelligent Task Automation Kernel — Agent Monitoring Dashboard">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a2e;
+            --bg-card-hover: #1e1e35;
+            --border: #2a2a40;
+            --text-primary: #e8e8f0;
+            --text-secondary: #8888a0;
+            --text-muted: #555570;
+            --accent-blue: #4a9eff;
+            --accent-purple: #a855f7;
+            --accent-green: #22c55e;
+            --accent-amber: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-cyan: #06b6d4;
+            --gradient-main: linear-gradient(135deg, #4a9eff 0%, #a855f7 100%);
+            --shadow-glow: 0 0 30px rgba(74, 158, 255, 0.15);
+            --radius: 12px;
+            --transition: 0.2s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ——— Top Bar ——— */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+        }
+
+        .topbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .topbar-brand h1 {
+            font-size: 20px;
+            font-weight: 700;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .topbar-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        /* ——— Layout ——— */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            padding: 24px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* ——— Cards ——— */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            background: var(--bg-card-hover);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-icon {
+            font-size: 18px;
+        }
+
+        .card-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .card-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* ——— Stat Grid ——— */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .stat-value.green {
+            color: var(--accent-green);
+        }
+
+        .stat-value.blue {
+            color: var(--accent-blue);
+        }
+
+        .stat-value.purple {
+            color: var(--accent-purple);
+        }
+
+        .stat-value.amber {
+            color: var(--accent-amber);
+        }
+
+        .stat-value.red {
+            color: var(--accent-red);
+        }
+
+        .stat-value.cyan {
+            color: var(--accent-cyan);
+        }
+
+        /* ——— Log Stream ——— */
+        .log-stream {
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+        }
+
+        .log-entry {
+            display: flex;
+            gap: 10px;
+            padding: 6px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .log-entry:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .log-time {
+            color: var(--text-muted);
+            min-width: 70px;
+        }
+
+        .log-type {
+            font-weight: 500;
+            min-width: 100px;
+        }
+
+        .log-type.system {
+            color: var(--accent-blue);
+        }
+
+        .log-type.tool {
+            color: var(--accent-purple);
+        }
+
+        .log-type.error {
+            color: var(--accent-red);
+        }
+
+        .log-type.user {
+            color: var(--accent-green);
+        }
+
+        .log-type.agent {
+            color: var(--accent-cyan);
+        }
+
+        .log-data {
+            color: var(--text-secondary);
+            flex: 1;
+            word-break: break-all;
+        }
+
+        /* ——— Chat Panel ——— */
+        .chat-panel {
+            grid-column: span 2;
+        }
+
+        .chat-messages {
+            max-height: 350px;
+            overflow-y: auto;
+            margin-bottom: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .chat-msg {
+            padding: 10px 14px;
+            border-radius: 10px;
+            max-width: 85%;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .chat-msg.user {
+            background: var(--accent-blue);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+
+        .chat-msg.agent {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-primary);
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+        }
+
+        .chat-input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .chat-input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .chat-btn {
+            padding: 12px 24px;
+            background: var(--gradient-main);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .chat-btn:hover {
+            transform: scale(1.03);
+        }
+
+        .chat-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ——— Memory Search ——— */
+        .memory-search-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .memory-results {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .memory-item {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .memory-item-cat {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--accent-purple);
+            margin-bottom: 4px;
+        }
+
+        .memory-item-content {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* ——— Scrollbar ——— */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* ——— Responsive ——— */
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                padding: 12px;
+            }
+
+            .chat-panel {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top Bar -->
+    <header class="topbar">
+        <div class="topbar-brand">
+            <h1>🧠 iTaK</h1>
+            <span style="font-size:12px; color:var(--text-muted)">Intelligent Task Automation Kernel</span>
+        </div>
+        <div class="topbar-status">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Connecting...</span>
+        </div>
+    </header>
+
+    <!-- Dashboard Grid -->
+    <main class="dashboard">
+        <!-- Stats Row -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Agent Overview</span>
+                <span class="card-icon">📊</span>
+            </div>
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Uptime</div>
+                    <div class="stat-value green" id="statUptime">--</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Tools</div>
+                    <div class="stat-value blue" id="statTools">--</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Iterations</div>
+                    <div class="stat-value purple" id="statIterations">--</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Budget Left</div>
+                    <div class="stat-value amber" id="statBudget">--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Memory Stats -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Memory Layers</span>
+                <span class="card-icon">🧠</span>
+            </div>
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Markdown</div>
+                    <div class="stat-value cyan" id="memMarkdown">--</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">SQLite</div>
+                    <div class="stat-value blue" id="memSqlite">--</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Neo4j</div>
+                    <div class="stat-value purple" id="memNeo4j">--</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Weaviate</div>
+                    <div class="stat-value green" id="memWeaviate">--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Log Stream -->
+        <div class="card" style="grid-column: span 2;">
+            <div class="card-header">
+                <span class="card-title">Live Log Stream</span>
+                <span class="card-icon">📋</span>
+            </div>
+            <div class="log-stream" id="logStream">
+                <div class="log-entry">
+                    <span class="log-time">--:--</span>
+                    <span class="log-type system">system</span>
+                    <span class="log-data">Waiting for connection...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Panel -->
+        <div class="card chat-panel">
+            <div class="card-header">
+                <span class="card-title">Chat with iTaK</span>
+                <span class="card-icon">💬</span>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="chat-msg agent">👋 Hello! I'm iTaK. Send me a task or question.</div>
+            </div>
+            <div class="chat-input-row">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Type your message..."
+                    autocomplete="off">
+                <button class="chat-btn" id="chatSendBtn" onclick="sendChat()">Send</button>
+            </div>
+        </div>
+
+        <!-- Memory Search -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Memory Search</span>
+                <span class="card-icon">🔍</span>
+            </div>
+            <div class="memory-search-row">
+                <input type="text" class="chat-input" id="memoryInput" placeholder="Search memories..."
+                    autocomplete="off">
+                <button class="chat-btn" onclick="searchMemory()">Search</button>
+            </div>
+            <div class="memory-results" id="memoryResults"></div>
+        </div>
+    </main>
+
+    <script>
+        const API = window.location.origin;
+        let ws = null;
+
+        // ——— WebSocket ———
+        function connectWS() {
+            const wsUrl = `${API.replace('http', 'ws')}/ws`;
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                document.getElementById('statusDot').style.background = 'var(--accent-green)';
+                document.getElementById('statusText').textContent = 'Connected';
+                addLog('system', 'WebSocket connected');
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+                    if (msg.type === 'progress') {
+                        addLog(msg.event, JSON.stringify(msg.data).slice(0, 200));
+                    } else if (msg.type === 'response') {
+                        addChatMessage('agent', msg.content);
+                    }
+                } catch (e) { }
+            };
+
+            ws.onclose = () => {
+                document.getElementById('statusDot').style.background = 'var(--accent-red)';
+                document.getElementById('statusText').textContent = 'Disconnected';
+                setTimeout(connectWS, 3000);
+            };
+
+            ws.onerror = () => {
+                document.getElementById('statusDot').style.background = 'var(--accent-amber)';
+                document.getElementById('statusText').textContent = 'Error';
+            };
+        }
+
+        // ——— Stats Polling ———
+        async function fetchStats() {
+            try {
+                const res = await fetch(`${API}/api/stats`);
+                const data = await res.json();
+
+                const uptime = Math.floor(data.uptime_seconds || 0);
+                const hrs = Math.floor(uptime / 3600);
+                const mins = Math.floor((uptime % 3600) / 60);
+                document.getElementById('statUptime').textContent = `${hrs}h ${mins}m`;
+                document.getElementById('statTools').textContent = data.tools_loaded || 0;
+                document.getElementById('statIterations').textContent = data.total_iterations || 0;
+
+                const budget = data.rate_limiter?.budget_remaining;
+                document.getElementById('statBudget').textContent = budget != null ? `$${budget}` : 'N/A';
+
+                // Memory
+                const mem = data.memory || {};
+                document.getElementById('memMarkdown').textContent = mem.layer_1_files || 0;
+                const sqlStats = mem.layer_2_sqlite || {};
+                document.getElementById('memSqlite').textContent = sqlStats.total_memories || 0;
+                document.getElementById('memNeo4j').textContent = mem.layer_3_neo4j || '--';
+                const wv = mem.layer_4_weaviate;
+                document.getElementById('memWeaviate').textContent =
+                    typeof wv === 'object' ? (wv.total_memories || wv.status || '--') : (wv || '--');
+
+            } catch (e) {
+                document.getElementById('statusDot').style.background = 'var(--accent-amber)';
+            }
+        }
+
+        // ——— Logs ———
+        function addLog(type, data) {
+            const stream = document.getElementById('logStream');
+            const now = new Date();
+            const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+
+            const typeClass = type.includes('error') ? 'error' :
+                type.includes('tool') ? 'tool' :
+                    type.includes('user') ? 'user' :
+                        type.includes('agent') ? 'agent' : 'system';
+
+            const el = document.createElement('div');
+            el.className = 'log-entry';
+            el.innerHTML = `
+                <span class="log-time">${time}</span>
+                <span class="log-type ${typeClass}">${type}</span>
+                <span class="log-data">${data}</span>
+            `;
+            stream.appendChild(el);
+            stream.scrollTop = stream.scrollHeight;
+
+            if (stream.children.length > 200) stream.removeChild(stream.firstChild);
+        }
+
+        // ——— Chat ———
+        function addChatMessage(role, content) {
+            const container = document.getElementById('chatMessages');
+            const el = document.createElement('div');
+            el.className = `chat-msg ${role}`;
+            el.textContent = content;
+            container.appendChild(el);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function sendChat() {
+            const input = document.getElementById('chatInput');
+            const btn = document.getElementById('chatSendBtn');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            addChatMessage('user', msg);
+            input.value = '';
+            btn.disabled = true;
+
+            try {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'chat', message: msg }));
+                } else {
+                    const res = await fetch(`${API}/api/chat`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: msg }),
+                    });
+                    const data = await res.json();
+                    addChatMessage('agent', data.response || data.error || 'No response');
+                }
+            } catch (e) {
+                addChatMessage('agent', '❌ Connection error');
+            }
+            btn.disabled = false;
+        }
+
+        document.getElementById('chatInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendChat();
+        });
+
+        // ——— Memory Search ———
+        async function searchMemory() {
+            const input = document.getElementById('memoryInput');
+            const query = input.value.trim();
+            if (!query) return;
+
+            const container = document.getElementById('memoryResults');
+            container.innerHTML = '<div style="color:var(--text-muted);padding:12px;">Searching...</div>';
+
+            try {
+                const res = await fetch(`${API}/api/memory/search?query=${encodeURIComponent(query)}&limit=10`);
+                const data = await res.json();
+
+                if (!data.results || data.results.length === 0) {
+                    container.innerHTML = '<div style="color:var(--text-muted);padding:12px;">No results found.</div>';
+                    return;
+                }
+
+                container.innerHTML = data.results.map(r => `
+                    <div class="memory-item">
+                        <div class="memory-item-cat">${r.category || 'general'}</div>
+                        <div class="memory-item-content">${(r.content || '').slice(0, 300)}</div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<div style="color:var(--accent-red);padding:12px;">Search failed.</div>';
+            }
+        }
+
+        document.getElementById('memoryInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') searchMemory();
+        });
+
+        // ——— Init ———
+        connectWS();
+        fetchStats();
+        setInterval(fetchStats, 10000);
+
+        // Fetch initial logs
+        fetch(`${API}/api/logs?limit=20`).then(r => r.json()).then(data => {
+            if (data.logs) {
+                data.logs.reverse().forEach(log => {
+                    addLog(log.event_type || 'system', typeof log.data === 'string' ? log.data : JSON.stringify(log.data).slice(0, 200));
+                });
+            }
+        }).catch(() => { });
+    </script>
+</body>
+
+</html>

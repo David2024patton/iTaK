@@ -1,0 +1,116 @@
+{
+    "agent": {
+        "name": "iTaK",
+        "version": "0.1.0",
+        "max_iterations": 25,
+        "timeout_seconds": 300,
+        "repeat_detection": true,
+        "checkpoint_enabled": true,
+        "checkpoint_interval_steps": 3
+    },
+    "models": {
+        "chat": {
+            "provider": "litellm",
+            "model": "gemini/gemini-2.5-pro-preview-05-06",
+            "temperature": 0.7,
+            "max_tokens": 8192,
+            "context_window": 1000000
+        },
+        "utility": {
+            "provider": "litellm",
+            "model": "gemini/gemini-2.0-flash",
+            "temperature": 0.3,
+            "max_tokens": 4096,
+            "context_window": 1000000
+        },
+        "browser": {
+            "provider": "litellm",
+            "model": "gemini/gemini-2.0-flash",
+            "temperature": 0.3,
+            "max_tokens": 4096,
+            "context_window": 1000000,
+            "use_vision": true
+        },
+        "embeddings": {
+            "provider": "fastembed",
+            "model": "BAAI/bge-small-en-v1.5",
+            "dimensions": 384
+        }
+    },
+    "memory": {
+        "sqlite_path": "data/db/memory.db",
+        "similarity_threshold": 0.7,
+        "max_results": 10,
+        "auto_memorize": true,
+        "consolidation_threshold": 0.85
+    },
+    "security": {
+        "secret_store_path": "data/db/secrets.db",
+        "sandbox_enabled": true,
+        "rate_limit_tokens_per_minute": 100000,
+        "allowed_domains": [
+            "github.com",
+            "stackoverflow.com",
+            "pypi.org",
+            "docs.python.org",
+            "google.com",
+            "duckduckgo.com"
+        ]
+    },
+    "adapters": {
+        "discord": {
+            "enabled": true,
+            "token": "${DISCORD_TOKEN}",
+            "allowed_channels": []
+        },
+        "telegram": {
+            "enabled": false,
+            "token": "${TELEGRAM_TOKEN}"
+        },
+        "slack": {
+            "enabled": false,
+            "token": "${SLACK_TOKEN}",
+            "app_token": "${SLACK_APP_TOKEN}"
+        },
+        "cli": {
+            "enabled": true
+        }
+    },
+    "webui": {
+        "enabled": true,
+        "host": "0.0.0.0",
+        "port": 0,
+        "auth_password": "${WEBUI_PASSWORD}"
+    },
+    "heartbeat": {
+        "enabled": true,
+        "interval_minutes": 30,
+        "integrations": [
+            "discord"
+        ]
+    },
+    "logging": {
+        "level": "INFO",
+        "jsonl_dir": "data/logs",
+        "sqlite_path": "data/db/logs.db",
+        "rotation_hours": 24,
+        "mask_secrets": true
+    },
+    "docker": {
+        "sandbox_image": "itak-sandbox:latest",
+        "restart_policy": "unless-stopped",
+        "network": "itak-network"
+    },
+    "neo4j": {
+        "uri": "${NEO4J_URI}",
+        "user": "neo4j",
+        "password": "${NEO4J_PASSWORD}"
+    },
+    "weaviate": {
+        "url": "${WEAVIATE_URL}",
+        "api_key": "${WEAVIATE_API_KEY}"
+    },
+    "searxng": {
+        "url": "${SEARXNG_URL}"
+    }
+}

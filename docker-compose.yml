@@ -1,0 +1,84 @@
+# iTaK — Docker Compose
+# Full stack: Agent + Neo4j + Weaviate + SearXNG
+
+services:
+  # ===== iTaK Agent =====
+  itak:
+    build: .
+    container_name: itak-agent
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+      - ./memory:/app/memory
+      - ./skills:/app/skills
+      - ./prompts:/app/prompts
+      - ./config.json:/app/config.json
+    depends_on:
+      - neo4j
+      - weaviate
+    networks:
+      - itak-network
+    command: [ "--adapter", "discord" ]
+
+  # ===== Neo4j (Knowledge Graph) =====
+  neo4j:
+    image: neo4j:5-community
+    container_name: itak-neo4j
+    restart: unless-stopped
+    ports:
+      - "${NEO4J_HTTP_PORT:-47474}:7474"
+      - "${NEO4J_BOLT_PORT:-47687}:7687"
+    environment:
+      NEO4J_AUTH: "neo4j/${NEO4J_PASSWORD:-changeme}"
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_server_memory_heap_initial__size: "256m"
+      NEO4J_server_memory_heap_max__size: "512m"
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+    networks:
+      - itak-network
+
+  # ===== Weaviate (Vector Database) =====
+  weaviate:
+    image: semitechnologies/weaviate:latest
+    container_name: itak-weaviate
+    restart: unless-stopped
+    ports:
+      - "${WEAVIATE_PORT:-48080}:8080"
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: "/var/lib/weaviate"
+      DEFAULT_VECTORIZER_MODULE: "none"
+      CLUSTER_HOSTNAME: "itak-weaviate"
+    volumes:
+      - weaviate-data:/var/lib/weaviate
+    networks:
+      - itak-network
+
+  # ===== SearXNG (Web Search) =====
+  searxng:
+    image: searxng/searxng:latest
+    container_name: itak-searxng
+    restart: unless-stopped
+    ports:
+      - "${SEARXNG_PORT:-48888}:8080"
+    environment:
+      SEARXNG_BASE_URL: "http://localhost:${SEARXNG_PORT:-48888}/"
+    volumes:
+      - searxng-data:/etc/searxng
+    networks:
+      - itak-network
+
+volumes:
+  neo4j-data:
+  neo4j-logs:
+  weaviate-data:
+  searxng-data:
+
+
+networks:
+  itak-network:
+    driver: bridge
