@@ -1,4 +1,4 @@
-# iTaK — Docker Compose
+# iTaK - Docker Compose
 # Full stack: Agent + Neo4j + Weaviate + SearXNG
 
 services:

@@ -1,5 +1,5 @@
 """
-iTaK Extension: Task Complete — Runs at process_chain_end.
+iTaK Extension: Task Complete - Runs at process_chain_end.
 Moves the active task to review/done when the process chain completes.
 """
 

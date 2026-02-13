@@ -1,5 +1,5 @@
 """
-iTaK Checkpoint Manager — Crash-safe state persistence.
+iTaK Checkpoint Manager - Crash-safe state persistence.
 Saves agent state to disk at intervals so it can resume after crashes.
 """
 

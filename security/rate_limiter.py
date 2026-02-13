@@ -1,5 +1,5 @@
 """
-iTaK Rate Limiter — Prevents abuse and controls API costs.
+iTaK Rate Limiter - Prevents abuse and controls API costs.
 Token-bucket algorithm with per-adapter and per-model limits.
 """
 

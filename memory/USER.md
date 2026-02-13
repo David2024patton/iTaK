@@ -1,40 +1,27 @@
-# iTaK — USER.md
-# Who David Is — Preferences, Projects, Goals
+# iTaK - USER.md
+# User Profile - Preferences, Projects, Goals
 # Updated by the agent as it learns more about the user.
+# Each user deployment should customize this file.
 
 ## Identity
 
-- **Name**: David Patton
-- **Role**: Builder, trader, infrastructure architect
-- **Discord ID**: 776628215066132502
+- **Name**: (set by user)
+- **Role**: (set by user)
 
 ## Infrastructure
 
-- **VPS**: Remote server running Dokploy, Neo4j, SearXNG, Caddy
-- **Skynet (Dell Mini PC)**: Local Ubuntu machine at 192.168.0.217 running Ollama
-- **Local**: Windows machine with Docker Desktop, VS Code, multiple AI tools
+- (document your servers, machines, and tools here)
 
 ## Active Projects
 
-- **iTaK**: This agent framework (you!)
-- **Polymarket Trading**: Automated prediction market strategies
-- **Clarity AI**: Counseling diagnostics platform
-- **ECAM**: Multi-tenant inventory SaaS
+- (list your current projects here)
 
 ## Preferences
 
-- Prefers direct, no-fluff communication
+- (the agent will learn and record your preferences over time)
 - Wants agents to test their own work
-- Values security — API keys must never be exposed
-- Prefers Docker for deployment
-- Uses Discord as primary communication channel
-- Likes detailed gameplans before building
+- Values security - API keys must never be exposed
 
 ## Tech Stack Preferences
 
-- Python for backend/agents
-- FastAPI for web APIs
-- Docker + Docker Compose for deployment
-- Neo4j for graph data
-- Ollama for local LLMs
-- SearXNG for web search
+- (the agent will learn your preferred technologies over time)

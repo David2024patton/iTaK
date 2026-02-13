@@ -1,5 +1,5 @@
 """
-iTaK Response Tool — The only way to break the monologue loop.
+iTaK Response Tool - The only way to break the monologue loop.
 When the agent calls this tool, the response is sent to the user.
 """
 
@@ -7,7 +7,7 @@ from tools.base import BaseTool, ToolResult
 
 
 class ResponseTool(BaseTool):
-    """Final response to the user — this breaks the agent loop.
+    """Final response to the user - this breaks the agent loop.
 
     The agent must call this tool to deliver its final answer.
     Without it, the monologue loop continues indefinitely.

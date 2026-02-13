@@ -1,5 +1,5 @@
 """
-iTaK Neo4j Knowledge Graph — Layer 3 of the 4-layer brain.
+iTaK Neo4j Knowledge Graph - Layer 3 of the 4-layer brain.
 Stores entities, relationships, and contextual knowledge.
 """
 

@@ -4,8 +4,8 @@ Tags: search, web, research, scraping, browser
 
 ## Overview
 iTaK has two tools for web research:
-1. **web_search** — SearXNG search engine queries (fast, text results)
-2. **browser_agent** — Full browser automation (slower, visual, interactive)
+1. **web_search** - SearXNG search engine queries (fast, text results)
+2. **browser_agent** - Full browser automation (slower, visual, interactive)
 
 ## When to Use Which
 
@@ -22,11 +22,11 @@ iTaK has two tools for web research:
 
 ## Research Protocol
 
-1. **Search first** — Use `web_search` to find relevant URLs
-2. **Read top results** — Use `browser_agent` to read specific pages
-3. **Extract key info** — Note important facts, code, patterns
-4. **Save to memory** — Use `memory_save` for important findings
-5. **Create skill** — If the info is reusable, save as a skill file
+1. **Search first** - Use `web_search` to find relevant URLs
+2. **Read top results** - Use `browser_agent` to read specific pages
+3. **Extract key info** - Note important facts, code, patterns
+4. **Save to memory** - Use `memory_save` for important findings
+5. **Create skill** - If the info is reusable, save as a skill file
 
 ## Search Tips
 

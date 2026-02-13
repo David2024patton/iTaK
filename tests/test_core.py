@@ -1,5 +1,5 @@
 """
-iTaK — Unit Tests for Core Components.
+iTaK - Unit Tests for Core Components.
 """
 
 import asyncio

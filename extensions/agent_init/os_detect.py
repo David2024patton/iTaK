@@ -1,5 +1,5 @@
 """
-iTaK Extension: OS Detection — Runs on agent_init.
+iTaK Extension: OS Detection - Runs on agent_init.
 Detects the host OS and stores it in memory.
 """
 

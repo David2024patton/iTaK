@@ -1,5 +1,5 @@
 """
-iTaK Extension: Self-Heal — Runs after tool execution.
+iTaK Extension: Self-Heal - Runs after tool execution.
 Catches tool failures and routes them to the SelfHealEngine.
 """
 
@@ -20,7 +20,7 @@ async def execute(agent, tool_name: str = "", tool_args: dict = None,
         f"self_heal: attempting recovery for {tool_name}",
     )
 
-    # Run the healing pipeline (no retry_fn — the agent loop will retry)
+    # Run the healing pipeline (no retry_fn - the agent loop will retry)
     heal_result = await agent.self_heal.heal(
         exc=error,
         tool_name=tool_name,
@@ -30,12 +30,12 @@ async def execute(agent, tool_name: str = "", tool_args: dict = None,
     if heal_result["healed"]:
         agent.logger.log(
             EventType.SYSTEM,
-            f"self_heal: SUCCESS — {heal_result['message']}",
+            f"self_heal: SUCCESS - {heal_result['message']}",
         )
         return heal_result["message"]
     else:
         agent.logger.log(
             EventType.ERROR,
-            f"self_heal: FAILED — {heal_result['message']}",
+            f"self_heal: FAILED - {heal_result['message']}",
         )
         return f"SELF_HEAL_FAILED: {heal_result['message']}"

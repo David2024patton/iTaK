@@ -1,10 +1,10 @@
 """
-iTaK Media Pipeline — Unified inbound/outbound media handling.
+iTaK Media Pipeline - Unified inbound/outbound media handling.
 
 Normalizes image, audio, video, and document attachments across
 all adapters (Discord, Telegram, Slack, Dashboard).
 
-Gameplan §26.7 — "Media Pipeline"
+Gameplan §26.7 - "Media Pipeline"
 """
 
 import asyncio
@@ -261,7 +261,7 @@ class MediaPipeline:
         return f"[Document: {path.name}, {path.stat().st_size} bytes]"
 
     async def _extract_pdf(self, path: Path) -> str:
-        """Extract text from PDF — tries multiple methods."""
+        """Extract text from PDF - tries multiple methods."""
         # Try PyMuPDF (fitz) first
         try:
             import fitz
@@ -347,7 +347,7 @@ class MediaPipeline:
 
         # Check size limits
         if size_limit > 0 and size > size_limit:
-            # File too large — provide download link instead
+            # File too large - provide download link instead
             self._stats["outbound_sent"] += 1
             self._stats["total_bytes_out"] += size
             return {

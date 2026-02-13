@@ -1,5 +1,5 @@
 """
-iTaK Extension: Cost Tracking — Runs after every LLM call.
+iTaK Extension: Cost Tracking - Runs after every LLM call.
 Logs token usage and cost per model for budget tracking.
 """
 

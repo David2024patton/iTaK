@@ -1,10 +1,10 @@
 """
-iTaK Presence Manager — Cross-adapter status broadcasting.
+iTaK Presence Manager - Cross-adapter status broadcasting.
 
 Shows agent state (thinking, tool_use, searching, etc.) across
 all connected adapters with typing indicators and auto-timeout.
 
-Gameplan §26.6 — "Presence & Typing Indicators"
+Gameplan §26.6 - "Presence & Typing Indicators"
 """
 
 import asyncio
@@ -125,7 +125,7 @@ class PresenceManager:
 
         logger.debug(
             f"Presence: {STATE_DISPLAY[state]['emoji']} {state.value}"
-            f"{f' — {detail}' if detail else ''}"
+            f"{f' - {detail}' if detail else ''}"
         )
 
     async def _broadcast(self, update: PresenceUpdate):
@@ -133,7 +133,7 @@ class PresenceManager:
         display = STATE_DISPLAY.get(update.state, {"emoji": "❓", "label": "Unknown"})
         message = f"{display['emoji']} {display['label']}"
         if update.detail:
-            message += f" — {update.detail}"
+            message += f" - {update.detail}"
 
         # Try to send through WebSocket if WebUI is running
         try:

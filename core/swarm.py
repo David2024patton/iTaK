@@ -1,10 +1,10 @@
 """
-iTaK Agent Swarm Coordinator — Parallel sub-agent orchestration.
+iTaK Agent Swarm Coordinator - Parallel sub-agent orchestration.
 
 Coordinate multiple specialized sub-agents working simultaneously
 on different aspects of a complex task, then merge their results.
 
-Gameplan §22 — "Agent Swarms & Custom Agents"
+Gameplan §22 - "Agent Swarms & Custom Agents"
 """
 
 import asyncio
@@ -249,7 +249,7 @@ class SwarmCoordinator:
             await self._run_subtask(st)
 
     async def _execute_pipeline(self, swarm: SwarmTask):
-        """Execute subtasks as a pipeline — output feeds into next input."""
+        """Execute subtasks as a pipeline - output feeds into next input."""
         prev_result = ""
         for st in swarm.subtasks:
             if prev_result:

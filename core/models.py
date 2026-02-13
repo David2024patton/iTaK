@@ -1,5 +1,5 @@
 """
-iTaK Multi-Model Router — 4-model architecture with fallback chains.
+iTaK Multi-Model Router - 4-model architecture with fallback chains.
 Chat (frontier), Utility (cheap), Browser (vision), Embeddings (local).
 Supports dynamic model switching and provider-aware API key injection.
 """
@@ -16,7 +16,7 @@ class ModelRouter:
 
     4-model architecture (stolen from Agent Zero):
     - chat: Main reasoning (expensive, powerful)
-    - utility: Background tasks (cheap, fast) — summarization, keyword extraction
+    - utility: Background tasks (cheap, fast) - summarization, keyword extraction
     - browser: Vision-capable model for browser automation
     - embeddings: Local model for vector search (zero API cost)
 

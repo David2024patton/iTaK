@@ -1,5 +1,5 @@
 """
-iTaK Knowledge Tool — Save and query reusable knowledge files.
+iTaK Knowledge Tool - Save and query reusable knowledge files.
 """
 
 import time

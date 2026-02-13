@@ -1,5 +1,5 @@
 """
-iTaK Weaviate Vector Store — Layer 4 of the 4-layer brain.
+iTaK Weaviate Vector Store - Layer 4 of the 4-layer brain.
 Semantic vector search for deep recall across all memories.
 """
 
@@ -20,7 +20,7 @@ class WeaviateStore:
     - Layer 3: Neo4j (relationships)
     - Layer 4: Weaviate (semantic search) ← THIS
 
-    Provides deep semantic recall — finds memories by meaning,
+    Provides deep semantic recall - finds memories by meaning,
     not just keywords. Uses pre-computed embeddings from the
     model router's embedding model.
     """

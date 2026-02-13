@@ -1,5 +1,5 @@
 """
-iTaK Memory Save Tool — Store new knowledge/facts/decisions.
+iTaK Memory Save Tool - Store new knowledge/facts/decisions.
 """
 
 from tools.base import BaseTool, ToolResult

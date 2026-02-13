@@ -1,5 +1,5 @@
 """
-iTaK WebUI — FastAPI backend for the monitoring dashboard.
+iTaK WebUI - FastAPI backend for the monitoring dashboard.
 Provides REST API + WebSocket for real-time agent monitoring.
 """
 
@@ -36,7 +36,7 @@ def create_app(agent: "Agent"):
     # WebSocket connections for real-time updates
     ws_clients: list[WebSocket] = []
 
-    # ——— REST Endpoints ———
+    # --- REST Endpoints ---
 
     @app.get("/api/health")
     async def health():
@@ -163,7 +163,7 @@ def create_app(agent: "Agent"):
         result = scanner.scan_code(code, source="webui")
         return result
 
-    # ——— Mission Control Endpoints ———
+    # --- Mission Control Endpoints ---
 
     @app.get("/api/tasks")
     async def list_tasks(status: str = "", limit: int = 50):
@@ -237,7 +237,7 @@ def create_app(agent: "Agent"):
             }
         return {"board": "", "stats": {}}
 
-    # ——— Phase 5 Status Endpoints ———
+    # --- Phase 5 Status Endpoints ---
 
     @app.get("/api/mcp/status")
     async def mcp_status():
@@ -260,7 +260,7 @@ def create_app(agent: "Agent"):
             return agent.get_subsystem_status()
         return {}
 
-    # ——— Phase 6: Webhook, Swarm, Users, Presence, MCP Server ———
+    # --- Phase 6: Webhook, Swarm, Users, Presence, MCP Server ---
 
     @app.post("/api/webhook")
     async def webhook_inbound(request: Request):
@@ -367,7 +367,7 @@ def create_app(agent: "Agent"):
     if hasattr(agent, "mcp_server") and agent.mcp_server and agent.mcp_server.enabled:
         agent.mcp_server.mount_routes(app)
 
-    # ——— WebSocket for real-time updates ———
+    # --- WebSocket for real-time updates ---
 
     @app.websocket("/ws")
     async def websocket_endpoint(ws: WebSocket):
@@ -405,7 +405,7 @@ def create_app(agent: "Agent"):
     if hasattr(agent, "progress") and agent.progress:
         agent.progress.register_callback(ws_broadcast)
 
-    # ——— Serve Frontend ———
+    # --- Serve Frontend ---
 
     static_dir = Path(__file__).parent / "static"
     if static_dir.exists():

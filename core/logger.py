@@ -1,5 +1,5 @@
 """
-iTaK Structured Logger — 14 event types, dual storage (JSONL + SQLite), 24hr rotation.
+iTaK Structured Logger - 14 event types, dual storage (JSONL + SQLite), 24hr rotation.
 Secret masking ensures API keys never appear in logs.
 """
 

@@ -1,5 +1,5 @@
 """
-iTaK Sub-Agent — Spawnable child agents for task delegation.
+iTaK Sub-Agent - Spawnable child agents for task delegation.
 The main agent can create specialized sub-agents for complex workflows.
 """
 
@@ -80,7 +80,7 @@ class SubAgent:
                 tool_calls = self._parse_tool_calls(response)
 
                 if not tool_calls:
-                    # Plain text response — we're done
+                    # Plain text response - we're done
                     self.result = response
                     break
 

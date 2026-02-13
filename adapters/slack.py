@@ -1,5 +1,5 @@
 """
-iTaK Slack Adapter — Slack bot using Socket Mode.
+iTaK Slack Adapter - Slack bot using Socket Mode.
 """
 
 import asyncio

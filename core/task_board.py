@@ -1,7 +1,7 @@
 """
-iTaK Mission Control — Built-in Kanban task board.
+iTaK Mission Control - Built-in Kanban task board.
 
-§19 of the gameplan — every task the agent works on is tracked
+§19 of the gameplan - every task the agent works on is tracked
 with full lifecycle: inbox → in_progress → review → done.
 
 Backed by SQLite for persistence. Graph queries via Neo4j deferred
@@ -115,7 +115,7 @@ STATUS_EMOJIS = {
 
 
 # ---------------------------------------------------------------------------
-# TaskBoard — SQLite-backed
+# TaskBoard - SQLite-backed
 # ---------------------------------------------------------------------------
 
 DB_DIR = Path("data/db")
@@ -359,7 +359,7 @@ class TaskBoard:
             lines.append("\n**Steps:**")
             for i, step in enumerate(task.steps):
                 icon = "✅" if step.status == "done" else "🔄" if step.status == "in_progress" else "⬜"
-                notes = f" — {step.notes}" if step.notes else ""
+                notes = f" - {step.notes}" if step.notes else ""
                 marker = " ← current" if i == task.current_step and step.status != "done" else ""
                 lines.append(f"  {icon} {i+1}. {step.name}{notes}{marker}")
 

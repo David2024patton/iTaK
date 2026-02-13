@@ -31,5 +31,5 @@ Send a task to the AI-powered browser agent. It navigates, clicks, types, and re
 
 - Use for anything that requires interacting with a web page
 - The browser agent uses the dedicated **browser model** (cheap, fast, vision-capable)
-- Keep tasks focused — one website, one objective
+- Keep tasks focused - one website, one objective
 - For simple data retrieval, prefer `web_search` over browser

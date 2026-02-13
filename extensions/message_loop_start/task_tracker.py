@@ -1,5 +1,5 @@
 """
-iTaK Extension: Task Tracker — Runs at message_loop_start.
+iTaK Extension: Task Tracker - Runs at message_loop_start.
 Creates a new Task on incoming user requests.
 """
 
@@ -43,6 +43,6 @@ async def execute(agent, **kwargs):
     from core.logger import EventType
     agent.logger.log(
         EventType.EXTENSION_FIRED,
-        f"task_tracker: created task '{task.id}' — {title[:40]}",
+        f"task_tracker: created task '{task.id}' - {title[:40]}",
     )
     return task.id

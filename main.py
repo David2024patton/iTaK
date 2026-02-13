@@ -1,5 +1,5 @@
 """
-iTaK — Main Entry Point (v2)
+iTaK - Main Entry Point (v2)
 Launch the agent with the specified adapter + optional WebUI.
 
 Usage:
@@ -58,7 +58,7 @@ def setup_logging(config: dict):
 
 async def main(adapter_name: str = "cli", enable_webui: bool = False, webui_only: bool = False):
     """Initialize and run iTaK."""
-    print("\n🧠 iTaK — Intelligent Task Automation Kernel v4")
+    print("\n🧠 iTaK - Intelligent Task Automation Kernel v4")
     print("─" * 50)
 
     # Load configuration
@@ -181,7 +181,7 @@ async def main(adapter_name: str = "cli", enable_webui: bool = False, webui_only
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="iTaK — Intelligent Task Automation Kernel")
+    parser = argparse.ArgumentParser(description="iTaK - Intelligent Task Automation Kernel")
     parser.add_argument(
         "--adapter",
         "-a",

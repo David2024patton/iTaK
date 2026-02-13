@@ -1,5 +1,5 @@
 """
-iTaK Discord Adapter — Full Discord bot with threads, progress editing, and slash commands.
+iTaK Discord Adapter - Full Discord bot with threads, progress editing, and slash commands.
 """
 
 import asyncio

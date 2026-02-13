@@ -1,5 +1,5 @@
 """
-iTaK SQLite Memory Store — Layer 2 of the 4-layer brain.
+iTaK SQLite Memory Store - Layer 2 of the 4-layer brain.
 Fast local storage with vector embeddings for semantic search.
 """
 

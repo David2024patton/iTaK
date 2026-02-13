@@ -1,5 +1,5 @@
 """
-iTaK Heartbeat System — Auto-recovery and health monitoring.
+iTaK Heartbeat System - Auto-recovery and health monitoring.
 Detects stalled agents, crashed services, and triggers self-healing.
 """
 

@@ -1,5 +1,5 @@
 """
-iTaK Self-Healing Engine — 5-step auto-recovery pipeline.
+iTaK Self-Healing Engine - 5-step auto-recovery pipeline.
 
 When a tool or operation fails, the engine:
   1. Classifies the error (repairable vs critical)
@@ -8,7 +8,7 @@ When a tool or operation fails, the engine:
   4. Optionally researches online (security-scanned)
   5. Learns from successful fixes → stores in memory
 
-§15 of the gameplan — never crash silently, always self-heal.
+§15 of the gameplan - never crash silently, always self-heal.
 """
 
 import asyncio
@@ -247,7 +247,7 @@ class SelfHealEngine:
     # ----- Step 4: (placeholder for web research) -----------------------------
 
     async def _research_online(self, classified: ClassifiedError) -> Optional[str]:
-        """Search the web for the error. Placeholder — requires web_search tool."""
+        """Search the web for the error. Placeholder - requires web_search tool."""
         # This would call the web_search tool and security-scan the results.
         # Deferred until web_search integration is ready in the heal loop.
         return None
@@ -295,7 +295,7 @@ class SelfHealEngine:
         classified = self.classify(exc, tool_name, tool_args)
         attempts: list[HealAttempt] = []
 
-        # Critical errors — don't attempt self-healing
+        # Critical errors - don't attempt self-healing
         if classified.severity == ErrorSeverity.CRITICAL:
             from core.logger import EventType
             self.agent.logger.log(
@@ -319,7 +319,7 @@ class SelfHealEngine:
         from core.logger import EventType
         self.agent.logger.log(
             EventType.SYSTEM,
-            f"Self-heal started: {classified.category.value} — {classified.message}",
+            f"Self-heal started: {classified.category.value} - {classified.message}",
         )
 
         # Step 2: Check memory
@@ -383,7 +383,7 @@ class SelfHealEngine:
         # Step 4: Online research (future)
         # web_fix = await self._research_online(classified)
 
-        # Failed — escalate to user
+        # Failed - escalate to user
         self.agent.logger.log(
             EventType.ERROR,
             f"Self-heal FAILED after {len(attempts)} attempts: {classified.message}",

@@ -1,5 +1,5 @@
 """
-iTaK Base Tool — Interface that all tools inherit from.
+iTaK Base Tool - Interface that all tools inherit from.
 """
 
 from typing import TYPE_CHECKING, Any

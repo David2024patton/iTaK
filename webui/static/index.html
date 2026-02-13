@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iTaK — Dashboard</title>
-    <meta name="description" content="iTaK Intelligent Task Automation Kernel — Agent Monitoring Dashboard">
+    <title>iTaK - Dashboard</title>
+    <meta name="description" content="iTaK Intelligent Task Automation Kernel - Agent Monitoring Dashboard">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
@@ -46,7 +46,7 @@
             overflow-x: hidden;
         }
 
-        /* ——— Top Bar ——— */
+        /* --- Top Bar --- */
         .topbar {
             display: flex;
             align-items: center;
@@ -102,7 +102,7 @@
             }
         }
 
-        /* ——— Layout ——— */
+        /* --- Layout --- */
         .dashboard {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -112,7 +112,7 @@
             margin: 0 auto;
         }
 
-        /* ——— Cards ——— */
+        /* --- Cards --- */
         .card {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -157,7 +157,7 @@
             color: var(--text-muted);
         }
 
-        /* ——— Stat Grid ——— */
+        /* --- Stat Grid --- */
         .stat-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -209,7 +209,7 @@
             color: var(--accent-cyan);
         }
 
-        /* ——— Log Stream ——— */
+        /* --- Log Stream --- */
         .log-stream {
             max-height: 400px;
             overflow-y: auto;
@@ -264,7 +264,7 @@
             word-break: break-all;
         }
 
-        /* ——— Chat Panel ——— */
+        /* --- Chat Panel --- */
         .chat-panel {
             grid-column: span 2;
         }
@@ -341,7 +341,7 @@
             cursor: not-allowed;
         }
 
-        /* ——— Memory Search ——— */
+        /* --- Memory Search --- */
         .memory-search-row {
             display: flex;
             gap: 10px;
@@ -371,7 +371,7 @@
             line-height: 1.5;
         }
 
-        /* ——— Scrollbar ——— */
+        /* --- Scrollbar --- */
         ::-webkit-scrollbar {
             width: 6px;
         }
@@ -389,7 +389,7 @@
             background: var(--text-muted);
         }
 
-        /* ——— Responsive ——— */
+        /* --- Responsive --- */
         @media (max-width: 768px) {
             .dashboard {
                 grid-template-columns: 1fr;
@@ -520,7 +520,7 @@
         const API = window.location.origin;
         let ws = null;
 
-        // ——— WebSocket ———
+        // --- WebSocket ---
         function connectWS() {
             const wsUrl = `${API.replace('http', 'ws')}/ws`;
             ws = new WebSocket(wsUrl);
@@ -554,7 +554,7 @@
             };
         }
 
-        // ——— Stats Polling ———
+        // --- Stats Polling ---
         async function fetchStats() {
             try {
                 const res = await fetch(`${API}/api/stats`);
@@ -585,7 +585,7 @@
             }
         }
 
-        // ——— Logs ———
+        // --- Logs ---
         function addLog(type, data) {
             const stream = document.getElementById('logStream');
             const now = new Date();
@@ -609,7 +609,7 @@
             if (stream.children.length > 200) stream.removeChild(stream.firstChild);
         }
 
-        // ——— Chat ———
+        // --- Chat ---
         function addChatMessage(role, content) {
             const container = document.getElementById('chatMessages');
             const el = document.createElement('div');
@@ -651,7 +651,7 @@
             if (e.key === 'Enter') sendChat();
         });
 
-        // ——— Memory Search ———
+        // --- Memory Search ---
         async function searchMemory() {
             const input = document.getElementById('memoryInput');
             const query = input.value.trim();
@@ -684,7 +684,7 @@
             if (e.key === 'Enter') searchMemory();
         });
 
-        // ——— Init ———
+        // --- Init ---
         connectWS();
         fetchStats();
         setInterval(fetchStats, 10000);

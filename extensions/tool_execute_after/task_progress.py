@@ -1,5 +1,5 @@
 """
-iTaK Extension: Task Progress — Runs after tool execution.
+iTaK Extension: Task Progress - Runs after tool execution.
 Updates the active task's step progress on every tool completion.
 """
 
@@ -31,7 +31,7 @@ async def execute(agent, tool_name: str = "", tool_args: dict = None,
     if task.steps and task.current_step < len(task.steps):
         agent.task_board.advance_step(task_id, notes=summary)
     else:
-        # No formal steps — just log the tool execution
+        # No formal steps - just log the tool execution
         task.error_log.append(f"tool: {summary}")
         agent.task_board.update(task)
 

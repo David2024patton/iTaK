@@ -1,5 +1,5 @@
 """
-iTaK Secret Manager — Two-store secrets with placeholder replacement.
+iTaK Secret Manager - Two-store secrets with placeholder replacement.
 Loads from .env and config.json, replaces {{placeholders}} in prompts/code.
 """
 

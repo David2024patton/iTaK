@@ -1,5 +1,5 @@
 """
-iTaK Web Search Tool — Search via SearXNG.
+iTaK Web Search Tool - Search via SearXNG.
 """
 
 import httpx

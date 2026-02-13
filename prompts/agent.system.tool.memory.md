@@ -1,6 +1,6 @@
 # Tool: memory_load / memory_save
 
-## memory_load — Search Memory
+## memory_load - Search Memory
 
 Search across all 4 memory layers for relevant information.
 
@@ -21,7 +21,7 @@ Search across all 4 memory layers for relevant information.
 }
 ```
 
-## memory_save — Store Memory
+## memory_save - Store Memory
 
 Save new knowledge, facts, or decisions to the brain.
 
@@ -33,11 +33,11 @@ Save new knowledge, facts, or decisions to the brain.
 
 ```json
 {
-    "thoughts": ["This Neo4j fix worked — I should save it for next time."],
+    "thoughts": ["This Neo4j fix worked - I should save it for next time."],
     "headline": "Saving solution to memory",
     "tool_name": "memory_save",
     "tool_args": {
-        "content": "Neo4j bolt connection fails when using localhost — must use 127.0.0.1 instead.",
+        "content": "Neo4j bolt connection fails when using localhost - must use 127.0.0.1 instead.",
         "category": "solution"
     }
 }

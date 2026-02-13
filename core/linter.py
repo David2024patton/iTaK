@@ -1,7 +1,7 @@
 """
-iTaK Code Quality Gate — Multi-linter pipeline.
+iTaK Code Quality Gate - Multi-linter pipeline.
 
-§10 of the gameplan — every piece of code gets linted
+§10 of the gameplan - every piece of code gets linted
 before it's considered done. Supports ruff (Python),
 eslint (JS/TS), shellcheck (Shell), with 3-pass
 self-correction and escalation.
@@ -101,7 +101,7 @@ async def lint_python(file_path: str) -> LintResult:
     )
 
     if not shutil.which("ruff"):
-        result.warnings.append("ruff not installed — skipping Python lint")
+        result.warnings.append("ruff not installed - skipping Python lint")
         return result
 
     # Check
@@ -126,7 +126,7 @@ async def lint_javascript(file_path: str) -> LintResult:
 
     eslint_cmd = shutil.which("eslint")
     if not eslint_cmd:
-        result.warnings.append("eslint not installed — skipping JS lint")
+        result.warnings.append("eslint not installed - skipping JS lint")
         return result
 
     code, stdout, stderr = await _run_cmd(["eslint", "--format=compact", file_path])
@@ -149,7 +149,7 @@ async def lint_shell(file_path: str) -> LintResult:
     )
 
     if not shutil.which("shellcheck"):
-        result.warnings.append("shellcheck not installed — skipping shell lint")
+        result.warnings.append("shellcheck not installed - skipping shell lint")
         return result
 
     code, stdout, stderr = await _run_cmd(["shellcheck", "-f", "gcc", file_path])
@@ -245,7 +245,7 @@ class CodeQualityGate:
         passed = sum(1 for r in results if r.passed)
         failed = total - passed
 
-        lines = [f"📋 **Code Quality Report** — {passed}/{total} passed"]
+        lines = [f"📋 **Code Quality Report** - {passed}/{total} passed"]
 
         if failed == 0:
             lines.append("✅ All files clean!")

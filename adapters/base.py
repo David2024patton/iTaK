@@ -1,5 +1,5 @@
 """
-iTaK Base Adapter — Shared interface for all communication adapters.
+iTaK Base Adapter - Shared interface for all communication adapters.
 Discord, Telegram, Slack, CLI all inherit from this.
 """
 

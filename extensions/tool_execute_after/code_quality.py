@@ -1,5 +1,5 @@
 """
-iTaK Extension: Code Quality Gate — Runs after code_execution tool.
+iTaK Extension: Code Quality Gate - Runs after code_execution tool.
 Automatically lints code files after the agent writes them.
 
 Upgraded from stub to full CodeQualityGate integration (Phase 5).
@@ -68,6 +68,6 @@ async def execute(agent, tool_name: str = "", tool_args: dict = None,
     except ImportError:
         agent.logger.log(
             EventType.WARNING,
-            "code_quality: CodeQualityGate not available — skipping",
+            "code_quality: CodeQualityGate not available - skipping",
         )
         return "lint_skipped"

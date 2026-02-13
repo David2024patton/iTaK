@@ -1,5 +1,5 @@
 """
-iTaK Progress Tracker — Anti-silence protocol.
+iTaK Progress Tracker - Anti-silence protocol.
 Immediate plan reply, step-by-step updates, completion summary.
 """
 
@@ -44,7 +44,7 @@ class ProgressTracker:
                 pass  # Don't let callback errors break the agent
 
     async def plan(self, plan_text: str):
-        """Send the initial plan — this is the anti-silence first response."""
+        """Send the initial plan - this is the anti-silence first response."""
         self.plan_text = plan_text
         self.start_time = time.time()
         self.steps = []
@@ -68,7 +68,7 @@ class ProgressTracker:
         await self._broadcast("step_added", step)
 
     async def update(self, message: str, step_index: Optional[int] = None):
-        """Update progress — sent as step-by-step updates."""
+        """Update progress - sent as step-by-step updates."""
         self.current_step += 1
 
         update_data = {

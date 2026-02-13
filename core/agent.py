@@ -1,5 +1,5 @@
 """
-iTaK Core Agent — The Monologue Engine (v4)
+iTaK Core Agent - The Monologue Engine (v4)
 Based on Agent Zero's double while-True loop pattern.
 Integrates all 4 memory layers, security, heartbeat, rate limiting,
 sub-agents, WebUI broadcasting, self-healing, task board, MCP client,
@@ -49,18 +49,18 @@ class RepairableException(Exception):
 
 
 class CriticalException(Exception):
-    """Fatal error — 1 retry then kill the loop."""
+    """Fatal error - 1 retry then kill the loop."""
     pass
 
 
 class InterventionException(Exception):
-    """User interrupted mid-execution — reset inner loop, keep context."""
+    """User interrupted mid-execution - reset inner loop, keep context."""
     pass
 
 
 class Agent:
     """
-    The iTaK Agent — a monologue engine with extension hooks.
+    The iTaK Agent - a monologue engine with extension hooks.
 
     Pattern from Agent Zero: double while-True loop that runs
     until the LLM explicitly calls the 'response' tool.
@@ -105,7 +105,7 @@ class Agent:
         except ImportError:
             pass
 
-        # Phase 2: Memory — full 4-layer
+        # Phase 2: Memory - full 4-layer
         self.memory = None
         try:
             from memory.manager import MemoryManager
@@ -235,7 +235,7 @@ class Agent:
         self._run_extensions("agent_init")
 
     async def startup(self):
-        """Async startup — connect stores, start heartbeat, MCP servers, Phase 6."""
+        """Async startup - connect stores, start heartbeat, MCP servers, Phase 6."""
         if self.memory:
             await self.memory.connect_stores()
         if self.heartbeat:
@@ -440,7 +440,7 @@ class Agent:
         # Fire before extension
         self._run_extensions("tool_execute_before", tool_name=tool_name, tool_args=tool_args)
 
-        # Resolve tool — MCP first, then local
+        # Resolve tool - MCP first, then local
         is_mcp = False
         tool = None
 
@@ -553,7 +553,7 @@ class Agent:
 
     async def monologue(self, user_message: str) -> str:
         """
-        The heart of iTaK — the monologue engine.
+        The heart of iTaK - the monologue engine.
 
         Double while-True loop:
         - Outer loop: handles intervention (user interrupts)
@@ -580,10 +580,10 @@ class Agent:
         })
 
         try:
-            # Outer loop — handles interventions
+            # Outer loop - handles interventions
             while self._running:
                 try:
-                    # Inner loop — LLM call + tool execution
+                    # Inner loop - LLM call + tool execution
                     while self._running:
                         self.iteration_count += 1
                         self.total_iterations += 1
@@ -681,7 +681,7 @@ class Agent:
                         self._run_extensions("message_loop_end")
 
                 except InterventionException:
-                    # User interrupted — the intervention message is already
+                    # User interrupted - the intervention message is already
                     # in history, just restart the inner loop
                     self.logger.log(EventType.INTERVENTION, "User intervention, restarting loop")
                     continue

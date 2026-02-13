@@ -1,10 +1,10 @@
 """
-iTaK Multi-User RBAC — 3-tier permission system.
+iTaK Multi-User RBAC - 3-tier permission system.
 
 Manages users, roles, and per-tool permission enforcement.
 Users are identified by their platform IDs (Discord, Telegram, etc.)
 
-Gameplan §25 — "Multi-User & Permissions"
+Gameplan §25 - "Multi-User & Permissions"
 """
 
 import json
@@ -26,28 +26,28 @@ ROLE_HIERARCHY = {
 
 # Minimum role required for each tool category
 TOOL_PERMISSIONS = {
-    # File operations — sudo+
+    # File operations - sudo+
     "write_file": "sudo",
     "edit_file": "sudo",
     "delete_file": "sudo",
     "create_file": "sudo",
 
-    # Code execution — sudo+
+    # Code execution - sudo+
     "bash_execute": "sudo",
     "code_execution": "sudo",
     "code_execution_tool": "sudo",
 
-    # Memory writes — sudo+
+    # Memory writes - sudo+
     "memory_save": "sudo",
     "memory_forget": "sudo",
     "memory_delete": "sudo",
 
-    # Config — owner only
+    # Config - owner only
     "config_update": "owner",
     "user_manage": "owner",
     "restart_agent": "owner",
 
-    # Everything else — all users
+    # Everything else - all users
     "web_search": "user",
     "memory_search": "user",
     "memory_load": "user",

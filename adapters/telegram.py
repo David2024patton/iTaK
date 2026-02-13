@@ -1,5 +1,5 @@
 """
-iTaK Telegram Adapter — Telegram bot with polling and progress edits.
+iTaK Telegram Adapter - Telegram bot with polling and progress edits.
 """
 
 import asyncio
@@ -77,9 +77,9 @@ class TelegramAdapter(BaseAdapter):
             "👋 **iTaK is online!**\n\n"
             "Send me any message and I'll work on it.\n\n"
             "Commands:\n"
-            "/logs — View recent logs\n"
-            "/memory <query> — Search memory\n"
-            "/forget <query> — Delete memories\n",
+            "/logs - View recent logs\n"
+            "/memory <query> - Search memory\n"
+            "/forget <query> - Delete memories\n",
             parse_mode="Markdown",
         )
 

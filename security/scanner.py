@@ -1,5 +1,5 @@
 """
-iTaK Security Scanner — Scans code, skills, and tools for dangerous patterns.
+iTaK Security Scanner - Scans code, skills, and tools for dangerous patterns.
 Defense in depth: prevent injection, data exfiltration, and privilege escalation.
 """
 
@@ -26,32 +26,32 @@ class SecurityScanner:
 
     # Dangerous patterns (regex → severity, description)
     DANGEROUS_PATTERNS: list[tuple[str, str, str]] = [
-        # Critical — always block
-        (r"os\.system\s*\(", "CRITICAL", "os.system() — use subprocess instead"),
-        (r"subprocess\.call\s*\(.+shell\s*=\s*True", "CRITICAL", "subprocess with shell=True — injection risk"),
-        (r"eval\s*\(", "CRITICAL", "eval() — arbitrary code execution"),
-        (r"exec\s*\(", "CRITICAL", "exec() — arbitrary code execution"),
-        (r"__import__\s*\(", "CRITICAL", "__import__() — dynamic import bypass"),
-        (r"pickle\.loads?\s*\(", "CRITICAL", "pickle deserialization — arbitrary code execution"),
-        (r"yaml\.load\s*\([^)]*\)", "CRITICAL", "yaml.load without SafeLoader — code execution"),
-        (r"shutil\.rmtree\s*\(\s*['\"/]", "CRITICAL", "shutil.rmtree on root paths — data loss"),
-        (r"rm\s+-rf\s+/", "CRITICAL", "rm -rf / — catastrophic data loss"),
+        # Critical - always block
+        (r"os\.system\s*\(", "CRITICAL", "os.system() - use subprocess instead"),
+        (r"subprocess\.call\s*\(.+shell\s*=\s*True", "CRITICAL", "subprocess with shell=True - injection risk"),
+        (r"eval\s*\(", "CRITICAL", "eval() - arbitrary code execution"),
+        (r"exec\s*\(", "CRITICAL", "exec() - arbitrary code execution"),
+        (r"__import__\s*\(", "CRITICAL", "__import__() - dynamic import bypass"),
+        (r"pickle\.loads?\s*\(", "CRITICAL", "pickle deserialization - arbitrary code execution"),
+        (r"yaml\.load\s*\([^)]*\)", "CRITICAL", "yaml.load without SafeLoader - code execution"),
+        (r"shutil\.rmtree\s*\(\s*['\"/]", "CRITICAL", "shutil.rmtree on root paths - data loss"),
+        (r"rm\s+-rf\s+/", "CRITICAL", "rm -rf / - catastrophic data loss"),
 
-        # Warning — flag but allow
-        (r"subprocess\.\w+\s*\(", "WARNING", "subprocess usage — verify arguments"),
-        (r"requests\.(get|post|put|delete)\s*\(", "WARNING", "HTTP request — verify URL is expected"),
-        (r"open\s*\(.+['\"]w['\"]", "WARNING", "File write operation — verify path"),
-        (r"sqlite3\.connect\s*\(", "WARNING", "Direct SQLite access — use memory manager"),
-        (r"socket\.\w+\s*\(", "WARNING", "Raw socket — verify network access"),
-        (r"ctypes\.\w+", "WARNING", "ctypes usage — low-level system access"),
+        # Warning - flag but allow
+        (r"subprocess\.\w+\s*\(", "WARNING", "subprocess usage - verify arguments"),
+        (r"requests\.(get|post|put|delete)\s*\(", "WARNING", "HTTP request - verify URL is expected"),
+        (r"open\s*\(.+['\"]w['\"]", "WARNING", "File write operation - verify path"),
+        (r"sqlite3\.connect\s*\(", "WARNING", "Direct SQLite access - use memory manager"),
+        (r"socket\.\w+\s*\(", "WARNING", "Raw socket - verify network access"),
+        (r"ctypes\.\w+", "WARNING", "ctypes usage - low-level system access"),
 
-        # Info — audit trail
+        # Info - audit trail
         (r"import\s+os", "INFO", "os module imported"),
         (r"import\s+sys", "INFO", "sys module imported"),
         (r"import\s+shutil", "INFO", "shutil module imported"),
     ]
 
-    # Secret patterns — things that should never appear in code/logs
+    # Secret patterns - things that should never appear in code/logs
     SECRET_PATTERNS: list[tuple[str, str]] = [
         (r"sk-[a-zA-Z0-9]{20,}", "OpenAI API key"),
         (r"AIza[a-zA-Z0-9_-]{35}", "Google API key"),
@@ -217,9 +217,9 @@ class SecurityScanner:
         lines = ["# Security Scan Report\n"]
 
         if scan_result["safe"]:
-            lines.append("✅ **SAFE** — No critical issues found.\n")
+            lines.append("✅ **SAFE** - No critical issues found.\n")
         else:
-            lines.append("❌ **BLOCKED** — Critical security issues detected.\n")
+            lines.append("❌ **BLOCKED** - Critical security issues detected.\n")
 
         if scan_result["secrets_found"]:
             lines.append("## 🔑 Exposed Secrets\n")

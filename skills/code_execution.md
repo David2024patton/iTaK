@@ -15,11 +15,11 @@ The `code_execution` tool runs code in Python, Node.js, or shell environments.
 
 ## Best Practices
 
-1. **Always use Python by default** — it's the most powerful runtime
-2. **Use `subprocess.run()`** instead of `os.system()` — safer and gives stdout/stderr
-3. **Set timeouts** — script hangs will block the whole agent
-4. **Never use shell=True** with user-provided input — injection risk
-5. **Install packages at runtime** — use `pip install` or `npm install` within the code
+1. **Always use Python by default** - it's the most powerful runtime
+2. **Use `subprocess.run()`** instead of `os.system()` - safer and gives stdout/stderr
+3. **Set timeouts** - script hangs will block the whole agent
+4. **Never use shell=True** with user-provided input - injection risk
+5. **Install packages at runtime** - use `pip install` or `npm install` within the code
 
 ## Common Patterns
 
@@ -60,10 +60,10 @@ The `code_execution` tool runs code in Python, Node.js, or shell environments.
 
 When `sandbox_enabled` is true in config.json, code runs inside a Docker container.
 This provides:
-- **Isolation** — code can't access host filesystem
-- **Timeout enforcement** — containers are killed after timeout
-- **Clean environment** — each execution starts fresh
-- **Network isolation** — optional network restrictions
+- **Isolation** - code can't access host filesystem
+- **Timeout enforcement** - containers are killed after timeout
+- **Clean environment** - each execution starts fresh
+- **Network isolation** - optional network restrictions
 
 ## Common Errors
 

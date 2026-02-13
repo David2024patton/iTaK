@@ -1,5 +1,5 @@
 """
-iTaK Memory Manager — Unified interface across all 4 memory layers.
+iTaK Memory Manager - Unified interface across all 4 memory layers.
 Searches markdown files, SQLite, Neo4j, and Weaviate.
 """
 
@@ -85,7 +85,7 @@ class MemoryManager:
             except Exception:
                 pass
 
-        # Save to SQLite (Layer 2) — always
+        # Save to SQLite (Layer 2) - always
         memory_id = await self.sqlite.save(
             content=content,
             metadata=metadata,
@@ -98,7 +98,7 @@ class MemoryManager:
         if category in ("decision", "lesson", "fact", "solution"):
             await self._append_to_markdown(content, category)
 
-        # Save to Neo4j (Layer 3) — if connected and entities provided
+        # Save to Neo4j (Layer 3) - if connected and entities provided
         if self.neo4j and self.neo4j.is_connected:
             try:
                 await self.neo4j.save_memory(
@@ -110,7 +110,7 @@ class MemoryManager:
             except Exception as e:
                 logger.warning(f"Neo4j save failed: {e}")
 
-        # Save to Weaviate (Layer 4) — if connected and embedding available
+        # Save to Weaviate (Layer 4) - if connected and embedding available
         if self.weaviate and self.weaviate.is_connected and embedding:
             try:
                 await self.weaviate.save(

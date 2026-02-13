@@ -1,5 +1,5 @@
 """
-iTaK Code Execution Tool — Run Python, Node.js, or Shell commands.
+iTaK Code Execution Tool - Run Python, Node.js, or Shell commands.
 Supports local execution and Docker sandbox.
 """
 

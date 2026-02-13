@@ -1,10 +1,10 @@
 """
-iTaK MCP Server — Expose iTaK as an MCP Tool Server.
+iTaK MCP Server - Expose iTaK as an MCP Tool Server.
 
 Other agents, IDEs (Cursor, VS Code), and automation platforms (n8n)
 can call iTaK tools over SSE transport via the Model Context Protocol.
 
-Gameplan §20 — "Connect to Everything"
+Gameplan §20 - "Connect to Everything"
 """
 
 import asyncio
@@ -299,9 +299,9 @@ class ITaKMCPServer:
         Mount MCP SSE routes onto a FastAPI app.
 
         Endpoints:
-          GET  /mcp/sse          — SSE connection
-          POST /mcp/messages     — JSON-RPC message handler
-          GET  /mcp/health       — Health check
+          GET  /mcp/sse          - SSE connection
+          POST /mcp/messages     - JSON-RPC message handler
+          GET  /mcp/health       - Health check
         """
         from starlette.responses import JSONResponse
 

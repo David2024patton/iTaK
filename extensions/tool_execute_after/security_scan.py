@@ -1,5 +1,5 @@
 """
-iTaK Extension: Security Scan — Runs after code_execution tool.
+iTaK Extension: Security Scan - Runs after code_execution tool.
 Scans generated/written code for dangerous patterns.
 """
 

@@ -1,5 +1,5 @@
 """
-iTaK Helpers — Utility functions used across the codebase.
+iTaK Helpers - Utility functions used across the codebase.
 """
 
 import hashlib

@@ -1,7 +1,7 @@
 """
-iTaK MCP Client — Connect to external MCP tool servers.
+iTaK MCP Client - Connect to external MCP tool servers.
 
-§20 of the gameplan — iTaK can use any MCP server (filesystem,
+§20 of the gameplan - iTaK can use any MCP server (filesystem,
 GitHub, postgres, browser, etc.) by managing stdio-based subprocess
 connections and auto-discovering provided tools.
 

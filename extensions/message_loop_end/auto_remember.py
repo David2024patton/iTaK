@@ -1,5 +1,5 @@
 """
-iTaK Extension: Auto-Remember — Runs at end of message loop.
+iTaK Extension: Auto-Remember - Runs at end of message loop.
 Detects "remember this" triggers and auto-saves to memory.
 """
 

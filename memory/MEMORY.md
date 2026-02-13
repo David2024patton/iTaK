@@ -1,13 +1,13 @@
-# iTaK — MEMORY.md
+# iTaK - MEMORY.md
 # Key Decisions, Lessons Learned, Important Facts
 # This file grows as the agent accumulates knowledge.
 
 ## Architecture Decisions
 
-- **4-model architecture** adopted from Agent Zero — separates costly reasoning from cheap utility tasks
-- **Extension hooks over plugin system** — simpler, more hackable, convention-based
-- **SQLite for fast retrieval** — Neo4j and Weaviate are upgrades on top, not replacements
-- **Markdown files as source of truth** — human-readable, version-controllable, any agent can understand
+- **4-model architecture** adopted from Agent Zero - separates costly reasoning from cheap utility tasks
+- **Extension hooks over plugin system** - simpler, more hackable, convention-based
+- **SQLite for fast retrieval** - Neo4j and Weaviate are upgrades on top, not replacements
+- **Markdown files as source of truth** - human-readable, version-controllable, any agent can understand
 
 ## Lessons Learned
 

@@ -27,6 +27,6 @@ Write, debug, test, and refactor code. You produce clean, production-ready code 
 
 ## Constraints
 - Focus on code quality over speed
-- Do NOT deploy to production — only write and test
+- Do NOT deploy to production - only write and test
 - If requirements are ambiguous, state assumptions clearly
 - Follow existing project patterns when modifying codebases

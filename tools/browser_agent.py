@@ -1,5 +1,5 @@
 """
-iTaK Browser Agent Tool — AI-driven browser via browser-use + Playwright.
+iTaK Browser Agent Tool - AI-driven browser via browser-use + Playwright.
 Dedicated browser model handles vision, clicks, navigation.
 """
 

@@ -1,5 +1,5 @@
 """
-iTaK Memory Load Tool — Search across all 4 memory layers.
+iTaK Memory Load Tool - Search across all 4 memory layers.
 """
 
 from tools.base import BaseTool, ToolResult
@@ -11,8 +11,8 @@ class MemoryLoadTool(BaseTool):
     Layers searched (in order):
     1. SQLite + embeddings (fast vector search)
     2. Markdown files (SOUL, USER, MEMORY, AGENTS)
-    3. Neo4j graph (relationships) — Phase 2
-    4. Weaviate vectors (semantic search) — Phase 2
+    3. Neo4j graph (relationships) - Phase 2
+    4. Weaviate vectors (semantic search) - Phase 2
     """
 
     name = "memory_load"

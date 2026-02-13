@@ -42,7 +42,7 @@ Execute code in Python, Node.js, or terminal (bash/PowerShell).
 ## Rules
 
 - **ALWAYS run `--help` first** when using a CLI tool you haven't used before
-- Check the exit code — non-zero means an error occurred
+- Check the exit code - non-zero means an error occurred
 - Read stderr carefully for error messages
 - For long-running processes, set a higher timeout
-- Never use `eval()` or `exec()` directly — always use this tool
+- Never use `eval()` or `exec()` directly - always use this tool

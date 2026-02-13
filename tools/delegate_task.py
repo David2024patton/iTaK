@@ -1,5 +1,5 @@
 """
-iTaK Tool: delegate_task — Spawn a sub-agent to handle a specific task.
+iTaK Tool: delegate_task - Spawn a sub-agent to handle a specific task.
 Allows the main agent to parallelize work.
 """
 
@@ -52,7 +52,7 @@ class DelegateTaskTool(BaseTool):
                 })
             )
         else:
-            # Fire and forget — agent can check status later
+            # Fire and forget - agent can check status later
             import asyncio
             asyncio.create_task(self.agent.sub_agents.run(sub.agent_id))
             return ToolResult(

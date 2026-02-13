@@ -1,10 +1,10 @@
 """
-iTaK Webhook Engine — Bidirectional n8n / Zapier integration.
+iTaK Webhook Engine - Bidirectional n8n / Zapier integration.
 
 Inbound:  External services POST tasks to iTaK
 Outbound: iTaK fires webhooks on events (task_completed, error_critical, etc.)
 
-Gameplan §21 — "Workflow Automation"
+Gameplan §21 - "Workflow Automation"
 """
 
 import asyncio
@@ -203,7 +203,7 @@ class WebhookEngine:
             if event_str not in target.events:
                 continue
 
-            # Fire in background — don't block agent
+            # Fire in background - don't block agent
             asyncio.create_task(
                 self._fire_target(target, event_str, data)
             )
@@ -250,7 +250,7 @@ class WebhookEngine:
                         )
 
         except ImportError:
-            # aiohttp not installed — fall back to urllib
+            # aiohttp not installed - fall back to urllib
             await self._fire_target_urllib(target, payload, headers)
         except Exception as e:
             target.failures += 1

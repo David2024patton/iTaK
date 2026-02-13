@@ -1,5 +1,5 @@
 """
-iTaK CLI Adapter — Terminal interface with spinner progress.
+iTaK CLI Adapter - Terminal interface with spinner progress.
 """
 
 import asyncio
@@ -31,7 +31,7 @@ class CLIAdapter(BaseAdapter):
         self.agent.context.adapter_name = "cli"
 
         print("\n" + "="*60)
-        print("  🧠 iTaK — Intelligent Task Automation Kernel")
+        print("  🧠 iTaK - Intelligent Task Automation Kernel")
         print("  Type your message. 'quit' to exit.")
         print("="*60 + "\n")
 
