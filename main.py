@@ -64,6 +64,18 @@ async def main(adapter_name: str = "cli", enable_webui: bool = False, webui_only
     # Load configuration
     load_env()
     config = load_config()
+
+    # Preflight check - validate prerequisites and auto-install missing packages
+    try:
+        from core.preflight import run_preflight
+        preflight = run_preflight(config=config, auto_install=True)
+        print(preflight.summary())
+        if not preflight.ok:
+            print("\n❌ Fix the errors above before starting iTaK.")
+            sys.exit(1)
+    except ImportError:
+        print("⚠️  Preflight module not found, skipping checks.")
+
     setup_logging(config)
 
     logger = logging.getLogger("itak")
