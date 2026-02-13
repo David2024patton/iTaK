@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center">🧠 iTaK — Intelligent Task Automation Kernel</h1>
+  <h1 align="center">🧠 iTaK - Intelligent Task Automation Kernel</h1>
   <p align="center">
     <em>If <a href="https://github.com/frdel/agent-zero">Agent Zero</a> and <a href="https://github.com/cpacker/MemGPT">MemGPT</a> had a baby… and <a href="https://github.com/Secure-Claw/OpenClaw">OpenClaw</a> was the godfather.</em>
   </p>
@@ -13,7 +13,7 @@
 
 ---
 
-**iTaK** is a modular, self-healing AI agent framework that combines Agent Zero's monologue engine with MemGPT's infinite memory architecture and OpenClaw's multi-channel connectivity. It's not just another chatbot — it's an autonomous coding assistant, DevOps engineer, and research analyst that remembers everything, fixes its own mistakes, and works across Discord, Telegram, Slack, and a web dashboard simultaneously.
+**iTaK** is a modular, self-healing AI agent framework that combines Agent Zero's monologue engine with MemGPT's infinite memory architecture and OpenClaw's multi-channel connectivity. It's not just another chatbot - it's an autonomous coding assistant, DevOps engineer, and research analyst that remembers everything, fixes its own mistakes, and works across Discord, Telegram, Slack, and a web dashboard simultaneously.
 
 ## 🎯 What Makes iTaK Different
 
@@ -39,71 +39,71 @@
 ## ✨ Feature List
 
 ### 🧠 Core Engine
-- **Double-loop monologue engine** — Agent Zero-style `while True` loop that thinks, acts, and only stops when it explicitly decides to respond
-- **LiteLLM model router** — Use any LLM (OpenAI, Anthropic, Gemini, local Ollama) with automatic fallback chains
-- **Extension hooks** — 8 hook points for plugins (`agent_init`, `message_loop_start`, `tool_execute_before/after`, etc.)
-- **Streaming responses** — Real-time token streaming with WebSocket broadcasting
+- **Double-loop monologue engine** - Agent Zero-style `while True` loop that thinks, acts, and only stops when it explicitly decides to respond
+- **LiteLLM model router** - Use any LLM (OpenAI, Anthropic, Gemini, local Ollama) with automatic fallback chains
+- **Extension hooks** - 8 hook points for plugins (`agent_init`, `message_loop_start`, `tool_execute_before/after`, etc.)
+- **Streaming responses** - Real-time token streaming with WebSocket broadcasting
 
 ### 🧬 Memory (MemGPT-Inspired)
-- **Tier 1 — Core Context**: Always-loaded identity, personality, active instructions
-- **Tier 2 — Recall Memory**: Recent conversation history (auto-managed FIFO)
-- **Tier 3 — Archival Memory**: Searchable long-term storage (SQLite + vector embeddings)
-- **Tier 4 — Knowledge Graph**: Neo4j-backed entity relationships with GraphRAG
+- **Tier 1 - Core Context**: Always-loaded identity, personality, active instructions
+- **Tier 2 - Recall Memory**: Recent conversation history (auto-managed FIFO)
+- **Tier 3 - Archival Memory**: Searchable long-term storage (SQLite + vector embeddings)
+- **Tier 4 - Knowledge Graph**: Neo4j-backed entity relationships with GraphRAG
 
 ### 🛡️ Security
-- **Secret management** — Auto-detect and mask API keys in logs and outputs
-- **Security scanner** — Static analysis on generated code for vulnerabilities
-- **Rate limiting** — Per-user, per-tool, and global rate limits
-- **Multi-user RBAC** — 3-tier permission system (owner → sudo → user) with per-tool enforcement
+- **Secret management** - Auto-detect and mask API keys in logs and outputs
+- **Security scanner** - Static analysis on generated code for vulnerabilities
+- **Rate limiting** - Per-user, per-tool, and global rate limits
+- **Multi-user RBAC** - 3-tier permission system (owner → sudo → user) with per-tool enforcement
 
 ### 🔧 Tool System
-- **Dynamic tool loading** — Drop a `.py` file in `tools/`, it's instantly available
-- **Code execution** — Sandboxed Python/shell execution with timeout
-- **Web search** — SearXNG / DuckDuckGo integration
-- **Browser automation** — Playwright-based web interaction
-- **File operations** — Read, write, edit with security checks
-- **Memory tools** — Save, search, delete, manage all 4 tiers
+- **Dynamic tool loading** - Drop a `.py` file in `tools/`, it's instantly available
+- **Code execution** - Sandboxed Python/shell execution with timeout
+- **Web search** - SearXNG / DuckDuckGo integration
+- **Browser automation** - Playwright-based web interaction
+- **File operations** - Read, write, edit with security checks
+- **Memory tools** - Save, search, delete, manage all 4 tiers
 
 ### 🩹 Self-Healing Engine
 - **5-step auto-recovery pipeline**: Classify error → Check memory for past fixes → LLM reasoning → Web research → Learn from fix
 - **Error classification** by category (syntax, runtime, network, auth, resource, logic) and severity
-- **Retry budgets** with exponential backoff — won't loop forever
+- **Retry budgets** with exponential backoff - won't loop forever
 
 ### 📋 Mission Control (Task Board)
 - **Kanban-style task tracking**: `inbox` → `in_progress` → `review` → `done` / `failed`
-- **SQLite-backed persistence** — Tasks survive restarts
-- **Auto-tracking** — Tasks created from user requests, progress updated during execution
-- **Dashboard view** — Full CRUD via REST API
+- **SQLite-backed persistence** - Tasks survive restarts
+- **Auto-tracking** - Tasks created from user requests, progress updated during execution
+- **Dashboard view** - Full CRUD via REST API
 
 ### 🔌 MCP (Model Context Protocol)
-- **MCP Client** — Connect to external MCP tool servers (GitHub, filesystem, databases)
-- **MCP Server** — Expose iTaK as a tool server for Cursor, VS Code, n8n, other agents
+- **MCP Client** - Connect to external MCP tool servers (GitHub, filesystem, databases)
+- **MCP Server** - Expose iTaK as a tool server for Cursor, VS Code, n8n, other agents
 - **6 exposed tools**: `send_message`, `search_memory`, `list_tasks`, `get_task`, `create_task`, `get_status`
-- **Bearer token auth** — Secure external access
+- **Bearer token auth** - Secure external access
 
 ### 🌐 Webhook Engine (n8n / Zapier)
-- **Inbound webhooks** — External services POST tasks to iTaK
-- **Outbound event hooks** — Fire webhooks on `task_completed`, `error_critical`, `daily_report`
-- **Callback URLs** — Results sent back to the caller automatically
-- **Secret-based auth** — Verify inbound requests
+- **Inbound webhooks** - External services POST tasks to iTaK
+- **Outbound event hooks** - Fire webhooks on `task_completed`, `error_critical`, `daily_report`
+- **Callback URLs** - Results sent back to the caller automatically
+- **Secret-based auth** - Verify inbound requests
 
 ### 🐝 Agent Swarms
-- **Parallel sub-agent execution** — Multiple specialists working simultaneously
+- **Parallel sub-agent execution** - Multiple specialists working simultaneously
 - **3 execution strategies**: Parallel, Sequential, Pipeline (output → next input)
 - **4 merge strategies**: Concat, Summarize (LLM), Best, Custom
-- **Agent profiles** — Researcher, Coder, DevOps (custom profiles via markdown)
+- **Agent profiles** - Researcher, Coder, DevOps (custom profiles via markdown)
 
 ### 📡 Multi-Channel Adapters
-- **CLI** — Terminal-based chat
-- **Discord** — Full bot with DM + channel support
-- **Telegram** — Inline keyboard + voice support
-- **Slack** — Thread-aware responses
-- **WebUI Dashboard** — Real-time monitoring + chat
+- **CLI** - Terminal-based chat
+- **Discord** - Full bot with DM + channel support
+- **Telegram** - Inline keyboard + voice support
+- **Slack** - Thread-aware responses
+- **WebUI Dashboard** - Real-time monitoring + chat
 
 ### 🎭 Presence System
 - **8 agent states**: idle, thinking, tool_use, searching, writing, deploying, healing, error
-- **Cross-adapter broadcasting** — Discord typing indicators, dashboard status badges
-- **Auto-timeout** — "⏳ Still working..." after 60 seconds of activity
+- **Cross-adapter broadcasting** - Discord typing indicators, dashboard status badges
+- **Auto-timeout** - "⏳ Still working..." after 60 seconds of activity
 
 ### 📎 Media Pipeline
 - **Inbound**: Download, classify, extract content (images → vision model, audio → Whisper, docs → text)
@@ -112,9 +112,9 @@
 
 ### 💚 Heartbeat & Reliability
 - **Periodic health checks** with configurable intervals
-- **Crash recovery** — Checkpoint/restore system preserves agent state
-- **Cost tracking** — Budget caps with warnings and hard stops
-- **Log rotation** — 24-hour JSONL + SQLite dual storage
+- **Crash recovery** - Checkpoint/restore system preserves agent state
+- **Cost tracking** - Budget caps with warnings and hard stops
+- **Log rotation** - 24-hour JSONL + SQLite dual storage
 
 ---
 
@@ -122,7 +122,7 @@
 
 ```
 iTaK/
-├── main.py                    # Entry point — launch with any adapter
+├── main.py                    # Entry point - launch with any adapter
 ├── config.json.example        # Configuration template
 ├── requirements.txt           # Python dependencies
 ├── Dockerfile                 # Container deployment
@@ -284,13 +284,13 @@ docker-compose up -d
 
 The dashboard provides real-time monitoring at `http://localhost:48920`:
 
-- **Chat** — Talk to the agent from your browser
-- **Mission Control** — Kanban task board
-- **Memory** — Search and browse all 4 memory tiers
-- **Tools** — View loaded tools and their schemas
-- **Users** — Manage users and permissions (owner only)
-- **Logs** — Structured event log with filtering
-- **Subsystems** — Health status of all components
+- **Chat** - Talk to the agent from your browser
+- **Mission Control** - Kanban task board
+- **Memory** - Search and browse all 4 memory tiers
+- **Tools** - View loaded tools and their schemas
+- **Users** - Manage users and permissions (owner only)
+- **Logs** - Structured event log with filtering
+- **Subsystems** - Health status of all components
 
 ### REST API Highlights
 
@@ -312,16 +312,16 @@ The dashboard provides real-time monitoring at `http://localhost:48920`:
 
 iTaK stands on the shoulders of giants:
 
-- **[Agent Zero](https://github.com/frdel/agent-zero)** — The monologue engine pattern, extension hooks, sub-agent delegation
-- **[MemGPT / Letta](https://github.com/cpacker/MemGPT)** — Self-managing memory tiers, context window optimization
-- **[OpenClaw](https://github.com/Secure-Claw/OpenClaw)** — Multi-channel adapters, presence system, media pipeline, security-first design
-- **[LiteLLM](https://github.com/BerriAI/litellm)** — Universal LLM provider abstraction
+- **[Agent Zero](https://github.com/frdel/agent-zero)** - The monologue engine pattern, extension hooks, sub-agent delegation
+- **[MemGPT / Letta](https://github.com/cpacker/MemGPT)** - Self-managing memory tiers, context window optimization
+- **[OpenClaw](https://github.com/Secure-Claw/OpenClaw)** - Multi-channel adapters, presence system, media pipeline, security-first design
+- **[LiteLLM](https://github.com/BerriAI/litellm)** - Universal LLM provider abstraction
 
 ---
 
 ## 📜 License
 
-MIT — Build whatever you want with it.
+MIT - Build whatever you want with it.
 
 ---
 
