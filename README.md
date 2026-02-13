@@ -17,19 +17,22 @@
 
 ## 🎯 What Makes iTaK Different
 
-| Feature | ChatGPT / Copilot | Agent Zero | iTaK |
-|---------|-------------------|------------|------|
-| Multi-channel (Discord, Telegram, Slack) | ❌ | ❌ | ✅ |
-| Self-healing on errors | ❌ | ❌ | ✅ |
-| 4-tier persistent memory (MemGPT-style) | ❌ | Partial | ✅ |
-| Multi-agent swarms | ❌ | Basic | ✅ |
-| MCP client AND server | ❌ | ❌ | ✅ |
-| Kanban task board (Mission Control) | ❌ | ❌ | ✅ |
-| n8n / Zapier webhook integration | ❌ | ❌ | ✅ |
-| Multi-user RBAC (owner/sudo/user) | ❌ | ❌ | ✅ |
-| Built-in code quality gate (linting) | ❌ | ❌ | ✅ |
-| Real-time WebUI dashboard | ❌ | ✅ | ✅ |
-| Crash recovery & checkpoints | ❌ | ❌ | ✅ |
+| Feature | ChatGPT / Copilot | Agent Zero | OpenClaw | iTaK |
+|---------|-------------------|------------|----------|------|
+| Multi-channel (Discord, Telegram, Slack) | ❌ | ❌ | ✅ | ✅ |
+| Self-healing on errors | ❌ | ❌ | ❌ | ✅ |
+| 4-tier persistent memory (MemGPT-style) | ❌ | Partial | ❌ | ✅ |
+| Multi-agent swarms | ❌ | Basic | ❌ | ✅ |
+| MCP client AND server | ❌ | ❌ | ✅ | ✅ |
+| Kanban task board (Mission Control) | ❌ | ❌ | ❌ | ✅ |
+| n8n / Zapier webhook integration | ❌ | ❌ | ❌ | ✅ |
+| Multi-user RBAC (owner/sudo/user) | ❌ | ❌ | ✅ | ✅ |
+| Built-in code quality gate (linting) | ❌ | ❌ | ✅ | ✅ |
+| Real-time WebUI dashboard | ❌ | ✅ | ✅ | ✅ |
+| Crash recovery & checkpoints | ❌ | ❌ | ❌ | ✅ |
+| Media pipeline (image/audio/video) | ❌ | ❌ | Partial | ✅ |
+| Presence system (typing/status) | ❌ | ❌ | ✅ | ✅ |
+| Open source & self-hosted | ❌ | ✅ | ✅ | ✅ |
 
 ---
 
