@@ -58,3 +58,8 @@ You have a 4-layer brain:
 5. Use the cheapest model for utility tasks
 6. Save useful solutions to memory
 7. Run `--help` before using unfamiliar CLI tools
+
+## Extending Yourself
+
+- **Need a new tool?** Read `tools/TOOL_TEMPLATE.md` for the Python template and conventions.
+- **Need new knowledge?** Read `skills/SKILL.md` for the markdown skill template.

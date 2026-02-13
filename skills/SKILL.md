@@ -1,54 +1,62 @@
-# iTaK Skills - Meta-Skill Template
+# iTaK Skill Template
 
-# How to Create a Skill
+Skills are markdown knowledge files in `skills/`. They teach the agent HOW to do something without writing code. Auto-discovered at startup.
 
-Skills are markdown files in the `skills/` directory. They extend iTaK's knowledge without requiring code changes.
-
-## File Format
+## Template
 
 ```markdown
 # Skill: [Name]
-Category: [category]
+Category: [code | devops | research | trading | os | tool]
 Tags: [tag1, tag2, tag3]
 
-## Description
-What this skill does.
-
 ## When to Use
-When the agent should activate this skill.
+Trigger conditions - when should the agent use this skill.
 
 ## Steps
-1. Step one
-2. Step two
-3. Step three
+1. First, do this
+2. Then, do that
+3. Verify by checking this
 
 ## Examples
-Example usage scenarios.
+
+### Example 1: [scenario]
+> User: "Deploy the new version"
+```bash
+docker compose build
+docker compose up -d
+docker compose logs -f
+```
+
+### Example 2: [scenario]
+> User: "Check if the service is running"
+```bash
+docker ps --filter name=myapp
+curl http://localhost:8080/health
+```
 
 ## Common Errors
-Known issues and solutions.
+| Error | Fix |
+|-------|-----|
+| Connection refused | Check if the service is running |
+| Permission denied | Run with sudo or fix file permissions |
 ```
+
+## How It Works
+
+1. Drop a `.md` file in `skills/`
+2. The agent finds it by filename/content keyword match
+3. Relevant skills get injected into the system prompt context
+4. No code changes needed - just markdown
 
 ## Categories
 
-| Category | Description |
-|----------|-------------|
-| `code` | Programming languages, frameworks |
-| `devops` | Docker, deployment, infrastructure |
-| `research` | Web research, data analysis |
-| `trading` | Polymarket, market analysis |
-| `os` | Operating system commands |
-| `tool` | Tool-specific instructions |
+| Category | Use For |
+|----------|---------|
+| `code` | Languages, frameworks, patterns |
+| `devops` | Docker, deployment, CI/CD |
+| `research` | Search strategies, analysis |
+| `trading` | Markets, APIs, strategies |
+| `os` | OS-specific commands |
+| `tool` | Tool-specific guides |
 
-## Discovery Pipeline
-
-When iTaK needs a skill:
-1. **Check memory** - Neo4j → SQLite → Weaviate
-2. **Check skills directory** - keyword match on filenames and content
-3. **Search web** - if not found locally
-4. **Create and save** - if learned from web, save as new skill file
-
-## Security
-
-All skills are scanned by the security module before execution.
-Dangerous patterns (eval, exec, subprocess with pipes) are flagged.
+> **Need to add a new tool instead?** See `tools/TOOL_TEMPLATE.md` for the code template.
