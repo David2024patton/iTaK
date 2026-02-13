@@ -119,6 +119,25 @@
 
 ---
 
+## 📚 Documentation
+
+Detailed guides for every module, config option, and API endpoint:
+
+| Guide | What It Covers |
+|-------|---------------|
+| [Architecture](docs/architecture.md) | System overview, monologue loop, data flow, subsystem map |
+| [Core Modules](docs/core.md) | agent.py, models.py, self_heal.py, and 13 more core files |
+| [Memory System](docs/memory.md) | 4-tier memory (Markdown / SQLite / Neo4j / Weaviate) |
+| [Security](docs/security.md) | Output Guard, scanner, secrets, rate limiter |
+| [Tools](docs/tools.md) | Every tool with arguments, types, and examples |
+| [Extensions](docs/extensions.md) | All 24 hook points with plugin examples |
+| [Adapters](docs/adapters.md) | Discord, Telegram, Slack, CLI setup guides |
+| [Prompts & Skills](docs/prompts.md) | Prompt assembly pipeline and skill system |
+| [WebUI & API](docs/webui.md) | Dashboard features and complete REST API reference |
+| [Configuration](docs/config.md) | Complete config.json reference with every option |
+
+---
+
 ## 📁 Project Structure
 
 ```
