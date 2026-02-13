@@ -123,7 +123,11 @@ class TestAgent:
         UNTRUSTED_TOOLS = {"web_search", "browser_agent", "browser", "web_scrape", "crawl"}
         
         def extract_base_tool_name(tool_name: str) -> str:
-            """Extract base tool name from namespaced format."""
+            """Extract base tool name from namespaced format.
+            
+            This duplicates the logic from core/agent.py (line 532) to test
+            the expected behavior independently of the implementation.
+            """
             return tool_name.split("::")[-1] if "::" in tool_name else tool_name
         
         # Test with namespaced MCP tool

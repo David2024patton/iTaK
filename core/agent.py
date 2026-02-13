@@ -243,7 +243,7 @@ class Agent:
         self._load_extensions()
 
     async def startup(self):
-        """Async startup - fire agent_init extensions, connect stores, start heartbeat, MCP servers, Phase 6."""
+        """Async startup - fire agent_init extensions, connect stores, start heartbeat, and initialize subsystems."""
         # Fire agent_init extensions
         await self._run_extensions("agent_init")
         if self.memory:
