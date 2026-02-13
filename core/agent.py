@@ -102,8 +102,11 @@ class Agent:
 
             from security.rate_limiter import RateLimiter
             self.rate_limiter = RateLimiter(self.config.get("rate_limiter", {}))
-        except ImportError:
-            pass
+            self._subsystem_status["security"] = "initialized"
+        except ImportError as e:
+            self._subsystem_status["security"] = f"import_error: {e}"
+        except Exception as e:
+            self._subsystem_status["security"] = f"error: {e}"
 
         # Phase 2: Memory - full 4-layer
         self.memory = None
@@ -113,40 +116,55 @@ class Agent:
                 config=self.config.get("memory", {}),
                 model_router=self.model_router,
             )
-        except ImportError:
-            pass
+            self._subsystem_status["memory"] = "initialized"
+        except ImportError as e:
+            self._subsystem_status["memory"] = f"import_error: {e}"
+        except Exception as e:
+            self._subsystem_status["memory"] = f"error: {e}"
 
         # Phase 2: Sub-agent manager
         self.sub_agents = None
         try:
             from core.sub_agent import SubAgentManager
             self.sub_agents = SubAgentManager(self)
-        except ImportError:
-            pass
+            self._subsystem_status["sub_agents"] = "initialized"
+        except ImportError as e:
+            self._subsystem_status["sub_agents"] = f"import_error: {e}"
+        except Exception as e:
+            self._subsystem_status["sub_agents"] = f"error: {e}"
 
         # Phase 2: Heartbeat
         self.heartbeat = None
         try:
             from heartbeat.monitor import Heartbeat
             self.heartbeat = Heartbeat(self, self.config.get("heartbeat", {}))
-        except ImportError:
-            pass
+            self._subsystem_status["heartbeat"] = "initialized"
+        except ImportError as e:
+            self._subsystem_status["heartbeat"] = f"import_error: {e}"
+        except Exception as e:
+            self._subsystem_status["heartbeat"] = f"error: {e}"
 
         # Phase 5: Self-Healing Engine
         self.self_heal = None
         try:
             from core.self_heal import SelfHealEngine
             self.self_heal = SelfHealEngine(self)
-        except ImportError:
-            pass
+            self._subsystem_status["self_heal"] = "initialized"
+        except ImportError as e:
+            self._subsystem_status["self_heal"] = f"import_error: {e}"
+        except Exception as e:
+            self._subsystem_status["self_heal"] = f"error: {e}"
 
         # Phase 5: Mission Control Task Board
         self.task_board = None
         try:
             from core.task_board import TaskBoard
             self.task_board = TaskBoard(self)
-        except ImportError:
-            pass
+            self._subsystem_status["task_board"] = "initialized"
+        except ImportError as e:
+            self._subsystem_status["task_board"] = f"import_error: {e}"
+        except Exception as e:
+            self._subsystem_status["task_board"] = f"error: {e}"
 
         # Phase 5: MCP Client
         self.mcp_client = None
@@ -156,40 +174,55 @@ class Agent:
             mcp_cfg = self.config.get("mcp_servers", {})
             if mcp_cfg:
                 self.mcp_client.load_config({"mcp_servers": mcp_cfg})
-        except ImportError:
-            pass
+            self._subsystem_status["mcp_client"] = "initialized"
+        except ImportError as e:
+            self._subsystem_status["mcp_client"] = f"import_error: {e}"
+        except Exception as e:
+            self._subsystem_status["mcp_client"] = f"error: {e}"
 
         # Phase 5: Code Quality Gate
         self.linter = None
         try:
             from core.linter import CodeQualityGate
             self.linter = CodeQualityGate(self)
-        except ImportError:
-            pass
+            self._subsystem_status["linter"] = "initialized"
+        except ImportError as e:
+            self._subsystem_status["linter"] = f"import_error: {e}"
+        except Exception as e:
+            self._subsystem_status["linter"] = f"error: {e}"
 
         # Phase 6: MCP Server (expose iTaK as tool server)
         self.mcp_server = None
         try:
             from core.mcp_server import ITaKMCPServer
             self.mcp_server = ITaKMCPServer(self, self.config)
-        except ImportError:
-            pass
+            self._subsystem_status["mcp_server"] = "initialized"
+        except ImportError as e:
+            self._subsystem_status["mcp_server"] = f"import_error: {e}"
+        except Exception as e:
+            self._subsystem_status["mcp_server"] = f"error: {e}"
 
         # Phase 6: Webhook Engine (n8n/Zapier integration)
         self.webhooks = None
         try:
             from core.webhooks import WebhookEngine
             self.webhooks = WebhookEngine(self, self.config)
-        except ImportError:
-            pass
+            self._subsystem_status["webhooks"] = "initialized"
+        except ImportError as e:
+            self._subsystem_status["webhooks"] = f"import_error: {e}"
+        except Exception as e:
+            self._subsystem_status["webhooks"] = f"error: {e}"
 
         # Phase 6: Agent Swarm Coordinator
         self.swarm = None
         try:
             from core.swarm import SwarmCoordinator
             self.swarm = SwarmCoordinator(self)
-        except ImportError:
-            pass
+            self._subsystem_status["swarm"] = "initialized"
+        except ImportError as e:
+            self._subsystem_status["swarm"] = f"import_error: {e}"
+        except Exception as e:
+            self._subsystem_status["swarm"] = f"error: {e}"
 
         # Phase 6: Multi-User RBAC
         self.user_registry = None
@@ -197,24 +230,33 @@ class Agent:
             from core.users import UserRegistry
             users_path = self.config.get("users", {}).get("registry_path", "data/users.json")
             self.user_registry = UserRegistry(users_path)
-        except ImportError:
-            pass
+            self._subsystem_status["user_registry"] = "initialized"
+        except ImportError as e:
+            self._subsystem_status["user_registry"] = f"import_error: {e}"
+        except Exception as e:
+            self._subsystem_status["user_registry"] = f"error: {e}"
 
         # Phase 6: Presence Manager
         self.presence = None
         try:
             from core.presence import PresenceManager
             self.presence = PresenceManager(self)
-        except ImportError:
-            pass
+            self._subsystem_status["presence"] = "initialized"
+        except ImportError as e:
+            self._subsystem_status["presence"] = f"import_error: {e}"
+        except Exception as e:
+            self._subsystem_status["presence"] = f"error: {e}"
 
         # Phase 6: Media Pipeline
         self.media = None
         try:
             from core.media import MediaPipeline
             self.media = MediaPipeline(self, self.config)
-        except ImportError:
-            pass
+            self._subsystem_status["media"] = "initialized"
+        except ImportError as e:
+            self._subsystem_status["media"] = f"import_error: {e}"
+        except Exception as e:
+            self._subsystem_status["media"] = f"error: {e}"
 
         # Output Guard - PII/Secret redaction on all outbound text
         self.output_guard = None
@@ -224,8 +266,11 @@ class Agent:
                 config=self.config,
                 secret_manager=self.secrets
             )
-        except ImportError:
-            pass
+            self._subsystem_status["output_guard"] = "initialized"
+        except ImportError as e:
+            self._subsystem_status["output_guard"] = f"import_error: {e}"
+        except Exception as e:
+            self._subsystem_status["output_guard"] = f"error: {e}"
 
         # State
         self.history: list[dict] = []
@@ -237,6 +282,7 @@ class Agent:
         self._running: bool = False
         self._start_time: float = time.time()
         self._last_llm_meta: dict = {}
+        self._subsystem_status: dict = {}  # Track subsystem initialization status
 
         # Load tools and extensions
         self._load_tools()
@@ -244,6 +290,9 @@ class Agent:
 
         # Fire agent_init extensions
         self._run_extensions("agent_init")
+        
+        # Log startup diagnostics
+        self._log_startup_diagnostics()
 
     async def startup(self):
         """Async startup - connect stores, start heartbeat, MCP servers, Phase 6."""
@@ -385,13 +434,41 @@ class Agent:
                     )
 
     def _run_extensions(self, hook_name: str, **kwargs) -> list:
-        """Fire all extensions registered for a hook point."""
+        """Fire all extensions registered for a hook point.
+        
+        Handles both sync and async extensions safely. If called from within
+        an async context, creates tasks; otherwise uses run_until_complete.
+        """
         results = []
-        for ext_fn in self._extensions.get(hook_name, []):
+        extensions = self._extensions.get(hook_name, [])
+        
+        if not extensions:
+            return results
+            
+        for ext_fn in extensions:
             try:
                 result = ext_fn(agent=self, **kwargs)
+                
+                # Handle async extensions
                 if asyncio.iscoroutine(result):
-                    result = asyncio.get_event_loop().run_until_complete(result)
+                    # Check if we're already in an event loop
+                    try:
+                        loop = asyncio.get_running_loop()
+                        # We're in a running loop - this shouldn't happen for _run_extensions
+                        # since it's synchronous, but handle it gracefully
+                        self.logger.log(
+                            EventType.WARNING,
+                            f"Extension '{hook_name}' returned coroutine in sync context, "
+                            "use _run_extensions_async instead",
+                        )
+                        # Schedule it and wait
+                        future = asyncio.ensure_future(result)
+                        # Get the result - this will block but we're in trouble anyway
+                        result = asyncio.get_event_loop().run_until_complete(future)
+                    except RuntimeError:
+                        # No running loop - safe to use run_until_complete
+                        result = asyncio.get_event_loop().run_until_complete(result)
+                
                 results.append(result)
             except Exception as e:
                 self.logger.log(
@@ -399,6 +476,150 @@ class Agent:
                     f"Extension error in '{hook_name}': {e}",
                 )
         return results
+    
+    async def _run_extensions_async(self, hook_name: str, **kwargs) -> list:
+        """Fire all extensions registered for a hook point (async-safe version).
+        
+        This version properly handles both sync and async extensions from within
+        an async context. Use this when calling from async code.
+        """
+        results = []
+        extensions = self._extensions.get(hook_name, [])
+        
+        if not extensions:
+            return results
+            
+        for ext_fn in extensions:
+            try:
+                result = ext_fn(agent=self, **kwargs)
+                
+                # Handle async extensions properly
+                if asyncio.iscoroutine(result):
+                    result = await result
+                
+                results.append(result)
+            except Exception as e:
+                self.logger.log(
+                    EventType.ERROR,
+                    f"Extension error in '{hook_name}': {e}",
+                )
+        return results
+
+    def _log_startup_diagnostics(self):
+        """Log startup diagnostics for all subsystems.
+        
+        Reports initialization status, warns about missing/misconfigured subsystems,
+        and logs critical subsystem requirements.
+        """
+        self.logger.log(EventType.SYSTEM, "=== Agent Startup Diagnostics ===")
+        
+        # Core subsystems (always required)
+        required_subsystems = ["model_router", "logger", "progress", "checkpoint"]
+        for subsys in required_subsystems:
+            if hasattr(self, subsys) and getattr(self, subsys) is not None:
+                self.logger.log(EventType.SYSTEM, f"✓ {subsys}: initialized")
+            else:
+                self.logger.log(EventType.ERROR, f"✗ {subsys}: MISSING (required)")
+        
+        # Optional subsystems (report status)
+        for subsys, status in self._subsystem_status.items():
+            if status == "initialized":
+                self.logger.log(EventType.SYSTEM, f"✓ {subsys}: {status}")
+            elif "import_error" in status:
+                self.logger.log(EventType.WARNING, f"⚠ {subsys}: {status} (optional)")
+            else:
+                self.logger.log(EventType.ERROR, f"✗ {subsys}: {status}")
+        
+        # Tools and extensions
+        tool_count = len(self._tools)
+        ext_count = sum(len(exts) for exts in self._extensions.values())
+        
+        if tool_count == 0:
+            self.logger.log(EventType.WARNING, "⚠ No tools loaded")
+        else:
+            self.logger.log(EventType.SYSTEM, f"✓ Tools: {tool_count} loaded")
+            
+        if ext_count == 0:
+            self.logger.log(EventType.WARNING, "⚠ No extensions loaded")
+        else:
+            self.logger.log(EventType.SYSTEM, f"✓ Extensions: {ext_count} loaded")
+            # Log extension hooks
+            for hook, exts in self._extensions.items():
+                self.logger.log(EventType.SYSTEM, f"  - {hook}: {len(exts)} extension(s)")
+        
+        self.logger.log(EventType.SYSTEM, "=== Startup Diagnostics Complete ===")
+    
+    def _check_invariants(self):
+        """Check runtime invariants for critical subsystems.
+        
+        This is called at the start of each monologue iteration to ensure
+        critical subsystems are still healthy.
+        """
+        warnings = []
+        
+        # Check extension runner is available
+        if not hasattr(self, "_extensions"):
+            warnings.append("Extension runner missing (_extensions attribute)")
+        
+        # Check logger presence
+        if not hasattr(self, "logger") or self.logger is None:
+            warnings.append("Logger subsystem is None")
+        
+        # Check history memory bounds
+        history_cap = self.config.get("agent", {}).get("history_cap", 1000)
+        if len(self.history) > history_cap:
+            warnings.append(
+                f"History overflow: {len(self.history)} messages exceeds cap of {history_cap}"
+            )
+        
+        # Check for runaway iterations
+        max_iterations = self.config.get("agent", {}).get("max_iterations", 25)
+        if self.iteration_count >= max_iterations * 0.9:
+            warnings.append(
+                f"Approaching iteration limit: {self.iteration_count}/{max_iterations}"
+            )
+        
+        # Log warnings
+        for warning in warnings:
+            self.logger.log(EventType.WARNING, f"Invariant check: {warning}")
+        
+        return len(warnings) == 0
+
+    def _add_to_history(self, role: str, content: str):
+        """Add a message to history with cap enforcement.
+        
+        Applies the configured history_cap limit. When cap is reached,
+        removes oldest messages (keeping at least the system message if present).
+        """
+        history_cap = self.config.get("agent", {}).get("history_cap", 1000)
+        
+        # Add the new message
+        self.history.append({"role": role, "content": content})
+        
+        # Check if we need to trim
+        if len(self.history) > history_cap:
+            overflow = len(self.history) - history_cap
+            
+            # Log the overflow
+            self.logger.log(
+                EventType.WARNING,
+                f"History overflow: {len(self.history)} messages exceeds cap of {history_cap}. "
+                f"Removing {overflow} oldest message(s)."
+            )
+            
+            # Keep system message if it exists, remove from position 1 onwards
+            # This preserves the system message while trimming old conversation
+            if self.history[0].get("role") == "system":
+                # Remove from position 1 (after system)
+                del self.history[1:overflow + 1]
+            else:
+                # Remove from beginning
+                del self.history[:overflow]
+            
+            self.logger.log(
+                EventType.SYSTEM,
+                f"History trimmed to {len(self.history)} messages"
+            )
 
     def _build_system_prompt(self) -> str:
         """Build the system prompt from templates + memory context + extensions."""
@@ -643,6 +864,9 @@ class Agent:
                         # Heartbeat activity signal
                         if self.heartbeat:
                             self.heartbeat.update_activity()
+
+                        # Runtime invariant checks
+                        self._check_invariants()
 
                         # Safety: max iterations
                         agent_config = self.config.get("agent", {})

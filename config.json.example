@@ -7,7 +7,8 @@
         "drain_timeout_seconds": 30,
         "repeat_detection": true,
         "checkpoint_enabled": true,
-        "checkpoint_interval_steps": 3
+        "checkpoint_interval_steps": 3,
+        "history_cap": 1000
     },
     "models": {
         "chat": {
