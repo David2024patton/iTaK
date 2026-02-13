@@ -6,7 +6,7 @@ python-dotenv>=1.0.0,<2.0.0
 
 # === Agent Loop ===
 tiktoken>=0.7.0,<1.0.0
-dirty-json>=0.0.1
+dirtyjson>=1.0.8,<2.0.0
 
 # === Memory ===
 aiosqlite>=0.20.0,<1.0.0
