@@ -32,6 +32,7 @@
 | Crash recovery & checkpoints | ❌ | ❌ | ❌ | ✅ |
 | Media pipeline (image/audio/video) | ❌ | ❌ | Partial | ✅ |
 | Presence system (typing/status) | ❌ | ❌ | ✅ | ✅ |
+| Output guard (PII/secret redaction) | ❌ | ❌ | ❌ | ✅ |
 | Open source & self-hosted | ❌ | ✅ | ✅ | ✅ |
 
 ---
@@ -161,7 +162,8 @@ iTaK/
 ├── security/                  # 🛡️ Security subsystem
 │   ├── secrets.py             # Secret detection & masking
 │   ├── scanner.py             # Code vulnerability scanner
-│   └── rate_limiter.py        # Rate limiting
+│   ├── rate_limiter.py        # Rate limiting
+│   └── output_guard.py        # PII/secret redaction (DLP)
 │
 ├── tools/                     # 🔧 Agent tools (auto-loaded)
 ├── extensions/                # 🔌 Hook-based plugins
