@@ -1,0 +1,23 @@
+Defaulting to user installation because normal site-packages is not writeable
+Collecting python-socketio
+  Downloading python_socketio-5.16.1-py3-none-any.whl.metadata (3.3 kB)
+Collecting bidict>=0.21.0 (from python-socketio)
+  Downloading bidict-0.23.1-py3-none-any.whl.metadata (8.7 kB)
+Collecting python-engineio>=4.11.0 (from python-socketio)
+  Downloading python_engineio-4.13.1-py3-none-any.whl.metadata (2.3 kB)
+Collecting simple-websocket>=0.10.0 (from python-engineio>=4.11.0->python-socketio)
+  Downloading simple_websocket-1.1.0-py3-none-any.whl.metadata (1.5 kB)
+Collecting wsproto (from simple-websocket>=0.10.0->python-engineio>=4.11.0->python-socketio)
+  Downloading wsproto-1.3.2-py3-none-any.whl.metadata (5.2 kB)
+Collecting h11<1,>=0.16.0 (from wsproto->simple-websocket>=0.10.0->python-engineio>=4.11.0->python-socketio)
+  Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+Downloading python_socketio-5.16.1-py3-none-any.whl (82 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 82.1/82.1 kB 3.7 MB/s eta 0:00:00
+Downloading bidict-0.23.1-py3-none-any.whl (32 kB)
+Downloading python_engineio-4.13.1-py3-none-any.whl (59 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 59.8/59.8 kB 15.5 MB/s eta 0:00:00
+Downloading simple_websocket-1.1.0-py3-none-any.whl (13 kB)
+Downloading wsproto-1.3.2-py3-none-any.whl (24 kB)
+Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+Installing collected packages: h11, bidict, wsproto, simple-websocket, python-engineio, python-socketio
+Successfully installed bidict-0.23.1 h11-0.16.0 python-engineio-4.13.1 python-socketio-5.16.1 simple-websocket-1.1.0 wsproto-1.3.2
