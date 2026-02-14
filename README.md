@@ -126,6 +126,7 @@ Detailed guides for every module, config option, and API endpoint:
 | Guide | What It Covers |
 |-------|---------------|
 | [Getting Started](docs/getting-started.md) | Install, configure, and run in 5 minutes |
+| [Integration Design](docs/integration-design.md) | How iTaK combines Agent Zero, Letta, OpenClaw + Neo4j |
 | [Architecture](docs/architecture.md) | System overview, monologue loop, data flow, subsystem map |
 | [Models & LLMs](docs/models.md) | Add/swap providers - Gemini, OpenAI, Claude, Ollama, etc. |
 | [Core Modules](docs/core.md) | agent.py, models.py, self_heal.py, and 13 more core files |
