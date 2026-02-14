@@ -2,7 +2,6 @@
 iTaK Social Media Tool - Interact with social media platforms.
 """
 
-import httpx
 from typing import Optional, Dict, Any
 from tools.base import BaseTool, ToolResult
 
