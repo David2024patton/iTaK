@@ -206,6 +206,9 @@ def update_env_file(neo4j_config):
     else:
         line_sep = "\n"
     
+    # Check if original file had trailing newline
+    has_trailing_newline = env_content.endswith(("\n", "\r\n"))
+    
     env_lines = env_content.splitlines()
     
     # Update Neo4j variables
@@ -233,9 +236,13 @@ def update_env_file(neo4j_config):
         if var not in updated_vars:
             updated_lines.append(f"{var}={value}")
     
-    # Write back with original line ending style
-    env_path.write_text(line_sep.join(updated_lines), encoding="utf-8")
+    # Write back with original line ending style and trailing newline if present
+    result = line_sep.join(updated_lines)
+    if has_trailing_newline:
+        result += line_sep
+    env_path.write_text(result, encoding="utf-8")
     print(_ok("Updated .env with Neo4j configuration"))
+
 
 
 def update_config_file(neo4j_config):
@@ -260,7 +267,7 @@ def update_config_file(neo4j_config):
         }
         
         with open(config_path, "w", encoding="utf-8") as f:
-            json.dump(config, f, indent=4)
+            json.dump(config, f, indent=4, ensure_ascii=False)
         
         print(_ok("Updated config.json with Neo4j configuration"))
     except Exception as e:
