@@ -386,10 +386,19 @@ def check_security() -> tuple[list[str], int, int]:
     # 1. SSRF Guard
     try:
         from security.ssrf_guard import SSRFGuard
-        guard = SSRFGuard()
-        ok, _ = guard.validate_url("http://example.com", source="doctor")
-        bad, _ = guard.validate_url("file:///etc/passwd", source="doctor")
-        if ok and not bad:
+        
+        # Test 1: Block dangerous schemes (file://)
+        guard = SSRFGuard({"security": {"block_private_ips": False}})
+        bad_scheme, _ = guard.validate_url("file:///etc/passwd", source="doctor")
+        
+        # Test 2: Allow safe schemes (http/https) when private IP blocking is disabled
+        ok_scheme, _ = guard.validate_url("http://safe-domain.example", source="doctor")
+        
+        # Test 3: Block private IPs when enabled
+        guard_with_ip_check = SSRFGuard({"security": {"block_private_ips": True}})
+        bad_ip, _ = guard_with_ip_check.validate_url("http://127.0.0.1", source="doctor")
+        
+        if not bad_scheme and ok_scheme and not bad_ip:
             lines.append(_ok("SSRF Guard functional (blocks file:// + private IPs)"))
             passed += 1
         else:
