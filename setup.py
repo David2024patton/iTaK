@@ -256,6 +256,10 @@ def update_config_file(neo4j_config):
         return
     
     try:
+        # Read original content to detect trailing newline
+        original_content = config_path.read_text(encoding="utf-8")
+        has_trailing_newline = original_content.endswith("\n")
+        
         with open(config_path, "r", encoding="utf-8") as f:
             config = json.load(f)
         
@@ -268,6 +272,9 @@ def update_config_file(neo4j_config):
         
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=4, ensure_ascii=False)
+            # Preserve trailing newline if original had one
+            if has_trailing_newline:
+                f.write("\n")
         
         print(_ok("Updated config.json with Neo4j configuration"))
     except Exception as e:
