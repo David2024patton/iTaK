@@ -1,21 +1,21 @@
 /* ===== iTaK Dashboard — Design Tokens ===== */
 :root {
-    --bg-primary: #0a0a0f;
-    --bg-secondary: #12121a;
-    --bg-card: #1a1a2e;
-    --bg-card-hover: #1e1e35;
-    --border: #2a2a40;
-    --text-primary: #e8e8f0;
-    --text-secondary: #8888a0;
-    --text-muted: #555570;
-    --accent-blue: #4a9eff;
-    --accent-purple: #a855f7;
-    --accent-green: #22c55e;
-    --accent-amber: #f59e0b;
-    --accent-red: #ef4444;
-    --accent-cyan: #06b6d4;
-    --gradient-main: linear-gradient(135deg, #4a9eff 0%, #a855f7 100%);
-    --shadow-glow: 0 0 30px rgba(74, 158, 255, 0.15);
+    --bg-primary: #0f172a;
+    --bg-secondary: #111827;
+    --bg-card: #1f2937;
+    --bg-card-hover: #253244;
+    --border: #374151;
+    --text-primary: #f3f4f6;
+    --text-secondary: #d1d5db;
+    --text-muted: #9ca3af;
+    --accent-blue: #60a5fa;
+    --accent-purple: #a78bfa;
+    --accent-green: #34d399;
+    --accent-amber: #fbbf24;
+    --accent-red: #f87171;
+    --accent-cyan: #67e8f9;
+    --gradient-main: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    --shadow-glow: 0 8px 24px rgba(15, 23, 42, 0.24);
     --radius: 12px;
     --transition: 0.2s ease;
 }
@@ -57,10 +57,8 @@ body {
 .topbar-brand h1 {
     font-size: 20px;
     font-weight: 700;
-    background: var(--gradient-main);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--text-primary);
+    letter-spacing: 0.2px;
 }
 
 .topbar-status {
@@ -76,19 +74,6 @@ body {
     height: 8px;
     border-radius: 50%;
     background: var(--accent-green);
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.4;
-    }
 }
 
 /* ===== Tab Bar ===== */
@@ -158,7 +143,6 @@ body {
 .card:hover {
     background: var(--bg-card-hover);
     box-shadow: var(--shadow-glow);
-    transform: translateY(-2px);
 }
 
 .card-header {
@@ -172,12 +156,14 @@ body {
     font-size: 14px;
     font-weight: 600;
     color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.2px;
 }
 
 .card-icon {
-    font-size: 18px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
 }
 
 .card-value {
@@ -364,7 +350,7 @@ body {
 }
 
 .chat-btn:hover {
-    transform: scale(1.03);
+    opacity: 0.92;
 }
 
 .chat-btn:disabled {

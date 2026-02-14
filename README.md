@@ -11,6 +11,11 @@
   </p>
 </p>
 
+<p align="center">
+  <img src="docs/images/dashboard-monitor.png" alt="iTaK dashboard monitor view" width="49%">
+  <img src="docs/images/dashboard-mission.png" alt="iTaK dashboard mission control view" width="49%">
+</p>
+
 ---
 
 **iTaK** is a modular, self-healing AI agent framework that combines Agent Zero's monologue engine with MemGPT's infinite memory architecture and OpenClaw's multi-channel connectivity. It's not just another chatbot - it's an autonomous coding assistant, DevOps engineer, and research analyst that remembers everything, fixes its own mistakes, and works across Discord, Telegram, Slack, and a web dashboard simultaneously.

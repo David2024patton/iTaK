@@ -17,8 +17,8 @@
     <!-- Top Bar -->
     <header class="topbar">
         <div class="topbar-brand">
-            <h1>🧠 iTaK</h1>
-            <span style="font-size:12px; color:var(--text-muted)">Intelligent Task Automation Kernel</span>
+            <h1>iTaK</h1>
+            <span style="font-size:12px; color:var(--text-muted)">Operations Dashboard</span>
         </div>
         <div class="topbar-status">
             <div class="status-dot" id="statusDot"></div>
@@ -28,8 +28,8 @@
 
     <!-- Tab Navigation -->
     <nav class="tab-bar">
-        <button class="tab-btn active" data-tab="monitor" onclick="switchTab('monitor')">📊 Monitor</button>
-        <button class="tab-btn" data-tab="mission" onclick="switchTab('mission')">📋 Mission Control</button>
+        <button class="tab-btn active" data-tab="monitor" onclick="switchTab('monitor')">Monitor</button>
+        <button class="tab-btn" data-tab="mission" onclick="switchTab('mission')">Mission Control</button>
     </nav>
 
     <!-- ==================== MONITOR TAB ==================== -->
@@ -39,7 +39,7 @@
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">Agent Overview</span>
-                    <span class="card-icon">📊</span>
+                    <span class="card-icon">OVR</span>
                 </div>
                 <div class="stat-grid">
                     <div class="stat-box">
@@ -65,7 +65,7 @@
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">Memory Layers</span>
-                    <span class="card-icon">🧠</span>
+                    <span class="card-icon">MEM</span>
                 </div>
                 <div class="stat-grid">
                     <div class="stat-box">
@@ -91,7 +91,7 @@
             <div class="card" style="grid-column: span 2;">
                 <div class="card-header">
                     <span class="card-title">Live Log Stream</span>
-                    <span class="card-icon">📋</span>
+                    <span class="card-icon">LOG</span>
                 </div>
                 <div class="log-stream" id="logStream">
                     <div class="log-entry">
@@ -106,7 +106,7 @@
             <div class="card chat-panel">
                 <div class="card-header">
                     <span class="card-title">Chat with iTaK</span>
-                    <span class="card-icon">💬</span>
+                    <span class="card-icon">CHAT</span>
                 </div>
                 <div class="chat-messages" id="chatMessages">
                     <div class="chat-msg agent">👋 Hello! I'm iTaK. Send me a task or question.</div>
@@ -122,7 +122,7 @@
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">Memory Search</span>
-                    <span class="card-icon">🔍</span>
+                    <span class="card-icon">FIND</span>
                 </div>
                 <div class="memory-search-row">
                     <input type="text" class="chat-input" id="memoryInput" placeholder="Search memories..."
