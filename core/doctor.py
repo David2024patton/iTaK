@@ -211,9 +211,14 @@ async def check_services() -> tuple[list[str], int, int]:
             driver.close()
             lines.append(_ok(f"Neo4j connected: {neo4j_uri}"))
             passed += 1
+        except ImportError:
+            lines.append(_fail(f"Neo4j package not installed"))
+            lines.append(f"        --> pip install neo4j>=5.0.0")
+            failed += 1
         except Exception as e:
             lines.append(_fail(f"Neo4j FAILED: {e}"))
             lines.append(f"        --> Check NEO4J_URI and NEO4J_PASSWORD in .env")
+            lines.append(f"        --> Or run 'python setup.py' to reconfigure")
             failed += 1
     else:
         lines.append(_warn("Neo4j not configured (knowledge graph disabled)"))
