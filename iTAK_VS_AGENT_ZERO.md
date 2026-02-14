@@ -9,6 +9,7 @@
 | Feature | iTaK | Agent-Zero |
 |---------|------|------------|
 | **Installation** | Docker OR Python | Docker (primary) |
+| **API Key Setup** | ⚠️ **Before first run** (.env file) | ✅ **After first run** (Web UI Settings) |
 | **Memory System** | 4-tier (Recall/Archival/Episodic/Knowledge) | Basic persistent memory |
 | **Test Coverage** | ✅ **85% (258 tests)** | ⚠️ Unknown |
 | **Production Ready** | ✅ **Compliance certified** (HIPAA/PCI/SOC2/GDPR) | ⚠️ Use with caution |
@@ -95,6 +96,123 @@ Choose **Agent-Zero** if you need:
 - ✅ **A2A protocol** (agent-to-agent communication)
 - ✅ **Git-based projects** with authentication
 - ✅ **Active community** and development
+
+---
+
+## 🚀 Installation Experience Comparison
+
+### Agent-Zero Installation
+
+**Time to First Run:** ~3 minutes  
+**Steps:** 2 commands
+
+```bash
+# Step 1: Pull and run Docker image
+docker pull agent0ai/agent-zero
+docker run -p 50080:80 agent0ai/agent-zero
+
+# Step 2: Configure AFTER seeing the UI
+# Visit http://localhost:50080
+# Click Settings → Add API keys → Save → Restart
+```
+
+**User Experience:**
+- ✅ See the UI immediately
+- ✅ Understand what it looks like before configuring
+- ✅ Web-based configuration (no file editing)
+- ⚠️ Must restart to apply changes
+- ⚠️ Might forget to configure and wonder why it doesn't work
+
+**Best For:** First-time users, quick demos, experimentation
+
+---
+
+### iTaK Installation (Docker)
+
+**Time to First Run:** ~5 minutes  
+**Steps:** 3 commands (configure BEFORE running)
+
+```bash
+# Step 1: Clone repository
+git clone https://github.com/David2024patton/iTaK.git
+cd iTaK
+
+# Step 2: Configure .env file with API keys
+cp .env.example .env
+nano .env  # Add GEMINI_API_KEY=your_key
+
+# Step 3: Start with docker-compose
+docker-compose up -d
+```
+
+**User Experience:**
+- ✅ Runs configured and ready from the start
+- ✅ Full stack (iTaK + Neo4j + Weaviate + SearXNG)
+- ✅ Production-like environment immediately
+- ⚠️ Must configure before seeing anything
+- ⚠️ Requires file editing (less friendly for beginners)
+
+**Best For:** Production deployments, developers, users who want everything configured properly from the start
+
+---
+
+### iTaK Installation (Python)
+
+**Time to First Run:** ~10 minutes  
+**Steps:** 5 steps (maximum control)
+
+```bash
+# Step 1: Clone
+git clone https://github.com/David2024patton/iTaK.git
+cd iTaK
+
+# Step 2: Install dependencies
+pip install -r requirements.txt
+
+# Step 3: Configure files
+cp .env.example .env
+cp config.json.example config.json
+nano .env  # Add API keys
+
+# Step 4: Run
+python main.py --webui
+
+# Step 5: Visit dashboard
+http://localhost:8000
+```
+
+**User Experience:**
+- ✅ Complete control over environment
+- ✅ Easy debugging and customization
+- ✅ See exactly what's being installed
+- ✅ Can run without Docker
+- ⚠️ More steps than Docker options
+- ⚠️ Dependency management can be tricky
+
+**Best For:** Developers, contributors, customization needs, debugging
+
+---
+
+### API Key Configuration Comparison
+
+**"Does Agent-Zero make you put in an API key before install?"**
+
+**Answer:** No! This is the key UX difference.
+
+| Aspect | Agent-Zero | iTaK |
+|--------|------------|------|
+| **When to configure** | ✅ AFTER first run | ⚠️ BEFORE first run |
+| **How to configure** | ✅ Web UI Settings panel | ⚠️ .env file editing |
+| **Can run without keys?** | ✅ Yes (shows empty UI) | ⚠️ Recommended to configure first |
+| **See UI before config?** | ✅ Yes | ⚠️ Not recommended |
+| **Restart required?** | ⚠️ Yes (to apply changes) | ✅ No (pre-configured) |
+| **File editing required?** | ❌ No (optional) | ✅ Yes |
+| **Beginner-friendly?** | ✅ Very (configure via UI) | ⚠️ Less (requires file editing) |
+| **Production-ready?** | ⚠️ Can misconfigure | ✅ Forces proper setup |
+
+**Summary:**
+- **Agent-Zero:** Better first-time user experience (run → see → configure → restart)
+- **iTaK:** Better for proper deployment (configure → run → works correctly)
 
 ---
 

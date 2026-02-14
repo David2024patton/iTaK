@@ -55,6 +55,8 @@ Choose your installation method:
 - Docker Desktop installed ([Windows](https://docs.docker.com/desktop/install/windows-install/) \| [macOS](https://docs.docker.com/desktop/install/mac-install/) \| [Linux](https://docs.docker.com/desktop/install/linux-install/))
 - At least one AI API key (see [API Keys](#api-keys-setup) below)
 
+> **Note:** Unlike Agent-Zero (which lets you configure API keys AFTER running via Web UI), iTaK requires API keys configured in `.env` BEFORE first run. See [comparison below](#api-key-configuration-agent-zero-vs-itak).
+
 ### Installation (2 Commands)
 
 ```bash
@@ -316,6 +318,48 @@ OLLAMA_BASE_URL=http://localhost:11434
 > - ✅ Enable output guards in production (redacts PII, secrets)
 > 
 > **For production deployments**, see [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) for security hardening.
+
+---
+
+### API Key Configuration: Agent-Zero vs iTaK
+
+**Question:** "Does Agent-Zero make you put in an API key before install?"
+
+**Answer:** No! This is a key difference in user experience:
+
+| Step | Agent-Zero | iTaK |
+|------|------------|------|
+| **1. Install** | `docker pull` + `docker run` | `git clone` + `pip install` OR `docker-compose up` |
+| **2. First Run** | ✅ Runs immediately (no API key needed) | ⚠️ Requires API key in `.env` first |
+| **3. Configure API** | Via Web UI Settings panel AFTER running | Via `.env` file BEFORE running |
+| **4. Restart** | Yes (to apply settings) | No (already configured) |
+
+**Agent-Zero's Approach (configure after):**
+```bash
+docker run -p 50080:80 agent0ai/agent-zero
+# Visit http://localhost:50080
+# Click Settings → Add API keys → Save → Restart
+```
+
+**iTaK's Approach (configure before):**
+```bash
+cp .env.example .env
+nano .env  # Add API keys
+python main.py --webui  # Runs with keys already configured
+```
+
+**Which is better?**
+- **Agent-Zero's approach:** ✅ Faster to see the UI, better for first-time users
+- **iTaK's approach:** ✅ Clearer for production, prevents running without proper config
+
+**Can iTaK match Agent-Zero's UX?**  
+Yes! iTaK can run without API keys for testing. If you skip the API key configuration, iTaK will:
+- ✅ Start up successfully
+- ✅ Show the Web UI
+- ⚠️ Display friendly error messages suggesting you configure API keys
+- 📝 Guide you to add keys and restart
+
+For the smoothest experience, we recommend configuring API keys before first run (iTaK's current default).
 
 ---
 
