@@ -9,6 +9,10 @@ function switchTab(tab) {
     document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
     document.getElementById(`tab-${tab}`).classList.add('active');
     if (tab === 'mission') loadTasks();
+    else if (tab === 'tools') loadTools();
+    else if (tab === 'logs') loadLogs();
+    else if (tab === 'subsystems') loadSubsystems();
+    else if (tab === 'users') loadUsers();
 }
 
 // ==================== WEBSOCKET ====================
@@ -285,9 +289,183 @@ async function deleteTask(taskId) {
     } catch (e) { console.error('Failed to delete task:', e); }
 }
 
+// ======================================================
+//                    TOOLS TAB
+// ======================================================
+
+async function loadTools() {
+    try {
+        const res = await fetch(`${API}/api/tools`);
+        const data = await res.json();
+        const tools = data.tools || [];
+        
+        const container = document.getElementById('toolsList');
+        if (tools.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted);padding:20px;">No tools loaded</div>';
+            return;
+        }
+        
+        container.innerHTML = tools.map(t => `
+            <div class="tool-item">
+                <div class="tool-name">${t.name}</div>
+                <div class="tool-desc">${t.description || 'No description'}</div>
+            </div>
+        `).join('');
+    } catch (e) {
+        console.error('Failed to load tools:', e);
+        document.getElementById('toolsList').innerHTML = '<div style="color:var(--accent-red);padding:20px;">Failed to load tools</div>';
+    }
+}
+
+// ======================================================
+//                    LOGS TAB
+// ======================================================
+
+async function loadLogs() {
+    const search = document.getElementById('logsSearch').value.trim();
+    try {
+        const url = search 
+            ? `${API}/api/logs?search=${encodeURIComponent(search)}&limit=100`
+            : `${API}/api/logs?limit=100`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const logs = data.logs || [];
+        
+        const container = document.getElementById('logsContainer');
+        if (logs.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted);padding:20px;">No logs found</div>';
+            return;
+        }
+        
+        container.innerHTML = logs.map(log => {
+            const time = new Date(log.timestamp * 1000).toLocaleString();
+            const type = log.event_type || 'system';
+            const typeClass = type.includes('error') ? 'error' : type.includes('tool') ? 'tool' : type.includes('user') ? 'user' : type.includes('agent') ? 'agent' : 'system';
+            const data = typeof log.data === 'string' ? log.data : JSON.stringify(log.data);
+            return `
+                <div class="log-entry">
+                    <span class="log-time">${time}</span>
+                    <span class="log-type ${typeClass}">${type}</span>
+                    <span class="log-data">${data}</span>
+                </div>
+            `;
+        }).join('');
+    } catch (e) {
+        console.error('Failed to load logs:', e);
+        document.getElementById('logsContainer').innerHTML = '<div style="color:var(--accent-red);padding:20px;">Failed to load logs</div>';
+    }
+}
+
+function clearLogsSearch() {
+    document.getElementById('logsSearch').value = '';
+    loadLogs();
+}
+
+// ======================================================
+//                  SUBSYSTEMS TAB
+// ======================================================
+
+async function loadSubsystems() {
+    try {
+        const res = await fetch(`${API}/api/subsystems`);
+        const data = await res.json();
+        
+        const container = document.getElementById('subsystemsList');
+        if (Object.keys(data).length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted);padding:20px;">No subsystems available</div>';
+            return;
+        }
+        
+        container.innerHTML = Object.entries(data).map(([name, status]) => {
+            const statusText = typeof status === 'object' ? JSON.stringify(status) : status;
+            const isHealthy = statusText.toLowerCase().includes('healthy') || statusText.toLowerCase().includes('ok') || statusText.toLowerCase().includes('connected');
+            const statusClass = isHealthy ? 'status-healthy' : 'status-unhealthy';
+            return `
+                <div class="subsystem-item">
+                    <div class="subsystem-name">${name}</div>
+                    <div class="subsystem-status ${statusClass}">${statusText}</div>
+                </div>
+            `;
+        }).join('');
+    } catch (e) {
+        console.error('Failed to load subsystems:', e);
+        document.getElementById('subsystemsList').innerHTML = '<div style="color:var(--accent-red);padding:20px;">Failed to load subsystems</div>';
+    }
+}
+
+// ======================================================
+//                    USERS TAB
+// ======================================================
+
+async function loadUsers() {
+    try {
+        const res = await fetch(`${API}/api/users`);
+        const data = await res.json();
+        const users = data.users || [];
+        
+        const container = document.getElementById('usersList');
+        if (users.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted);padding:20px;">No users registered</div>';
+            return;
+        }
+        
+        container.innerHTML = users.map(u => `
+            <div class="user-item">
+                <div class="user-info">
+                    <div class="user-name">${u.username || u.id}</div>
+                    <div class="user-role">${u.role || 'user'}</div>
+                </div>
+                <button class="delete-btn" onclick="deleteUser('${u.id}')" title="Delete user">✕</button>
+            </div>
+        `).join('');
+    } catch (e) {
+        console.error('Failed to load users:', e);
+        document.getElementById('usersList').innerHTML = '<div style="color:var(--accent-red);padding:20px;">Failed to load users</div>';
+    }
+}
+
+function openAddUserModal() {
+    document.getElementById('addUserModal').classList.add('open');
+    document.getElementById('newUserUsername').focus();
+}
+
+function closeAddUserModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('addUserModal').classList.remove('open');
+}
+
+async function addUser(e) {
+    e.preventDefault();
+    const username = document.getElementById('newUserUsername').value.trim();
+    const role = document.getElementById('newUserRole').value;
+    if (!username) return;
+    try {
+        await fetch(`${API}/api/users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, role }),
+        });
+        document.getElementById('newUserUsername').value = '';
+        document.getElementById('newUserRole').value = 'user';
+        closeAddUserModal();
+        loadUsers();
+    } catch (e) { console.error('Failed to add user:', e); }
+}
+
+async function deleteUser(userId) {
+    if (!confirm('Delete this user?')) return;
+    try {
+        await fetch(`${API}/api/users/${userId}`, { method: 'DELETE' });
+        loadUsers();
+    } catch (e) { console.error('Failed to delete user:', e); }
+}
+
 // ===== Keyboard shortcuts =====
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Escape') {
+        closeModal();
+        closeAddUserModal();
+    }
 });
 
 // ==================== INIT ====================
