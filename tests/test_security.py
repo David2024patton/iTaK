@@ -730,7 +730,11 @@ class TestWebhookSecurity:
         from core.webhooks import WebhookEngine
         source = inspect.getsource(WebhookEngine.verify_secret)
         assert "hmac.compare_digest" in source
-        assert "==" not in source or "==" in source.split("hmac.compare_digest")[0]
+        # Ensure the return statement uses hmac.compare_digest, not plain ==
+        for line in source.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("return") and "==" in stripped:
+                pytest.fail("verify_secret uses plain == comparison instead of hmac.compare_digest")
 
 
 # ============================================================

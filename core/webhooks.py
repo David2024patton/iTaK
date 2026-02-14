@@ -90,7 +90,10 @@ class WebhookEngine:
             from security.ssrf_guard import SSRFGuard
             self._ssrf_guard = SSRFGuard(config)
         except ImportError:
-            logger.warning("SSRFGuard not available - callback URLs will not be validated")
+            logger.warning(
+                "SSRFGuard not available - callback URLs will not be validated "
+                "against SSRF attacks, which may allow requests to internal services"
+            )
 
     def _load_config(self):
         """Load webhook configuration from config."""
@@ -305,7 +308,10 @@ class WebhookEngine:
         if self._ssrf_guard:
             allowed, reason = self._ssrf_guard.validate_url(url, source="webhook_callback")
             if not allowed:
-                logger.warning(f"Webhook callback blocked by SSRF guard: {reason} ({url[:120]})")
+                from urllib.parse import urlparse
+                parsed = urlparse(url)
+                safe_url = f"{parsed.scheme}://{parsed.hostname}"
+                logger.warning(f"Webhook callback blocked by SSRF guard: {reason} ({safe_url})")
                 return
         target = WebhookTarget(name="callback", url=url, events=[])
         await self._fire_target(target, "callback", data)
