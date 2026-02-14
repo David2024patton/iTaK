@@ -16,15 +16,36 @@
 
 ## 🚀 Quick Start
 
-**Choose your installation method:**
+**⚡ ONE-COMMAND INSTALL (Like Agent-Zero!):**
 
 ```bash
-# 🐳 Docker (Fastest - Full Stack)
+# Linux/macOS - One command to install and run!
+curl -fsSL https://raw.githubusercontent.com/David2024patton/iTaK/main/quick-install.sh | bash
+
+# Or manually:
+git clone https://github.com/David2024patton/iTaK.git && cd iTaK && ./quick-install.sh
+
+# Windows:
+git clone https://github.com/David2024patton/iTaK.git && cd iTaK && quick-install.bat
+
+# Direct Docker (if image available):
+docker run -it --rm -p 8000:8000 david2024patton/itak
+```
+
+**Then visit http://localhost:8000 and configure via Web UI!**
+
+📚 **[QUICK START GUIDE](QUICK_START.md)** — Get running in 2 minutes!
+
+---
+
+**Traditional Installation Methods:**
+
+```bash
+# 🐳 Docker (Full Stack with Neo4j, Weaviate, SearXNG)
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
 cp .env.example .env  # Add your API keys
 docker-compose up -d
-# Visit http://localhost:8000
 
 # 🐍 Python (Most Control)
 git clone https://github.com/David2024patton/iTaK.git
@@ -32,7 +53,6 @@ cd iTaK
 pip install -r requirements.txt
 cp .env.example .env  # Add your API keys
 python main.py --webui
-# Visit http://localhost:8000
 ```
 
 📚 **Detailed Guide:** [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md)  
