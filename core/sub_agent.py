@@ -140,9 +140,18 @@ Maximum iterations: {self.max_iterations}
 """
 
     def _parse_tool_calls(self, response: str) -> list[dict]:
-        """Parse tool calls from LLM response (JSON format)."""
+        """Parse tool calls from LLM response (JSON format).
+        
+        Uses dirtyjson to handle malformed JSON from LLM responses.
+        """
         try:
-            data = json.loads(response)
+            # Try dirtyjson first for better handling of malformed JSON
+            try:
+                import dirtyjson
+                data = dirtyjson.loads(response)
+            except Exception:
+                data = json.loads(response)
+                
             if isinstance(data, dict):
                 tool_calls = data.get("tool_calls", data.get("tools", []))
                 if isinstance(tool_calls, list):

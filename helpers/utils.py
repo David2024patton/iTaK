@@ -22,7 +22,10 @@ def truncate(text: str, max_length: int = 500, suffix: str = "...") -> str:
 
 
 def extract_json(text: str) -> dict | list | None:
-    """Extract JSON from text, even if wrapped in markdown code blocks."""
+    """Extract JSON from text, even if wrapped in markdown code blocks.
+    
+    Uses dirtyjson to handle malformed JSON gracefully.
+    """
     # Try to find JSON in code blocks
     patterns = [
         r"```json\s*\n(.*?)\n```",
@@ -34,13 +37,23 @@ def extract_json(text: str) -> dict | list | None:
         match = re.search(pattern, text, re.DOTALL)
         if match:
             try:
-                return json.loads(match.group(1) if match.lastindex else match.group(0))
+                # Try dirtyjson first for better handling of malformed JSON
+                try:
+                    import dirtyjson
+                    return dirtyjson.loads(match.group(1) if match.lastindex else match.group(0))
+                except Exception:
+                    return json.loads(match.group(1) if match.lastindex else match.group(0))
             except (json.JSONDecodeError, IndexError):
                 continue
 
     # Try parsing the entire text
     try:
-        return json.loads(text)
+        # Try dirtyjson first for better handling of malformed JSON
+        try:
+            import dirtyjson
+            return dirtyjson.loads(text)
+        except Exception:
+            return json.loads(text)
     except json.JSONDecodeError:
         return None
 
