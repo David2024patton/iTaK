@@ -20,7 +20,13 @@ for %%p in (python3.12 python3.11 python3 python py) do (
             for /f "tokens=1,2 delims=." %%a in ("!VERSION!") do (
                 set MAJOR=%%a
                 set MINOR=%%b
-                if !MAJOR! geq 3 if !MINOR! geq 11 (
+                REM Check if Python version is >= 3.11 (supports future major versions)
+                if !MAJOR! gtr 3 (
+                    set PYTHON_CMD=%%p
+                    echo ✓ Found %%p (!VERSION!)
+                    goto :found_python
+                )
+                if !MAJOR! equ 3 if !MINOR! geq 11 (
                     set PYTHON_CMD=%%p
                     echo ✓ Found %%p (!VERSION!)
                     goto :found_python

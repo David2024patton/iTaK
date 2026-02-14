@@ -24,7 +24,8 @@ for cmd in python3.12 python3.11 python3 python; do
         MAJOR=$(echo $VERSION | cut -d. -f1)
         MINOR=$(echo $VERSION | cut -d. -f2)
         
-        if [ "$MAJOR" -ge 3 ] && [ "$MINOR" -ge 11 ]; then
+        # Check if Python version is >= 3.11 (supports future major versions)
+        if [ "$MAJOR" -gt 3 ] || ([ "$MAJOR" -eq 3 ] && [ "$MINOR" -ge 11 ]); then
             PYTHON_CMD="$cmd"
             echo -e "${GREEN}✓${NC} Found $cmd ($($cmd --version))"
             break

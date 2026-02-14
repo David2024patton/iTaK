@@ -184,17 +184,16 @@ def install_system_dependencies(os_info: dict) -> bool:
     else:
         print_warn("Git not found - recommended for version control")
         if pkg_mgr:
-            print_info(f"You can install git with: ", end="")
             if pkg_mgr == "brew":
-                print("brew install git")
+                print_info("You can install git with: brew install git")
             elif pkg_mgr in ["apt"]:
-                print("sudo apt install git")
+                print_info("You can install git with: sudo apt install git")
             elif pkg_mgr in ["yum", "dnf"]:
-                print(f"sudo {pkg_mgr} install git")
+                print_info(f"You can install git with: sudo {pkg_mgr} install git")
             elif pkg_mgr == "pacman":
-                print("sudo pacman -S git")
+                print_info("You can install git with: sudo pacman -S git")
             elif pkg_mgr == "choco":
-                print("choco install git")
+                print_info("You can install git with: choco install git")
     
     # Docker check (optional)
     if shutil.which("docker"):
@@ -315,7 +314,7 @@ def setup_config_files() -> bool:
             try:
                 shutil.copy(example_path, target_path)
                 print_ok(f"Created {target} from {example}")
-                print_warn(f"⚠️  Please edit {target} and add your API keys!")
+                print_warn(f"Please edit {target} and add your API keys!")
             except Exception as e:
                 print_error(f"Failed to copy {example} to {target}: {e}")
                 all_ok = False
