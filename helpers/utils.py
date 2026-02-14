@@ -10,6 +10,13 @@ import time
 from pathlib import Path
 from typing import Any
 
+# Optional import for better JSON parsing
+try:
+    import dirtyjson
+    HAS_DIRTYJSON = True
+except ImportError:
+    HAS_DIRTYJSON = False
+
 # ============================================================
 # Text Utilities
 # ============================================================
@@ -36,25 +43,24 @@ def extract_json(text: str) -> dict | list | None:
     for pattern in patterns:
         match = re.search(pattern, text, re.DOTALL)
         if match:
+            json_str = match.group(1) if match.lastindex else match.group(0)
             try:
                 # Try dirtyjson first for better handling of malformed JSON
-                try:
-                    import dirtyjson
-                    return dirtyjson.loads(match.group(1) if match.lastindex else match.group(0))
-                except Exception:
-                    return json.loads(match.group(1) if match.lastindex else match.group(0))
-            except (json.JSONDecodeError, IndexError):
+                if HAS_DIRTYJSON:
+                    return dirtyjson.loads(json_str)
+                else:
+                    return json.loads(json_str)
+            except (json.JSONDecodeError, ValueError, IndexError):
                 continue
 
     # Try parsing the entire text
     try:
         # Try dirtyjson first for better handling of malformed JSON
-        try:
-            import dirtyjson
+        if HAS_DIRTYJSON:
             return dirtyjson.loads(text)
-        except Exception:
+        else:
             return json.loads(text)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, ValueError):
         return None
 
 

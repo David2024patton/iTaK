@@ -9,6 +9,13 @@ import logging
 import uuid
 from typing import TYPE_CHECKING, Any, Optional
 
+# Optional import for better JSON parsing
+try:
+    import dirtyjson
+    HAS_DIRTYJSON = True
+except ImportError:
+    HAS_DIRTYJSON = False
+
 if TYPE_CHECKING:
     from core.agent import Agent
 
@@ -146,10 +153,9 @@ Maximum iterations: {self.max_iterations}
         """
         try:
             # Try dirtyjson first for better handling of malformed JSON
-            try:
-                import dirtyjson
+            if HAS_DIRTYJSON:
                 data = dirtyjson.loads(response)
-            except Exception:
+            else:
                 data = json.loads(response)
                 
             if isinstance(data, dict):
@@ -159,7 +165,7 @@ Maximum iterations: {self.max_iterations}
                 # Single tool call format
                 if "tool_name" in data or "name" in data:
                     return [data]
-        except (json.JSONDecodeError, TypeError):
+        except (json.JSONDecodeError, ValueError, TypeError):
             pass
         return []
 
