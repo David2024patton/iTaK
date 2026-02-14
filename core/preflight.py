@@ -237,6 +237,19 @@ def run_preflight(config: dict | None = None, auto_install: bool = True) -> Pref
         else:
             result.passed.append(f"Directory exists: {dirname}/")
 
+    # ------------------------------------------------------------------
+    # 8. Memory infrastructure (Neo4j, Weaviate)
+    # ------------------------------------------------------------------
+    neo4j_uri = os.environ.get("NEO4J_URI", "")
+    if config and not neo4j_uri:
+        # Check if configured in config.json
+        neo4j_uri = config.get("neo4j", {}).get("uri", "")
+    
+    if not neo4j_uri or neo4j_uri.startswith("${"):
+        result.warnings.append(
+            "Neo4j not configured - run 'python setup.py' for interactive setup"
+        )
+
     return result
 
 

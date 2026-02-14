@@ -217,6 +217,7 @@ async def check_services() -> tuple[list[str], int, int]:
             failed += 1
     else:
         lines.append(_warn("Neo4j not configured (knowledge graph disabled)"))
+        lines.append(f"        --> Run 'python setup.py' for interactive Neo4j setup")
 
     # SearXNG
     searxng_url = os.environ.get("SEARXNG_URL", "")
