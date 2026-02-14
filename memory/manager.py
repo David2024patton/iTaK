@@ -24,9 +24,10 @@ class MemoryManager:
     Search order: SQLite (fast) → Markdown (always loaded) → Neo4j → Weaviate
     """
 
-    def __init__(self, config: dict, model_router=None):
+    def __init__(self, config: dict, model_router=None, full_config: dict = None):
         self.config = config
         self.model_router = model_router
+        self.full_config = full_config or {}
 
         # Layer 1: Markdown files
         self.memory_dir = Path("memory")
@@ -49,8 +50,13 @@ class MemoryManager:
 
         # Layer 3: Neo4j
         self.neo4j = None
+        # Try nested config first (memory.neo4j), then top-level (neo4j)
         neo4j_config = config.get("neo4j", {})
-        if neo4j_config.get("uri"):
+        if not neo4j_config.get("uri"):
+            neo4j_config = self.full_config.get("neo4j", {})
+        
+        # Only initialize if enabled and URI is set
+        if neo4j_config.get("enabled", False) and neo4j_config.get("uri"):
             try:
                 from memory.neo4j_store import Neo4jStore
                 self.neo4j = Neo4jStore(neo4j_config)
@@ -59,8 +65,13 @@ class MemoryManager:
 
         # Layer 4: Weaviate
         self.weaviate = None
+        # Try nested config first (memory.weaviate), then top-level (weaviate)
         weaviate_config = config.get("weaviate", {})
-        if weaviate_config.get("url"):
+        if not weaviate_config.get("url"):
+            weaviate_config = self.full_config.get("weaviate", {})
+            
+        # Only initialize if enabled and URL is set
+        if weaviate_config.get("enabled", False) and weaviate_config.get("url"):
             try:
                 from memory.weaviate_store import WeaviateStore
                 self.weaviate = WeaviateStore(weaviate_config)
