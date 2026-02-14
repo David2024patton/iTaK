@@ -392,6 +392,7 @@ def check_security() -> tuple[list[str], int, int]:
         bad_scheme, _ = guard.validate_url("file:///etc/passwd", source="doctor")
         
         # Test 2: Allow safe schemes (http/https) when private IP blocking is disabled
+        # Note: With block_private_ips=False, no DNS resolution is performed
         ok_scheme, _ = guard.validate_url("http://safe-domain.example", source="doctor")
         
         # Test 3: Block private IPs when enabled
