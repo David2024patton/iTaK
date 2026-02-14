@@ -11,6 +11,10 @@
   </p>
 </p>
 
+> **🚀 Ready to Test?** See [READY_TO_TEST.md](READY_TO_TEST.md) for a quick assessment  
+> **📋 Deploying?** See [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) for step-by-step guidance  
+> **🔍 Full Assessment?** See [LIVE_READINESS_ASSESSMENT.md](LIVE_READINESS_ASSESSMENT.md) for detailed analysis
+
 ---
 
 **iTaK** is a modular, self-healing AI agent framework that combines Agent Zero's monologue engine with MemGPT's infinite memory architecture and OpenClaw's multi-channel connectivity. It's not just another chatbot - it's an autonomous coding assistant, DevOps engineer, and research analyst that remembers everything, fixes its own mistakes, and works across Discord, Telegram, Slack, and a web dashboard simultaneously.
