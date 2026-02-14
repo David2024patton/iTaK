@@ -2,6 +2,42 @@
 
 Get iTaK running in **2 minutes** — just like Agent-Zero!
 
+## ✅ Prerequisites
+
+Before you begin, you need **either**:
+- 🐳 **Docker** (recommended - easiest)  
+  OR
+- 🐍 **Python 3.11+** (alternative)
+
+**Plus:**
+- 📦 **Git** (to clone the repository)
+- 💾 **4GB RAM** minimum (8GB+ recommended)
+- 💿 **5GB disk space** minimum
+
+### Quick Prerequisites Check
+
+```bash
+docker --version   # Should be 20.10+
+python3 --version  # Should be 3.11+
+git --version      # Should be 2.0+
+```
+
+### Don't have them?
+
+**Option 1: Auto-install (Recommended)**
+```bash
+# Linux/macOS
+./install-prerequisites.sh
+
+# Windows
+install-prerequisites.bat
+```
+
+**Option 2: Manual install**
+See [PREREQUISITES.md](PREREQUISITES.md) for complete installation guides.
+
+---
+
 ## 🚀 Super Quick Install (Recommended)
 
 ### Option 1: One-Command Install (Linux/macOS)

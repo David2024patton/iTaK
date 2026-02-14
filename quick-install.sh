@@ -10,9 +10,60 @@ echo ""
 
 # Check if Docker is installed
 if ! command -v docker &> /dev/null; then
-    echo "❌ Docker not found. Please install Docker first:"
-    echo "   https://docs.docker.com/get-docker/"
-    exit 1
+    echo "❌ Docker not found"
+    echo ""
+    echo "📚 Installation options:"
+    echo "   1. Auto-install: ./install-prerequisites.sh"
+    echo "   2. Manual install: See PREREQUISITES.md"
+    echo "   3. Use Python instead (fallback below)"
+    echo ""
+    read -p "Try Python installation instead? (y/n): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo ""
+        echo "To install Docker: ./install-prerequisites.sh"
+        echo "Or see: PREREQUISITES.md"
+        exit 1
+    fi
+    
+    # Python fallback
+    echo ""
+    echo "ℹ️  Falling back to Python installation..."
+    
+    # Check for Python
+    if ! command -v python3 &> /dev/null && ! command -v python3.11 &> /dev/null; then
+        echo "❌ Python 3.11+ not found either"
+        echo ""
+        echo "Please install prerequisites first:"
+        echo "   ./install-prerequisites.sh"
+        echo ""
+        echo "Or see manual instructions: PREREQUISITES.md"
+        exit 1
+    fi
+    
+    # Run Python install
+    echo "✅ Python found"
+    echo "📦 Installing iTaK via Python..."
+    
+    # Install dependencies
+    pip install -r requirements.txt
+    
+    # Create .env if not exists
+    if [ ! -f .env ]; then
+        cp .env.example .env
+        echo ""
+        echo "⚠️  Please configure your API keys in .env file"
+        echo "   At minimum, add ONE of:"
+        echo "     - GEMINI_API_KEY=your_key"
+        echo "     - OPENAI_API_KEY=your_key"
+        echo ""
+        read -p "Press Enter when ready to continue..."
+    fi
+    
+    # Run iTaK
+    echo "🚀 Starting iTaK..."
+    python3 main.py --webui
+    exit 0
 fi
 
 echo "✅ Docker found"

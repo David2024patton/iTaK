@@ -10,15 +10,70 @@ echo.
 REM Check if Docker is installed
 docker --version >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
-    echo ERROR: Docker not found!
-    echo Please install Docker Desktop first:
-    echo https://docs.docker.com/desktop/install/windows-install/
-    pause
-    exit /b 1
+    echo [!] Docker Desktop not found
+    echo.
+    echo Installation options:
+    echo   1. Auto-install: install-prerequisites.bat
+    echo   2. Manual install: See PREREQUISITES.md
+    echo   3. Use Python instead (fallback option)
+    echo.
+    choice /C YN /M "Try Python installation instead?"
+    if errorlevel 2 goto docker_required
+    if errorlevel 1 goto python_fallback
 )
 
 echo [OK] Docker found
 echo.
+goto docker_install
+
+:docker_required
+echo.
+echo To install Docker Desktop: install-prerequisites.bat
+echo Or see: PREREQUISITES.md
+pause
+exit /b 1
+
+:python_fallback
+echo.
+echo [INFO] Falling back to Python installation...
+echo.
+
+REM Check for Python
+python --version >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] Python not found either!
+    echo.
+    echo Please install prerequisites first:
+    echo   install-prerequisites.bat
+    echo.
+    echo Or see manual instructions: PREREQUISITES.md
+    pause
+    exit /b 1
+)
+
+echo [OK] Python found
+python --version
+echo.
+echo Installing iTaK via Python...
+pip install -r requirements.txt
+
+REM Create .env if not exists
+if not exist .env (
+    copy .env.example .env
+    echo.
+    echo [!] Please configure your API keys in .env file
+    echo     At minimum, add ONE of:
+    echo       - GEMINI_API_KEY=your_key
+    echo       - OPENAI_API_KEY=your_key
+    echo.
+    pause
+)
+
+echo Starting iTaK...
+python main.py --webui
+goto end
+
+:docker_install
 
 REM Try to pull pre-built image
 echo Checking for pre-built image...
