@@ -8,6 +8,7 @@ Gameplan §21 - "Workflow Automation"
 """
 
 import asyncio
+import hmac
 import json
 import logging
 import time
@@ -73,6 +74,7 @@ class WebhookEngine:
         self.config = config or {}
         self.targets: dict[str, WebhookTarget] = {}
         self.inbound_secret = ""
+        self._ssrf_guard = None
         self._stats = {
             "inbound_received": 0,
             "inbound_processed": 0,
@@ -82,6 +84,13 @@ class WebhookEngine:
         }
 
         self._load_config()
+
+        # Initialize SSRF guard for callback URL validation
+        try:
+            from security.ssrf_guard import SSRFGuard
+            self._ssrf_guard = SSRFGuard(config)
+        except ImportError:
+            logger.warning("SSRFGuard not available - callback URLs will not be validated")
 
     def _load_config(self):
         """Load webhook configuration from config."""
@@ -107,10 +116,17 @@ class WebhookEngine:
     # ── Inbound ────────────────────────────────────────────────
 
     def verify_secret(self, provided: str) -> bool:
-        """Verify the inbound webhook secret."""
+        """Verify the inbound webhook secret using constant-time comparison.
+
+        Uses hmac.compare_digest to prevent timing attacks that could
+        leak the secret byte-by-byte.
+        """
         if not self.inbound_secret:
             return True  # No secret configured = open
-        return provided == self.inbound_secret
+        return hmac.compare_digest(
+            provided.encode("utf-8"),
+            self.inbound_secret.encode("utf-8"),
+        )
 
     def parse_inbound(self, data: dict) -> InboundPayload:
         """Parse and validate an inbound webhook payload."""
@@ -282,7 +298,15 @@ class WebhookEngine:
             logger.error(f"Webhook {target.name} urllib fallback failed: {e}")
 
     async def _fire_callback(self, url: str, data: dict):
-        """Fire a callback URL with result data."""
+        """Fire a callback URL with result data.
+
+        Validates the URL against SSRF before firing.
+        """
+        if self._ssrf_guard:
+            allowed, reason = self._ssrf_guard.validate_url(url, source="webhook_callback")
+            if not allowed:
+                logger.warning(f"Webhook callback blocked by SSRF guard: {reason} ({url[:120]})")
+                return
         target = WebhookTarget(name="callback", url=url, events=[])
         await self._fire_target(target, "callback", data)
 
