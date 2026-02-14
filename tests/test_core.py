@@ -201,3 +201,36 @@ class TestProgressTracker:
         assert "█" in bar
         assert "░" in bar
         assert "50%" in bar
+
+
+class TestAgentShutdown:
+    @pytest.mark.asyncio
+    async def test_shutdown_logs_without_name_error(self, monkeypatch):
+        import sys
+        import types
+        from unittest.mock import AsyncMock, MagicMock
+
+        monkeypatch.setitem(
+            sys.modules,
+            "litellm",
+            types.SimpleNamespace(suppress_debug_info=False),
+        )
+
+        from core.agent import Agent
+        from core.logger import EventType
+
+        agent = Agent.__new__(Agent)
+        agent.config = {"agent": {"drain_timeout_seconds": 0}}
+        agent._running = True
+        agent._active_turn = True
+        agent.logger = MagicMock()
+        agent.heartbeat = None
+        agent.mcp_client = None
+        agent.task_board = None
+        agent.memory = None
+        agent.checkpoint = MagicMock(save=AsyncMock())
+
+        await agent.shutdown()
+
+        agent.logger.log.assert_any_call(EventType.WARNING, "Drain timeout - forcing shutdown with active turn")
+        agent.logger.log.assert_any_call(EventType.SYSTEM, "Shutdown complete")

@@ -278,14 +278,14 @@ class Agent:
 
         # Wait for active turn to complete
         if getattr(self, "_active_turn", False):
-            logger.info(f"Draining active turn (up to {drain_timeout}s)...")
+            self.logger.log(EventType.SYSTEM, f"Draining active turn (up to {drain_timeout}s)...")
             deadline = time.time() + drain_timeout
             while getattr(self, "_active_turn", False) and time.time() < deadline:
                 await asyncio.sleep(0.5)
             if getattr(self, "_active_turn", False):
-                logger.warning("Drain timeout - forcing shutdown with active turn")
+                self.logger.log(EventType.WARNING, "Drain timeout - forcing shutdown with active turn")
             else:
-                logger.info("Active turn completed, proceeding with shutdown")
+                self.logger.log(EventType.SYSTEM, "Active turn completed, proceeding with shutdown")
 
         # Tear down services
         if self.heartbeat:
@@ -297,7 +297,7 @@ class Agent:
         if self.memory:
             await self.memory.close()
         await self.checkpoint.save()
-        logger.info("Shutdown complete")
+        self.logger.log(EventType.SYSTEM, "Shutdown complete")
 
     def _load_config(self, config: Optional[dict] = None) -> dict:
         """Load config from dict or config.json."""
