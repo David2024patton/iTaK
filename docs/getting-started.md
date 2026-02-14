@@ -188,9 +188,15 @@ XX passed in Y.YYs
 # Start in CLI mode
 python main.py
 
-# In another terminal, check if the agent responds
-# Type a simple question like "What's 2+2?"
+# The agent will display a prompt:
+# [iTaK] Ready. Type your message:
+# > 
+
+# Type a simple question at the prompt and press Enter:
+# > What's 2+2?
 ```
+
+The agent should respond with a calculation or explanation.
 
 ---
 

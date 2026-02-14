@@ -209,12 +209,10 @@ class TestProgressTracker:
 class TestFrameworkIntegration:
     """Test framework initialization and basic functionality."""
 
-    @pytest.mark.asyncio
-    async def test_agent_initialization(self, tmp_path):
-        """Agent should initialize with minimal config."""
-        from core.agent import Agent
-
-        config = {
+    @pytest.fixture
+    def minimal_config(self):
+        """Provide a minimal test configuration."""
+        return {
             "agent": {
                 "name": "TestAgent",
                 "max_iterations": 10,
@@ -238,33 +236,22 @@ class TestFrameworkIntegration:
             },
         }
 
-        agent = Agent(config=config)
+    @pytest.mark.asyncio
+    async def test_agent_initialization(self, minimal_config):
+        """Agent should initialize with minimal config."""
+        from core.agent import Agent
+
+        agent = Agent(config=minimal_config)
         assert agent.config["agent"]["name"] == "TestAgent"
         # Agent tracks total_iterations, not max_iterations as an attribute
         assert "max_iterations" in agent.config["agent"]
 
     @pytest.mark.asyncio
-    async def test_tool_loading(self, tmp_path):
+    async def test_tool_loading(self, minimal_config):
         """Agent should load available tools."""
         from core.agent import Agent
 
-        config = {
-            "agent": {"name": "TestAgent"},
-            "models": {
-                "chat": {
-                    "provider": "litellm",
-                    "model": "gemini/gemini-2.0-flash",
-                },
-            },
-            "memory": {"sqlite_path": "data/memory.db"},
-            "logging": {
-                "jsonl_dir": "data/logs",
-                "sqlite_path": "data/logs.db",
-            },
-            "security": {"secret_store_path": "data/secrets.db"},
-        }
-
-        agent = Agent(config=config)
+        agent = Agent(config=minimal_config)
         tools = agent.get_tool_names()
         assert isinstance(tools, list)
         assert len(tools) > 0
