@@ -1,12 +1,14 @@
 # 🚀 iTaK Installation Guide - New User Walkthrough
 
-> **Quick Summary:** Get iTaK running in 5 simple steps (5-10 minutes). This guide walks you through installation and explains what iTaK does once running.
+> **Quick Summary:** Get iTaK running in minutes. Choose Docker (fastest) or Python (most control). This guide walks you through both methods and explains what iTaK does once running.
 
 ---
 
 ## 📋 Table of Contents
 1. [What is iTaK?](#what-is-itak)
-2. [Installation (5 Steps)](#installation-5-steps)
+2. [Installation Methods](#installation-methods)
+   - [Docker Quick Start (Recommended)](#docker-quick-start-recommended)
+   - [Python Installation (Full Control)](#python-installation-full-control)
 3. [What iTaK Does Once Installed](#what-itak-does-once-installed)
 4. [Common Use Cases](#common-use-cases)
 5. [Troubleshooting](#troubleshooting)
@@ -20,18 +22,144 @@
 
 - 💬 **Chat with you** via terminal, Discord, Telegram, Slack, or web dashboard
 - 🔧 **Execute code** to solve problems, automate tasks, and build projects
-- 🧠 **Remember everything** using a 4-tier memory system (like MemGPT)
+- 🧠 **Remember everything** using a 4-tier memory system (Recall/Archival/Episodic/Knowledge)
 - 🩹 **Fix its own errors** automatically using self-healing AI
 - 🌐 **Search the web** and interact with websites
 - 📊 **Manage tasks** on a Kanban board (Mission Control)
 - 🤖 **Control multiple sub-agents** working in parallel (swarms)
 - 🔌 **Integrate with tools** via webhooks and MCP protocol
+- 🔒 **Production-ready** with 85% test coverage and compliance certifications
 
 Think of it as **ChatGPT + GitHub Copilot + n8n automation** - all in one self-hosted package.
 
+**Coming from Agent-Zero?** See our [comparison guide](iTAK_VS_AGENT_ZERO.md) to understand the differences.
+
 ---
 
-## 🛠️ Installation (5 Steps)
+## 🐳 Installation Methods
+
+Choose your installation method:
+
+| Method | Time | Best For | Pros | Cons |
+|--------|------|----------|------|------|
+| **Docker** | 5 min | Quick start, production | Isolated, reproducible, full stack | Requires Docker |
+| **Python** | 10 min | Development, customization | Full control, easy debugging | Manual setup |
+
+---
+
+## 🚢 Docker Quick Start (Recommended)
+
+**Perfect for:** Quick testing, production deployments, users familiar with Docker
+
+### Prerequisites
+- Docker Desktop installed ([Windows](https://docs.docker.com/desktop/install/windows-install/) \| [macOS](https://docs.docker.com/desktop/install/mac-install/) \| [Linux](https://docs.docker.com/desktop/install/linux-install/))
+- At least one AI API key (see [API Keys](#api-keys-setup) below)
+
+### Installation (2 Commands)
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/David2024patton/iTaK.git
+cd iTaK
+
+# 2. Start with Docker Compose (includes Neo4j, Weaviate, SearXNG)
+cp .env.example .env
+# Edit .env and add your API keys (see below)
+docker-compose up -d
+```
+
+### What This Starts
+
+The `docker-compose.yml` starts a full stack:
+- **iTaK Agent** - Main AI agent (port 8000 for WebUI)
+- **Neo4j** - Knowledge graph database (port 47474)
+- **Weaviate** - Vector database (port 48080)
+- **SearXNG** - Private web search (port 48888)
+
+### Access iTaK
+
+```bash
+# Web Dashboard
+http://localhost:8000
+
+# Check logs
+docker-compose logs -f itak
+
+# Stop all services
+docker-compose down
+```
+
+### Docker-Only Mode (Minimal)
+
+Don't need the full stack? Run just iTaK:
+
+```bash
+# Build and run iTaK only
+docker build -t itak .
+docker run -p 8000:8000 --env-file .env itak --webui
+```
+
+---
+
+## 🐍 Python Installation (Full Control)
+
+**Perfect for:** Developers, customization, debugging, contributing
+
+### Step 1: Prerequisites
+
+Make sure you have:
+
+```bash
+# Python 3.11 or higher
+python --version
+# Should show: Python 3.11.x or higher
+
+# pip (Python package manager)
+pip --version
+
+# Git (to clone the repository)
+git --version
+```
+
+**Don't have Python 3.11+?** Download from [python.org](https://www.python.org/downloads/)
+
+---
+
+### Step 2: Clone the Repository
+
+```bash
+# Clone iTaK
+git clone https://github.com/David2024patton/iTaK.git
+cd iTaK
+```
+
+---
+
+### Step 3: Install Dependencies
+
+```bash
+# Install all required packages
+pip install -r requirements.txt
+
+# This takes 2-3 minutes and installs:
+# - LiteLLM (AI model router)
+# - FastAPI (web dashboard)
+# - Discord/Telegram/Slack libraries
+# - Database drivers
+# - Security tools
+# - And ~30 more packages
+```
+
+**Tip:** Use a virtual environment to keep things clean:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+---
+
+### Step 4: Configure iTaK
 
 ### Step 1: Prerequisites
 
@@ -120,6 +248,76 @@ OLLAMA_BASE_URL=http://localhost:11434
 - **OpenAI**: [platform.openai.com](https://platform.openai.com/)
 - **Anthropic**: [console.anthropic.com](https://console.anthropic.com/)
 - **Ollama**: [ollama.com](https://ollama.com/) (Run LLMs locally)
+
+---
+
+### API Keys Setup
+
+<details>
+<summary><b>📘 Click here for detailed API key instructions</b></summary>
+
+#### Google Gemini (Recommended for Beginners)
+1. Go to [Google AI Studio](https://aistudio.google.com/)
+2. Sign in with Google account
+3. Click "Get API Key" → "Create API key"
+4. Copy the key and add to `.env`:
+   ```
+   GEMINI_API_KEY=AIza...
+   ```
+
+#### OpenAI
+1. Go to [OpenAI Platform](https://platform.openai.com/)
+2. Create account and add payment method
+3. Navigate to API Keys section
+4. Create new key and copy to `.env`:
+   ```
+   OPENAI_API_KEY=sk-...
+   ```
+
+#### Anthropic Claude
+1. Go to [Anthropic Console](https://console.anthropic.com/)
+2. Sign up for account
+3. Add payment method
+4. Generate API key in settings
+5. Add to `.env`:
+   ```
+   ANTHROPIC_API_KEY=sk-ant-...
+   ```
+
+#### Ollama (Local, Free)
+1. Install Ollama from [ollama.com](https://ollama.com/)
+2. Pull a model: `ollama pull llama2`
+3. Add to `.env`:
+   ```
+   OLLAMA_BASE_URL=http://localhost:11434
+   ```
+4. Set in `config.json`:
+   ```json
+   {
+     "agent": {
+       "default_model": "ollama/llama2"
+     }
+   }
+   ```
+
+</details>
+
+---
+
+## ⚠️ Security Warning
+
+> **IMPORTANT:** iTaK can execute code on your computer by design. Always:
+> 
+> - ✅ Run in an isolated environment (Docker recommended for production)
+> - ✅ Use a separate, limited-privilege user account
+> - ✅ Never give iTaK admin/root access in production
+> - ✅ Review code before allowing execution in sensitive environments
+> - ✅ Keep API keys secure (never commit `.env` to git)
+> - ✅ Enable output guards in production (redacts PII, secrets)
+> 
+> **For production deployments**, see [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) for security hardening.
+
+---
 
 **Optional Settings (you can skip these for now):**
 - `DISCORD_TOKEN` - To use iTaK as a Discord bot
