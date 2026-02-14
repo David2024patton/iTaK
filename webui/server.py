@@ -181,6 +181,223 @@ def create_app(agent: "Agent"):
             })
         return {"tools": tools}
 
+    # --- Skills, Tools, and MCPs Management ---
+
+    @app.get("/api/resources/skills")
+    async def list_skills():
+        """List all skill files."""
+        skills_dir = Path(__file__).parent.parent / "skills"
+        skills = []
+        if skills_dir.exists():
+            for skill_file in skills_dir.glob("*.md"):
+                if skill_file.name == "SKILL.md":
+                    continue
+                try:
+                    content = skill_file.read_text(encoding="utf-8")
+                    # Extract first line as title
+                    lines = content.split("\n")
+                    title = lines[0].replace("#", "").strip() if lines else skill_file.stem
+                    skills.append({
+                        "name": skill_file.stem,
+                        "filename": skill_file.name,
+                        "title": title,
+                        "size": skill_file.stat().st_size,
+                    })
+                except Exception:
+                    pass
+        return {"skills": skills}
+
+    @app.get("/api/resources/skills/{skill_name}")
+    async def get_skill(skill_name: str):
+        """Get a specific skill file content."""
+        skills_dir = Path(__file__).parent.parent / "skills"
+        skill_file = skills_dir / f"{skill_name}.md"
+        if not skill_file.exists():
+            return JSONResponse({"error": "Skill not found"}, status_code=404)
+        try:
+            content = skill_file.read_text(encoding="utf-8")
+            return {"name": skill_name, "content": content}
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+
+    @app.post("/api/resources/skills")
+    async def create_skill(payload: dict):
+        """Create a new skill file."""
+        name = payload.get("name", "").strip()
+        content = payload.get("content", "")
+        if not name:
+            return JSONResponse({"error": "Skill name is required"}, status_code=400)
+        # Sanitize filename
+        import re
+        safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', name)
+        skills_dir = Path(__file__).parent.parent / "skills"
+        skill_file = skills_dir / f"{safe_name}.md"
+        if skill_file.exists():
+            return JSONResponse({"error": "Skill already exists"}, status_code=400)
+        try:
+            skill_file.write_text(content, encoding="utf-8")
+            return {"name": safe_name, "message": "Skill created successfully"}
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+
+    @app.put("/api/resources/skills/{skill_name}")
+    async def update_skill(skill_name: str, payload: dict):
+        """Update an existing skill file."""
+        content = payload.get("content", "")
+        skills_dir = Path(__file__).parent.parent / "skills"
+        skill_file = skills_dir / f"{skill_name}.md"
+        if not skill_file.exists():
+            return JSONResponse({"error": "Skill not found"}, status_code=404)
+        try:
+            skill_file.write_text(content, encoding="utf-8")
+            return {"name": skill_name, "message": "Skill updated successfully"}
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+
+    @app.delete("/api/resources/skills/{skill_name}")
+    async def delete_skill(skill_name: str):
+        """Delete a skill file."""
+        skills_dir = Path(__file__).parent.parent / "skills"
+        skill_file = skills_dir / f"{skill_name}.md"
+        if not skill_file.exists():
+            return JSONResponse({"error": "Skill not found"}, status_code=404)
+        if skill_name == "SKILL":
+            return JSONResponse({"error": "Cannot delete template"}, status_code=400)
+        try:
+            skill_file.unlink()
+            return {"message": "Skill deleted successfully"}
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+
+    @app.get("/api/resources/tools")
+    async def list_tool_files():
+        """List all tool files (Python + prompts)."""
+        tools_dir = Path(__file__).parent.parent / "tools"
+        prompts_dir = Path(__file__).parent.parent / "prompts"
+        tools = []
+        if tools_dir.exists():
+            for tool_file in tools_dir.glob("*.py"):
+                if tool_file.name in ["__init__.py", "base.py", "response.py", "TOOL_TEMPLATE.md"]:
+                    continue
+                tool_name = tool_file.stem
+                # Check if corresponding prompt exists
+                prompt_file = prompts_dir / f"agent.system.tool.{tool_name}.md"
+                has_prompt = prompt_file.exists() if prompts_dir.exists() else False
+                try:
+                    content = tool_file.read_text(encoding="utf-8")
+                    # Extract description from class docstring
+                    import re
+                    desc_match = re.search(r'"""(.+?)"""', content, re.DOTALL)
+                    description = desc_match.group(1).strip().split("\n")[0] if desc_match else ""
+                    tools.append({
+                        "name": tool_name,
+                        "filename": tool_file.name,
+                        "description": description[:100],
+                        "has_prompt": has_prompt,
+                        "size": tool_file.stat().st_size,
+                    })
+                except Exception:
+                    pass
+        return {"tools": tools}
+
+    @app.get("/api/resources/tools/{tool_name}")
+    async def get_tool(tool_name: str):
+        """Get a specific tool file and its prompt."""
+        tools_dir = Path(__file__).parent.parent / "tools"
+        prompts_dir = Path(__file__).parent.parent / "prompts"
+        tool_file = tools_dir / f"{tool_name}.py"
+        if not tool_file.exists():
+            return JSONResponse({"error": "Tool not found"}, status_code=404)
+        try:
+            code = tool_file.read_text(encoding="utf-8")
+            prompt = ""
+            prompt_file = prompts_dir / f"agent.system.tool.{tool_name}.md"
+            if prompt_file.exists():
+                prompt = prompt_file.read_text(encoding="utf-8")
+            return {"name": tool_name, "code": code, "prompt": prompt}
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+
+    @app.post("/api/resources/tools")
+    async def create_tool(payload: dict):
+        """Create a new tool file."""
+        name = payload.get("name", "").strip()
+        code = payload.get("code", "")
+        prompt = payload.get("prompt", "")
+        if not name:
+            return JSONResponse({"error": "Tool name is required"}, status_code=400)
+        # Sanitize filename
+        import re
+        safe_name = re.sub(r'[^a-zA-Z0-9_]', '_', name)
+        tools_dir = Path(__file__).parent.parent / "tools"
+        prompts_dir = Path(__file__).parent.parent / "prompts"
+        tool_file = tools_dir / f"{safe_name}.py"
+        if tool_file.exists():
+            return JSONResponse({"error": "Tool already exists"}, status_code=400)
+        try:
+            tool_file.write_text(code, encoding="utf-8")
+            if prompt:
+                prompt_file = prompts_dir / f"agent.system.tool.{safe_name}.md"
+                prompt_file.write_text(prompt, encoding="utf-8")
+            return {"name": safe_name, "message": "Tool created successfully"}
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+
+    @app.put("/api/resources/tools/{tool_name}")
+    async def update_tool(tool_name: str, payload: dict):
+        """Update an existing tool file."""
+        code = payload.get("code", "")
+        prompt = payload.get("prompt", "")
+        tools_dir = Path(__file__).parent.parent / "tools"
+        prompts_dir = Path(__file__).parent.parent / "prompts"
+        tool_file = tools_dir / f"{tool_name}.py"
+        if not tool_file.exists():
+            return JSONResponse({"error": "Tool not found"}, status_code=404)
+        try:
+            if code:
+                tool_file.write_text(code, encoding="utf-8")
+            if prompt:
+                prompt_file = prompts_dir / f"agent.system.tool.{tool_name}.md"
+                prompt_file.write_text(prompt, encoding="utf-8")
+            return {"name": tool_name, "message": "Tool updated successfully"}
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+
+    @app.delete("/api/resources/tools/{tool_name}")
+    async def delete_tool(tool_name: str):
+        """Delete a tool file and its prompt."""
+        tools_dir = Path(__file__).parent.parent / "tools"
+        prompts_dir = Path(__file__).parent.parent / "prompts"
+        tool_file = tools_dir / f"{tool_name}.py"
+        if not tool_file.exists():
+            return JSONResponse({"error": "Tool not found"}, status_code=404)
+        if tool_name in ["base", "response"]:
+            return JSONResponse({"error": "Cannot delete core tools"}, status_code=400)
+        try:
+            tool_file.unlink()
+            # Also delete prompt if exists
+            prompt_file = prompts_dir / f"agent.system.tool.{tool_name}.md"
+            if prompt_file.exists():
+                prompt_file.unlink()
+            return {"message": "Tool deleted successfully"}
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+
+    @app.get("/api/resources/mcps")
+    async def list_mcps():
+        """List configured MCP servers and their tools."""
+        mcps = []
+        if hasattr(agent, "mcp_client") and agent.mcp_client:
+            status = agent.mcp_client.get_status()
+            for server_name, server_info in status.get("servers", {}).items():
+                mcps.append({
+                    "name": server_name,
+                    "connected": server_info.get("connected", False),
+                    "tools": server_info.get("tools", []),
+                    "tool_count": len(server_info.get("tools", [])),
+                })
+        return {"mcps": mcps}
+
     @app.get("/api/heartbeat/history")
     async def heartbeat_history(limit: int = 20):
         """Get heartbeat check history."""

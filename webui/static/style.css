@@ -787,3 +787,228 @@ select.form-input {
         gap: 12px;
     }
 }
+
+/* ===== RESOURCES TAB ===== */
+.resource-type-bar {
+    display: flex;
+    gap: 8px;
+    background: var(--bg-secondary);
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.resource-type-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.resource-type-btn:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
+}
+
+.resource-type-btn.active {
+    background: var(--accent-blue);
+    color: white;
+    border-color: var(--accent-blue);
+}
+
+.resource-section {
+    display: none;
+    padding: 24px;
+}
+
+.resource-section.active {
+    display: block;
+}
+
+.resource-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.resource-header h2 {
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.resource-list {
+    display: grid;
+    gap: 16px;
+}
+
+.resource-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.resource-item:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--accent-blue);
+}
+
+.resource-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.resource-item-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.resource-item-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.resource-item-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.resource-item-btn:hover {
+    background: var(--accent-blue);
+    color: white;
+    border-color: var(--accent-blue);
+}
+
+.resource-item-btn.delete {
+    border-color: var(--accent-red);
+    color: var(--accent-red);
+}
+
+.resource-item-btn.delete:hover {
+    background: var(--accent-red);
+    color: white;
+}
+
+.resource-item-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.resource-item-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.resource-loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+}
+
+.mcp-status {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.mcp-status.connected {
+    background: rgba(34, 197, 94, 0.2);
+    color: var(--accent-green);
+}
+
+.mcp-status.disconnected {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--accent-red);
+}
+
+.mcp-tools-list {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+}
+
+.mcp-tool-item {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.mcp-tool-item:last-child {
+    border-bottom: none;
+}
+
+.modal-large {
+    max-width: 900px;
+    width: 90vw;
+}
+
+.editor-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.editor-textarea {
+    width: 100%;
+    min-height: 400px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    resize: vertical;
+}
+
+.editor-textarea:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+}
+
+.editor-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.tool-editor-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.editor-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.editor-section label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}

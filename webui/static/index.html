@@ -30,6 +30,7 @@
     <nav class="tab-bar">
         <button class="tab-btn active" data-tab="monitor" onclick="switchTab('monitor')">📊 Monitor</button>
         <button class="tab-btn" data-tab="mission" onclick="switchTab('mission')">📋 Mission Control</button>
+        <button class="tab-btn" data-tab="resources" onclick="switchTab('resources')">🧰 Resources</button>
     </nav>
 
     <!-- ==================== MONITOR TAB ==================== -->
@@ -192,6 +193,49 @@
         </div>
     </main>
 
+    <!-- ==================== RESOURCES TAB ==================== -->
+    <main class="tab-content" id="tab-resources">
+        <!-- Resource Type Selector -->
+        <div class="resource-type-bar">
+            <button class="resource-type-btn active" data-type="skills" onclick="switchResourceType('skills')">📚 Skills</button>
+            <button class="resource-type-btn" data-type="tools" onclick="switchResourceType('tools')">🔧 Tools</button>
+            <button class="resource-type-btn" data-type="mcps" onclick="switchResourceType('mcps')">🔌 MCPs</button>
+        </div>
+
+        <!-- Skills Section -->
+        <div class="resource-section active" id="section-skills">
+            <div class="resource-header">
+                <h2>Skills</h2>
+                <button class="chat-btn" onclick="openNewResourceModal('skill')">+ New Skill</button>
+            </div>
+            <div class="resource-list" id="skillsList">
+                <div class="resource-loading">Loading skills...</div>
+            </div>
+        </div>
+
+        <!-- Tools Section -->
+        <div class="resource-section" id="section-tools">
+            <div class="resource-header">
+                <h2>Tools</h2>
+                <button class="chat-btn" onclick="openNewResourceModal('tool')">+ New Tool</button>
+            </div>
+            <div class="resource-list" id="toolsList">
+                <div class="resource-loading">Loading tools...</div>
+            </div>
+        </div>
+
+        <!-- MCPs Section -->
+        <div class="resource-section" id="section-mcps">
+            <div class="resource-header">
+                <h2>MCP Servers</h2>
+                <p style="color:var(--text-muted);margin-top:8px;">Configure MCP servers in config.json</p>
+            </div>
+            <div class="resource-list" id="mcpsList">
+                <div class="resource-loading">Loading MCP servers...</div>
+            </div>
+        </div>
+    </main>
+
     <!-- New Task Modal -->
     <div class="modal-overlay" id="newTaskModal" onclick="closeModal(event)">
         <div class="modal" onclick="event.stopPropagation()">
@@ -214,6 +258,19 @@
                 </select>
                 <button type="submit" class="chat-btn" style="width:100%;margin-top:16px;">Create Task</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Resource Editor Modal -->
+    <div class="modal-overlay" id="resourceModal" onclick="closeResourceModal(event)">
+        <div class="modal modal-large" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 id="resourceModalTitle">Edit Resource</h2>
+                <button class="modal-close" onclick="closeResourceModal()">&times;</button>
+            </div>
+            <div id="resourceModalContent">
+                <!-- Dynamic content based on resource type -->
+            </div>
         </div>
     </div>
 

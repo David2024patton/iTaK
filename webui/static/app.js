@@ -9,6 +9,7 @@ function switchTab(tab) {
     document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
     document.getElementById(`tab-${tab}`).classList.add('active');
     if (tab === 'mission') loadTasks();
+    if (tab === 'resources') loadResources();
 }
 
 // ==================== WEBSOCKET ====================
@@ -287,8 +288,331 @@ async function deleteTask(taskId) {
 
 // ===== Keyboard shortcuts =====
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Escape') {
+        closeModal();
+        closeResourceModal();
+    }
 });
+
+// ======================================================
+//             RESOURCES TAB - SKILLS, TOOLS, MCPs
+// ======================================================
+
+let currentResourceType = 'skills';
+let currentEditingResource = null;
+
+function switchResourceType(type) {
+    currentResourceType = type;
+    document.querySelectorAll('.resource-type-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.resource-section').forEach(s => s.classList.remove('active'));
+    document.querySelector(`.resource-type-btn[data-type="${type}"]`).classList.add('active');
+    document.getElementById(`section-${type}`).classList.add('active');
+    loadResourceType(type);
+}
+
+function loadResources() {
+    loadResourceType(currentResourceType);
+}
+
+async function loadResourceType(type) {
+    if (type === 'skills') await loadSkills();
+    else if (type === 'tools') await loadTools();
+    else if (type === 'mcps') await loadMCPs();
+}
+
+// ===== SKILLS =====
+async function loadSkills() {
+    const container = document.getElementById('skillsList');
+    container.innerHTML = '<div class="resource-loading">Loading skills...</div>';
+    try {
+        const res = await fetch(`${API}/api/resources/skills`);
+        const data = await res.json();
+        const skills = data.skills || [];
+        if (skills.length === 0) {
+            container.innerHTML = '<div class="resource-loading">No skills found. Create your first skill!</div>';
+            return;
+        }
+        container.innerHTML = skills.map(skill => `
+            <div class="resource-item" onclick="editSkill('${skill.name}')">
+                <div class="resource-item-header">
+                    <div class="resource-item-name">📚 ${skill.title || skill.name}</div>
+                    <div class="resource-item-actions">
+                        <button class="resource-item-btn delete" onclick="event.stopPropagation(); deleteSkill('${skill.name}')">Delete</button>
+                    </div>
+                </div>
+                <div class="resource-item-meta">
+                    <span>📄 ${skill.filename}</span>
+                    <span>${(skill.size / 1024).toFixed(1)} KB</span>
+                </div>
+            </div>
+        `).join('');
+    } catch (e) {
+        container.innerHTML = '<div class="resource-loading">Failed to load skills.</div>';
+        console.error('Failed to load skills:', e);
+    }
+}
+
+async function editSkill(name) {
+    try {
+        const res = await fetch(`${API}/api/resources/skills/${name}`);
+        const data = await res.json();
+        currentEditingResource = { type: 'skill', name: name };
+        showResourceEditor('Edit Skill: ' + name, data.content, false);
+    } catch (e) {
+        console.error('Failed to load skill:', e);
+    }
+}
+
+async function deleteSkill(name) {
+    if (!confirm(`Delete skill "${name}"?`)) return;
+    try {
+        await fetch(`${API}/api/resources/skills/${name}`, { method: 'DELETE' });
+        loadSkills();
+    } catch (e) {
+        console.error('Failed to delete skill:', e);
+    }
+}
+
+// ===== TOOLS =====
+async function loadTools() {
+    const container = document.getElementById('toolsList');
+    container.innerHTML = '<div class="resource-loading">Loading tools...</div>';
+    try {
+        const res = await fetch(`${API}/api/resources/tools`);
+        const data = await res.json();
+        const tools = data.tools || [];
+        if (tools.length === 0) {
+            container.innerHTML = '<div class="resource-loading">No tools found.</div>';
+            return;
+        }
+        container.innerHTML = tools.map(tool => `
+            <div class="resource-item" onclick="editTool('${tool.name}')">
+                <div class="resource-item-header">
+                    <div class="resource-item-name">🔧 ${tool.name}</div>
+                    <div class="resource-item-actions">
+                        <button class="resource-item-btn delete" onclick="event.stopPropagation(); deleteTool('${tool.name}')">Delete</button>
+                    </div>
+                </div>
+                <div class="resource-item-desc">${tool.description || 'No description'}</div>
+                <div class="resource-item-meta">
+                    <span>📄 ${tool.filename}</span>
+                    <span>${(tool.size / 1024).toFixed(1)} KB</span>
+                    <span>${tool.has_prompt ? '✓ Has prompt' : '⚠️ No prompt'}</span>
+                </div>
+            </div>
+        `).join('');
+    } catch (e) {
+        container.innerHTML = '<div class="resource-loading">Failed to load tools.</div>';
+        console.error('Failed to load tools:', e);
+    }
+}
+
+async function editTool(name) {
+    try {
+        const res = await fetch(`${API}/api/resources/tools/${name}`);
+        const data = await res.json();
+        currentEditingResource = { type: 'tool', name: name };
+        showToolEditor('Edit Tool: ' + name, data.code, data.prompt);
+    } catch (e) {
+        console.error('Failed to load tool:', e);
+    }
+}
+
+async function deleteTool(name) {
+    if (!confirm(`Delete tool "${name}"?`)) return;
+    try {
+        await fetch(`${API}/api/resources/tools/${name}`, { method: 'DELETE' });
+        loadTools();
+    } catch (e) {
+        console.error('Failed to delete tool:', e);
+    }
+}
+
+// ===== MCPs =====
+async function loadMCPs() {
+    const container = document.getElementById('mcpsList');
+    container.innerHTML = '<div class="resource-loading">Loading MCP servers...</div>';
+    try {
+        const res = await fetch(`${API}/api/resources/mcps`);
+        const data = await res.json();
+        const mcps = data.mcps || [];
+        if (mcps.length === 0) {
+            container.innerHTML = '<div class="resource-loading">No MCP servers configured. Add them in config.json.</div>';
+            return;
+        }
+        container.innerHTML = mcps.map(mcp => `
+            <div class="resource-item">
+                <div class="resource-item-header">
+                    <div class="resource-item-name">🔌 ${mcp.name}</div>
+                    <span class="mcp-status ${mcp.connected ? 'connected' : 'disconnected'}">
+                        ${mcp.connected ? 'Connected' : 'Disconnected'}
+                    </span>
+                </div>
+                <div class="resource-item-meta">
+                    <span>${mcp.tool_count} tools available</span>
+                </div>
+                ${mcp.tools && mcp.tools.length > 0 ? `
+                    <div class="mcp-tools-list">
+                        ${mcp.tools.slice(0, 5).map(t => `
+                            <div class="mcp-tool-item">🔧 ${t.name}${t.description ? ': ' + t.description.slice(0, 80) : ''}</div>
+                        `).join('')}
+                        ${mcp.tools.length > 5 ? `<div class="mcp-tool-item">... and ${mcp.tools.length - 5} more</div>` : ''}
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
+    } catch (e) {
+        container.innerHTML = '<div class="resource-loading">Failed to load MCP servers.</div>';
+        console.error('Failed to load MCPs:', e);
+    }
+}
+
+// ===== RESOURCE MODALS =====
+function openNewResourceModal(type) {
+    currentEditingResource = { type: type, name: null };
+    if (type === 'skill') {
+        showResourceEditor('Create New Skill', '# Skill: New Skill\nCategory: general\nTags: [tag1, tag2]\n\n## When to Use\n\n## Steps\n\n## Examples\n', true);
+    } else if (type === 'tool') {
+        const template = `"""
+iTaK Tool: New Tool - Description here.
+"""
+
+from tools.base import BaseTool, ToolResult
+
+
+class NewTool(BaseTool):
+    """Tool description for LLM."""
+
+    name = "new_tool"
+    description = "Short description"
+
+    async def execute(self, **kwargs) -> ToolResult:
+        """Execute the tool."""
+        return ToolResult(output="Result here")
+`;
+        const promptTemplate = `# Tool: new_tool
+
+## When to Use
+
+## Arguments
+
+## Examples
+`;
+        showToolEditor('Create New Tool', template, promptTemplate);
+    }
+}
+
+function showResourceEditor(title, content, isNew) {
+    document.getElementById('resourceModalTitle').textContent = title;
+    const modalContent = document.getElementById('resourceModalContent');
+    modalContent.innerHTML = `
+        <div class="editor-container">
+            ${isNew ? `
+                <div>
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-input" id="resourceName" placeholder="resource_name" required>
+                </div>
+            ` : ''}
+            <div>
+                <label class="form-label">Content</label>
+                <textarea class="editor-textarea" id="resourceContent">${content || ''}</textarea>
+            </div>
+            <div class="editor-actions">
+                <button class="chat-btn" onclick="closeResourceModal()">Cancel</button>
+                <button class="chat-btn" onclick="saveResource()">${isNew ? 'Create' : 'Save'}</button>
+            </div>
+        </div>
+    `;
+    document.getElementById('resourceModal').classList.add('open');
+}
+
+function showToolEditor(title, code, prompt) {
+    document.getElementById('resourceModalTitle').textContent = title;
+    const modalContent = document.getElementById('resourceModalContent');
+    const isNew = currentEditingResource.name === null;
+    modalContent.innerHTML = `
+        <div class="editor-container">
+            ${isNew ? `
+                <div>
+                    <label class="form-label">Tool Name (e.g., my_tool)</label>
+                    <input type="text" class="form-input" id="toolName" placeholder="my_tool" required>
+                </div>
+            ` : ''}
+            <div class="tool-editor-split">
+                <div class="editor-section">
+                    <label>Python Code</label>
+                    <textarea class="editor-textarea" id="toolCode">${code || ''}</textarea>
+                </div>
+                <div class="editor-section">
+                    <label>Prompt (optional)</label>
+                    <textarea class="editor-textarea" id="toolPrompt">${prompt || ''}</textarea>
+                </div>
+            </div>
+            <div class="editor-actions">
+                <button class="chat-btn" onclick="closeResourceModal()">Cancel</button>
+                <button class="chat-btn" onclick="saveTool()">${isNew ? 'Create' : 'Save'}</button>
+            </div>
+        </div>
+    `;
+    document.getElementById('resourceModal').classList.add('open');
+}
+
+function closeResourceModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('resourceModal').classList.remove('open');
+    currentEditingResource = null;
+}
+
+async function saveResource() {
+    const content = document.getElementById('resourceContent').value;
+    if (currentEditingResource.type === 'skill') {
+        const name = currentEditingResource.name || document.getElementById('resourceName')?.value;
+        if (!name) {
+            alert('Please enter a skill name');
+            return;
+        }
+        try {
+            const method = currentEditingResource.name ? 'PUT' : 'POST';
+            const url = currentEditingResource.name 
+                ? `${API}/api/resources/skills/${name}`
+                : `${API}/api/resources/skills`;
+            await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, content }),
+            });
+            closeResourceModal();
+            loadSkills();
+        } catch (e) {
+            alert('Failed to save skill: ' + e.message);
+        }
+    }
+}
+
+async function saveTool() {
+    const code = document.getElementById('toolCode').value;
+    const prompt = document.getElementById('toolPrompt').value;
+    const name = currentEditingResource.name || document.getElementById('toolName')?.value;
+    if (!name) {
+        alert('Please enter a tool name');
+        return;
+    }
+    try {
+        const method = currentEditingResource.name ? 'PUT' : 'POST';
+        const url = currentEditingResource.name 
+            ? `${API}/api/resources/tools/${name}`
+            : `${API}/api/resources/tools`;
+        await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, code, prompt }),
+        });
+        closeResourceModal();
+        loadTools();
+    } catch (e) {
+        alert('Failed to save tool: ' + e.message);
+    }
+}
 
 // ==================== INIT ====================
 document.getElementById('chatInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChat(); });
