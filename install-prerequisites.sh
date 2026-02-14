@@ -16,7 +16,22 @@ NC='\033[0m' # No Color
 
 # Detect OS
 detect_os() {
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    # Check for WSL
+    if grep -qi microsoft /proc/version 2>/dev/null || grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null; then
+        if [ -f /etc/os-release ]; then
+            . /etc/os-release
+            OS=$ID
+            VER=$VERSION_ID
+            WSL_VERSION="WSL 2"
+            if grep -qi "WSL1" /proc/version 2>/dev/null; then
+                WSL_VERSION="WSL 1"
+            fi
+            echo "Detected OS: $WSL_VERSION ($NAME $VERSION_ID)"
+        else
+            OS="wsl"
+            echo "Detected OS: WSL"
+        fi
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
         if [ -f /etc/os-release ]; then
             . /etc/os-release
             OS=$ID
@@ -24,14 +39,20 @@ detect_os() {
         else
             OS="unknown"
         fi
+        echo "Detected OS: $OS $VER"
     elif [[ "$OSTYPE" == "darwin"* ]]; then
         OS="macos"
+        ARCH=$(uname -m)
+        if [[ "$ARCH" == "arm64" ]]; then
+            echo "Detected OS: macOS (Apple Silicon ARM)"
+        else
+            echo "Detected OS: macOS (Intel x86_64)"
+        fi
     else
         echo -e "${RED}❌ Unsupported OS: $OSTYPE${NC}"
         exit 1
     fi
     
-    echo "Detected OS: $OS"
     echo ""
 }
 

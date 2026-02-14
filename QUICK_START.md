@@ -2,6 +2,27 @@
 
 Get iTaK running in **2 minutes** — just like Agent-Zero!
 
+## 🖥️ OS Detection & Platform Support
+
+iTaK **automatically detects** your operating system and uses the right installation method.
+
+**Supported Platforms:**
+- ✅ **Linux** (Ubuntu, Debian, Fedora, RHEL, CentOS, Arch)
+- ✅ **macOS** (Intel and Apple Silicon)
+- ✅ **WSL** (Windows Subsystem for Linux - recommended for Windows)
+- ✅ **Windows** (via WSL - auto-installs if missing)
+
+**Universal Installer:**
+```bash
+# Linux/macOS/WSL - One command detects your OS
+./install.sh
+
+# Windows - Auto-detects WSL or offers to install it
+install.bat
+```
+
+---
+
 ## ✅ Prerequisites
 
 Before you begin, you need **either**:
@@ -26,12 +47,14 @@ git --version      # Should be 2.0+
 
 **Option 1: Auto-install (Recommended)**
 ```bash
-# Linux/macOS
+# Linux/macOS/WSL
 ./install-prerequisites.sh
 
-# Windows
+# Windows (auto-installs WSL if needed)
 install-prerequisites.bat
 ```
+
+> **Windows Users:** iTaK works best in WSL. The installer will automatically detect if WSL is missing and offer to install it for you!
 
 **Option 2: Manual install**
 See [PREREQUISITES.md](PREREQUISITES.md) for complete installation guides.
