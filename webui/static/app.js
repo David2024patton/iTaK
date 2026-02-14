@@ -4,13 +4,6 @@ let ws = null;
 let authToken = sessionStorage.getItem('itak_token') || '';
 
 // ==================== AUTH HELPERS ====================
-function authHeaders() {
-    return {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`,
-    };
-}
-
 function apiFetch(url, options = {}) {
     options.headers = Object.assign({}, options.headers || {}, {
         'Authorization': `Bearer ${authToken}`,
