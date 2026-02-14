@@ -17,6 +17,9 @@ import sys
 from pathlib import Path
 
 
+# ─── Constants ────────────────────────────────────────────
+BOX_WIDTH = 55  # Width of header box content area
+
 # ─── Colour helpers ────────────────────────────────────────────
 GREEN = "\033[92m"
 YELLOW = "\033[93m"
@@ -39,7 +42,10 @@ def _info(msg: str) -> str:
 
 
 def _header(msg: str) -> str:
-    return f"\n{BOLD}{CYAN}╔═══════════════════════════════════════════════════════════╗{RESET}\n{BOLD}{CYAN}║  {msg}{' ' * (55 - len(msg))}║{RESET}\n{BOLD}{CYAN}╚═══════════════════════════════════════════════════════════╝{RESET}"
+    # Truncate message if too long, ensuring it fits within the box
+    display_msg = msg[:BOX_WIDTH] if len(msg) > BOX_WIDTH else msg
+    padding = max(0, BOX_WIDTH - len(display_msg))
+    return f"\n{BOLD}{CYAN}╔═══════════════════════════════════════════════════════════╗{RESET}\n{BOLD}{CYAN}║  {display_msg}{' ' * padding}║{RESET}\n{BOLD}{CYAN}╚═══════════════════════════════════════════════════════════╝{RESET}"
 
 
 def prompt_yes_no(question: str, default: bool = False) -> bool:
@@ -192,8 +198,15 @@ def update_env_file(neo4j_config):
         print(_warn(".env file not found - skipping update"))
         return
     
-    # Read existing .env
-    env_lines = env_path.read_text(encoding="utf-8").split("\n")
+    # Read existing .env and detect line ending style
+    env_content = env_path.read_text(encoding="utf-8")
+    # Detect line ending style (preserve original)
+    if "\r\n" in env_content:
+        line_sep = "\r\n"
+    else:
+        line_sep = "\n"
+    
+    env_lines = env_content.splitlines()
     
     # Update Neo4j variables
     neo4j_vars = {
@@ -220,8 +233,8 @@ def update_env_file(neo4j_config):
         if var not in updated_vars:
             updated_lines.append(f"{var}={value}")
     
-    # Write back
-    env_path.write_text("\n".join(updated_lines), encoding="utf-8")
+    # Write back with original line ending style
+    env_path.write_text(line_sep.join(updated_lines), encoding="utf-8")
     print(_ok("Updated .env with Neo4j configuration"))
 
 
