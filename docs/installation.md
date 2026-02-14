@@ -261,7 +261,7 @@ Edit `config.json` to customize:
 - **Adapter settings** (Discord, Telegram, Slack)
 - **WebUI configuration**
 
-See `docs/configuration.md` for detailed config options.
+See `docs/config.md` for detailed config options.
 
 ### 3. Run Diagnostic
 

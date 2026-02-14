@@ -5,6 +5,8 @@ iTaK Setup Script - Cross-platform Onboarding
 Automatically installs all dependencies and sets up the iTaK environment
 on Mac, Linux, Windows, and WSL.
 
+Requires Python 3.11+ (uses modern type hints like tuple[...])
+
 Usage:
     python setup.py
     python3 setup.py
