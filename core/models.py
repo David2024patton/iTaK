@@ -36,6 +36,9 @@ class ModelRouter:
         # Fallback models (tried if primary fails)
         self._fallbacks = config.get("fallbacks", {})
 
+        # Cache for FastEmbed model instance to avoid repeated loading
+        self._fastembed_cache: dict[str, Any] = {}
+
         # Disable litellm logging noise
         litellm.suppress_debug_info = True
 
@@ -90,7 +93,11 @@ class ModelRouter:
         """Run FastEmbed locally for zero-cost embeddings."""
         from fastembed import TextEmbedding
 
-        embedding_model = TextEmbedding(model_name=model)
+        # Check cache for existing model instance
+        if model not in self._fastembed_cache:
+            self._fastembed_cache[model] = TextEmbedding(model_name=model)
+        
+        embedding_model = self._fastembed_cache[model]
         embeddings = list(embedding_model.embed(texts))
         return [emb.tolist() for emb in embeddings]
 
