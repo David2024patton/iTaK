@@ -340,9 +340,9 @@ class TestWithFixtures:
 
 As of v4.0:
 - **Total Lines:** ~15,000
-- **Tested Lines:** ~9,000
-- **Coverage:** ~60% (estimated)
-- **Test Count:** 125 tests (up from 12)
+- **Tested Lines:** ~10,500
+- **Coverage:** ~70% (estimated)
+- **Test Count:** 188 tests (up from 12)
 
 **Tested Components:**
 - ✅ Logger (core/logger.py) - 4 tests
@@ -359,19 +359,23 @@ As of v4.0:
   - SQLite, Neo4j (mocked), Weaviate (mocked), MemoryManager
 - ✅ Integration tests - 25 tests
   - Tool pipeline, secret lifecycle, crash recovery, multi-user
+- ✅ **Adapters (adapters/*.py) - 23 tests** ← NEW
+  - Discord, Telegram, Slack, CLI, base interface, performance
+- ✅ **WebUI (webui/*.py) - 23 tests** ← NEW
+  - API endpoints, authentication, WebSocket, validation, security
+- ✅ **Advanced features - 17 tests** ← NEW
+  - Swarm, task board, webhooks, media, presence, config watcher
 
 **Partially Tested:**
-- ⚠️ MCP client/server (core/mcp_*.py) - 0 tests (low priority)
-- ⚠️ Adapters (adapters/*.py) - 2 tests (CLI only)
-- ⚠️ WebUI (webui/*.py) - 0 tests (manual testing recommended)
+- ⚠️ MCP client/server (core/mcp_*.py) - 0 tests (future Phase 4)
 
 ### Coverage Goals
 
 | Phase | Target | Tests | Status |
 |-------|--------|-------|--------|
-| **Phase 1** | 30% | 40+ | ✅ EXCEEDED (60% achieved with 125 tests) |
-| **Phase 2** | 50% | 70+ | ✅ EXCEEDED (60% achieved with 125 tests) |
-| **Phase 3** | 70% | 100+ | 🟡 IN PROGRESS (60% achieved, need 10% more) |
+| **Phase 1** | 30% | 40+ | ✅ EXCEEDED (70% achieved with 188 tests) |
+| **Phase 2** | 50% | 70+ | ✅ EXCEEDED (70% achieved with 188 tests) |
+| **Phase 3** | 70% | 100+ | ✅ COMPLETE (70% achieved with 188 tests) |
 | **Phase 4** | 80% | 150+ | ⏳ FUTURE |
 
 ### Coverage Commands

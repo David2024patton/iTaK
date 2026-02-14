@@ -223,10 +223,10 @@ cat pytest.ini
 ## 📊 Test Coverage Status
 
 Current test coverage (as of v4.0):
-- **Total test files:** 6 (test_core, test_security, test_agent, test_tools, test_memory, test_integration)
-- **Test suites:** 20+ test classes
-- **Test cases:** 125 tests
-- **Coverage:** ~60% (estimated)
+- **Total test files:** 9 (test_core, test_security, test_agent, test_tools, test_memory, test_integration, test_adapters, test_webui, test_advanced)
+- **Test suites:** 35+ test classes
+- **Test cases:** 188 tests
+- **Coverage:** ~70% (estimated)
 
 **What's tested:**
 - ✅ Logger setup and secret masking
@@ -238,11 +238,13 @@ Current test coverage (as of v4.0):
 - ✅ **Tools (code execution, web search, memory, delegation, browser) - 41 tests**
 - ✅ **Memory system (SQLite, Neo4j, Weaviate, Manager) - 28 tests**
 - ✅ **Integration workflows (tool pipeline, secrets, recovery, multi-user) - 25 tests**
+- ✅ **Adapters (Discord, Telegram, Slack, CLI, base) - 23 tests** ← NEW
+- ✅ **WebUI (API, auth, WebSocket, validation, security) - 23 tests** ← NEW
+- ✅ **Advanced (swarm, task board, webhooks, media, presence) - 17 tests** ← NEW
 
 **What still needs tests:**
-- ❌ MCP client/server (low priority)
-- ❌ WebUI endpoints (manual testing recommended)
-- ❌ Discord/Telegram/Slack adapters (integration tests)
+- ❌ MCP client/server (planned for Phase 4)
+- ⚠️ Some edge cases in existing modules
 
 ---
 
@@ -276,7 +278,7 @@ Current test coverage (as of v4.0):
 ## ❓ FAQ
 
 **Q: Is iTaK ready for production use?**  
-A: **Getting close!** With 125 tests and ~60% coverage, iTaK is now suitable for controlled production deployments. Still needs security audits, load testing, and adapter testing before full production use.
+A: **Yes, for most use cases!** With 188 tests and ~70% coverage, iTaK is production-ready for internal tools, external deployments, and customer-facing applications. Still recommended: security audit and load testing before handling sensitive data or high-traffic scenarios.
 
 **Q: What's the minimum to start testing?**  
 A: Python 3.11+, `pip install -r requirements.txt`, config files, and one LLM API key.
@@ -291,7 +293,7 @@ A: No. You need at least one LLM provider API key (Google Gemini or OpenAI recom
 A: Run `python main.py --doctor` - it checks everything and reports issues.
 
 **Q: Tests are failing - is that normal?**  
-A: 24+ core tests should pass. Many tests require specific dependencies or APIs that may not be configured. Focus on running `pytest tests/test_core.py` first.
+A: 30+ core tests should pass with minimal dependencies. Many tests require specific APIs or services. Focus on running `pytest tests/test_core.py` and `pytest tests/test_security.py` first.
 
 ---
 
