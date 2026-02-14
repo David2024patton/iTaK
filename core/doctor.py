@@ -392,10 +392,11 @@ def check_security() -> tuple[list[str], int, int]:
         bad_scheme, _ = guard.validate_url("file:///etc/passwd", source="doctor")
         
         # Test 2: Allow safe schemes (http/https) when private IP blocking is disabled
-        # Note: With block_private_ips=False, no DNS resolution is performed
-        ok_scheme, _ = guard.validate_url("http://safe-domain.example", source="doctor")
+        # Note: With block_private_ips=False, no DNS resolution is performed,
+        # so any hostname format is accepted (only scheme is validated)
+        ok_scheme, _ = guard.validate_url("http://any-hostname.test", source="doctor")
         
-        # Test 3: Block private IPs when enabled
+        # Test 3: Block private IPs when enabled (using direct IP, no DNS needed)
         guard_with_ip_check = SSRFGuard({"security": {"block_private_ips": True}})
         bad_ip, _ = guard_with_ip_check.validate_url("http://127.0.0.1", source="doctor")
         
