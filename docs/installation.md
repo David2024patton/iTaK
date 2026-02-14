@@ -50,7 +50,7 @@ The automated setup script will:
 6. ✅ **Install all Python dependencies** from requirements.txt
 7. ✅ **Install Playwright browsers** for web automation
 8. ✅ **Copy configuration files** (.env and config.json from examples)
-9. ✅ **Create required directories** (data/, logs/, memory/)
+9. ✅ **Create required directories** (data/, logs/)
 10. ✅ **Provide next steps** and usage instructions
 
 ## Prerequisites
@@ -230,7 +230,7 @@ copy config.json.example config.json
 ### 6. Create Data Directories
 
 ```bash
-mkdir -p data logs memory
+mkdir -p data logs
 ```
 
 ## Post-Installation Configuration

@@ -330,7 +330,7 @@ def create_directories() -> bool:
     """Create necessary data directories."""
     print_info("Creating data directories...")
     
-    directories = ["data", "logs", "memory"]
+    directories = ["data", "logs"]
     
     for dirname in directories:
         dirpath = Path(dirname)
