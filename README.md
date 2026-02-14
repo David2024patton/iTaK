@@ -119,12 +119,27 @@
 
 ---
 
+## 🚀 Quick Start
+
+**New to iTaK?** Start here:
+
+👉 **[INSTALLATION GUIDE](INSTALLATION_GUIDE.md)** - Complete step-by-step walkthrough for new users:
+- 5-step installation (5-10 minutes)
+- What iTaK does once installed
+- Common use cases with examples
+- Troubleshooting
+
+**Already installed?** Jump to the documentation below.
+
+---
+
 ## 📚 Documentation
 
 Detailed guides for every module, config option, and API endpoint:
 
 | Guide | What It Covers |
 |-------|---------------|
+| **[Installation Guide](INSTALLATION_GUIDE.md)** | **Complete new user walkthrough - install and get started** |
 | [Getting Started](docs/getting-started.md) | Install, configure, and run in 5 minutes |
 | [Architecture](docs/architecture.md) | System overview, monologue loop, data flow, subsystem map |
 | [Models & LLMs](docs/models.md) | Add/swap providers - Gemini, OpenAI, Claude, Ollama, etc. |

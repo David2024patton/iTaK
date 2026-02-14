@@ -1,0 +1,645 @@
+# 🚀 iTaK Installation Guide - New User Walkthrough
+
+> **Quick Summary:** Get iTaK running in 5 simple steps (5-10 minutes). This guide walks you through installation and explains what iTaK does once running.
+
+---
+
+## 📋 Table of Contents
+1. [What is iTaK?](#what-is-itak)
+2. [Installation (5 Steps)](#installation-5-steps)
+3. [What iTaK Does Once Installed](#what-itak-does-once-installed)
+4. [Common Use Cases](#common-use-cases)
+5. [Troubleshooting](#troubleshooting)
+6. [Next Steps](#next-steps)
+
+---
+
+## 🤔 What is iTaK?
+
+**iTaK (Intelligent Task Automation Kernel)** is an AI-powered assistant that can:
+
+- 💬 **Chat with you** via terminal, Discord, Telegram, Slack, or web dashboard
+- 🔧 **Execute code** to solve problems, automate tasks, and build projects
+- 🧠 **Remember everything** using a 4-tier memory system (like MemGPT)
+- 🩹 **Fix its own errors** automatically using self-healing AI
+- 🌐 **Search the web** and interact with websites
+- 📊 **Manage tasks** on a Kanban board (Mission Control)
+- 🤖 **Control multiple sub-agents** working in parallel (swarms)
+- 🔌 **Integrate with tools** via webhooks and MCP protocol
+
+Think of it as **ChatGPT + GitHub Copilot + n8n automation** - all in one self-hosted package.
+
+---
+
+## 🛠️ Installation (5 Steps)
+
+### Step 1: Prerequisites
+
+Make sure you have:
+
+```bash
+# Python 3.11 or higher
+python --version
+# Should show: Python 3.11.x or higher
+
+# pip (Python package manager)
+pip --version
+
+# Git (to clone the repository)
+git --version
+```
+
+**Don't have Python 3.11+?** Download from [python.org](https://www.python.org/downloads/)
+
+---
+
+### Step 2: Clone the Repository
+
+```bash
+# Clone iTaK
+git clone https://github.com/David2024patton/iTaK.git
+cd iTaK
+```
+
+---
+
+### Step 3: Install Dependencies
+
+```bash
+# Install all required packages
+pip install -r requirements.txt
+
+# This takes 2-3 minutes and installs:
+# - LiteLLM (AI model router)
+# - FastAPI (web dashboard)
+# - Discord/Telegram/Slack libraries
+# - Database drivers
+# - Security tools
+# - And ~30 more packages
+```
+
+**Tip:** Use a virtual environment to keep things clean:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+---
+
+### Step 4: Configure iTaK
+
+```bash
+# Copy example configuration files
+cp config.json.example config.json
+cp .env.example .env
+
+# Edit .env and add AT LEAST ONE API key
+nano .env  # or use your favorite editor
+```
+
+**Minimum Configuration (.env file):**
+```bash
+# Add ONE of these (iTaK supports multiple LLM providers):
+
+# Option 1: Google Gemini (recommended - has free tier)
+GEMINI_API_KEY=your_gemini_key_here
+
+# Option 2: OpenAI
+OPENAI_API_KEY=your_openai_key_here
+
+# Option 3: Anthropic Claude
+ANTHROPIC_API_KEY=your_anthropic_key_here
+
+# Option 4: Local Ollama (free, runs on your machine)
+OLLAMA_BASE_URL=http://localhost:11434
+```
+
+**Where to get API keys:**
+- **Gemini**: [aistudio.google.com](https://aistudio.google.com/) (Free tier available)
+- **OpenAI**: [platform.openai.com](https://platform.openai.com/)
+- **Anthropic**: [console.anthropic.com](https://console.anthropic.com/)
+- **Ollama**: [ollama.com](https://ollama.com/) (Run LLMs locally)
+
+**Optional Settings (you can skip these for now):**
+- `DISCORD_TOKEN` - To use iTaK as a Discord bot
+- `TELEGRAM_TOKEN` - To use iTaK as a Telegram bot
+- `SLACK_TOKEN` - To use iTaK as a Slack bot
+- `NEO4J_URI` - For knowledge graph memory (advanced)
+
+---
+
+### Step 5: Run iTaK!
+
+```bash
+# Option 1: Terminal Chat (simplest)
+python main.py
+
+# Option 2: With Web Dashboard
+python main.py --webui
+
+# Option 3: Run System Diagnostics (recommended first time)
+python main.py --doctor
+```
+
+**First Run - What to Expect:**
+
+```
+🧠 iTaK - Intelligent Task Automation Kernel v4
+──────────────────────────────────────────────────
+
+🔍 Running preflight checks...
+  ✓ Python version: 3.11.5
+  ✓ Configuration loaded
+  ✓ Memory database initialized
+  ✓ LLM connection verified (Gemini)
+  ✓ Security modules loaded
+  ✓ Tools loaded: 15 tools
+  ⚠ Neo4j not connected (optional)
+  ⚠ Discord adapter disabled (no token)
+
+🚀 iTaK is ready!
+
+> 
+```
+
+You can now start chatting! Try asking:
+- "Hello, what can you do?"
+- "Search the web for latest Python news"
+- "Create a Python script that generates fibonacci numbers"
+- "Remember that my favorite color is blue"
+
+---
+
+## 🎯 What iTaK Does Once Installed
+
+Once running, iTaK becomes your AI-powered assistant with these capabilities:
+
+### 1. 💬 **Natural Conversation**
+```
+You: Write me a Python script to sort a list
+iTaK: I'll create that for you. Let me write the code...
+     [executes code tool]
+     Done! I've created sort_list.py with quicksort implementation.
+     Would you like me to test it?
+```
+
+### 2. 🔧 **Code Execution**
+iTaK can:
+- Write and run Python/Bash scripts
+- Install packages (`pip install requests`)
+- Read and edit files
+- Run tests and fix bugs
+- Deploy code
+
+**Example:**
+```
+You: Install Flask and create a hello world web app
+iTaK: [Executes: pip install flask]
+     [Creates: app.py with Flask code]
+     [Runs: python app.py]
+     Web server started on http://localhost:5000
+```
+
+### 3. 🧠 **4-Tier Memory System**
+iTaK remembers everything across sessions:
+
+**Tier 1 - Core Context**: Your name, preferences, active projects  
+**Tier 2 - Recall**: Recent conversation (last 20 messages)  
+**Tier 3 - Archival**: Searchable long-term storage (all past conversations)  
+**Tier 4 - Knowledge Graph**: Entity relationships (if Neo4j configured)
+
+**Example:**
+```
+Day 1:
+You: Remember that I'm working on a FastAPI project called "TaskMaster"
+iTaK: Saved to memory. I'll remember your TaskMaster project.
+
+Day 3:
+You: What was I working on?
+iTaK: You're working on a FastAPI project called "TaskMaster"
+```
+
+### 4. 🩹 **Self-Healing**
+When iTaK encounters errors, it automatically:
+1. Classifies the error type
+2. Checks memory for past fixes
+3. Reasons about the solution
+4. Researches if needed
+5. Learns from the fix
+
+**Example:**
+```
+iTaK: [Runs code with missing import]
+     ❌ Error: ModuleNotFoundError: No module named 'requests'
+     
+     [Self-healing activates]
+     🔧 Installing missing package...
+     [Executes: pip install requests]
+     ✓ Fixed! Retrying...
+     [Code runs successfully]
+```
+
+### 5. 🌐 **Web Search & Interaction**
+```
+You: What's the current Python version?
+iTaK: [Searches web]
+     The latest Python version is 3.12.1, released on December 8, 2024.
+     
+You: Go to python.org and download it
+iTaK: [Opens browser automation]
+     [Navigates to python.org]
+     Here's the download link: [URL]
+```
+
+### 6. 📊 **Mission Control (Task Board)**
+iTaK automatically tracks tasks:
+
+```
+You: I need to build a REST API and write tests
+iTaK: [Creates task: "Build REST API" → inbox]
+     [Creates task: "Write tests" → inbox]
+     I've added these to the task board. Starting with the API...
+     [Moves "Build REST API" → in_progress]
+```
+
+View tasks in the web dashboard (`python main.py --webui`)
+
+### 7. 🐝 **Multi-Agent Swarms**
+Delegate to specialist sub-agents:
+
+```
+You: Research Python web frameworks, compare them, and write a report
+iTaK: [Spawns 3 agents in parallel]
+     - Research Agent: Gathering framework data
+     - Analysis Agent: Comparing features
+     - Writer Agent: Drafting report
+     
+     [Merges results]
+     Here's your comprehensive comparison report...
+```
+
+### 8. 🔌 **Multi-Channel Access**
+
+Run iTaK on multiple channels simultaneously:
+
+**Terminal:**
+```bash
+python main.py
+```
+
+**Web Dashboard:**
+```bash
+python main.py --webui
+# Open http://localhost:8080
+```
+
+**Discord Bot:**
+```bash
+# Add DISCORD_TOKEN to .env
+python main.py --adapter discord
+```
+
+**Telegram Bot:**
+```bash
+# Add TELEGRAM_TOKEN to .env
+python main.py --adapter telegram
+```
+
+**All at once:**
+```bash
+python main.py --adapter discord --webui
+# Discord bot + web dashboard running together
+```
+
+### 9. 🔒 **Security Features**
+- **Secret detection**: Automatically masks API keys in logs
+- **Output guard**: Redacts PII (emails, SSNs, credit cards)
+- **Rate limiting**: Prevents abuse
+- **Multi-user RBAC**: Owner → Sudo → User permissions
+- **Code scanning**: Checks generated code for vulnerabilities
+
+### 10. 🔗 **Integration Capabilities**
+
+**Webhooks (n8n/Zapier):**
+```json
+POST /webhooks/inbound
+{
+  "task": "Generate daily report",
+  "callback_url": "https://your-webhook.com/result"
+}
+```
+
+**MCP (Model Context Protocol):**
+- iTaK can connect to MCP servers (GitHub, databases)
+- iTaK can BE an MCP server for other tools
+
+---
+
+## 📚 Common Use Cases
+
+### Use Case 1: Code Development Assistant
+
+```
+You: Create a FastAPI CRUD app for managing books
+iTaK: I'll build that for you:
+     1. Installing FastAPI and dependencies...
+     2. Creating project structure...
+     3. Writing models.py, routes.py, main.py...
+     4. Creating database schema...
+     5. Writing tests...
+     Done! Run with: python main.py
+     
+You: The POST endpoint isn't working
+iTaK: [Debugs code]
+     Found the issue - missing request body validation.
+     [Fixes code]
+     Fixed! Try again.
+```
+
+### Use Case 2: Research & Analysis
+
+```
+You: Research the top 5 JavaScript frameworks in 2024 and create a comparison table
+iTaK: [Web search: "top javascript frameworks 2024"]
+     [Gathers data on React, Vue, Angular, Svelte, Next.js]
+     [Creates markdown table with features, pros, cons]
+     Here's your comparison table...
+```
+
+### Use Case 3: DevOps Automation
+
+```
+You: Check server disk space and send alert if > 80%
+iTaK: [Executes: df -h]
+     Current usage: 45%
+     [Saves monitoring script]
+     I've created monitor_disk.sh and scheduled it with cron.
+     You'll get alerts if disk exceeds 80%.
+```
+
+### Use Case 4: Documentation Generator
+
+```
+You: Generate API documentation for all Python files in /src
+iTaK: [Scans /src directory]
+     [Analyzes 15 Python files]
+     [Extracts docstrings and function signatures]
+     [Generates markdown documentation]
+     Created API_DOCS.md with documentation for all modules.
+```
+
+### Use Case 5: Multi-Agent Project
+
+```
+You: Build a blog platform - one agent for backend, one for frontend, one for database
+iTaK: [Spawns parallel swarm]
+     Backend Agent: Creating Flask API...
+     Frontend Agent: Building React app...
+     Database Agent: Setting up PostgreSQL schema...
+     
+     [30 seconds later]
+     All agents complete! Integrating components...
+     Blog platform ready at http://localhost:3000
+```
+
+### Use Case 6: Discord/Telegram Bot
+
+```bash
+# In Discord:
+@iTaK Write me a Python function to calculate prime numbers
+[iTaK responds with code in Discord]
+
+# In Telegram:
+/ask Deploy my project to AWS
+[iTaK executes deployment steps and reports progress]
+```
+
+### Use Case 7: Scheduled Tasks
+
+```
+You: Every Monday at 9am, search for "Python news" and save a summary
+iTaK: [Creates scheduled task]
+     [Sets up weekly webhook]
+     Done! I'll research Python news every Monday and save summaries to /reports
+```
+
+---
+
+## 🔧 Troubleshooting
+
+### Problem: "config.json not found"
+```bash
+# Solution:
+cp config.json.example config.json
+```
+
+### Problem: "No LLM API key configured"
+```bash
+# Solution: Edit .env and add at least ONE key:
+GEMINI_API_KEY=your_key_here
+# OR
+OPENAI_API_KEY=your_key_here
+```
+
+### Problem: "ModuleNotFoundError: No module named 'X'"
+```bash
+# Solution: Reinstall dependencies
+pip install -r requirements.txt
+```
+
+### Problem: "Permission denied" when running code
+```bash
+# Solution: Enable code execution in config.json
+{
+  "security": {
+    "sandbox_enabled": true,  # Allows code execution
+    ...
+  }
+}
+```
+
+### Problem: Tests fail with import errors
+```bash
+# Solution: Set PYTHONPATH
+PYTHONPATH=$(pwd) python3 -m pytest tests/
+```
+
+### Problem: iTaK responses are slow
+```bash
+# Solution 1: Use faster models
+# Edit config.json:
+{
+  "models": {
+    "chat": {
+      "model": "gemini/gemini-2.0-flash"  # Faster than gemini-pro
+    }
+  }
+}
+
+# Solution 2: Use local Ollama
+ollama run llama2
+# Then set OLLAMA_BASE_URL in .env
+```
+
+### Problem: "WebUI won't start"
+```bash
+# Check if port 8080 is in use:
+lsof -i :8080
+
+# Change port in config.json:
+{
+  "webui": {
+    "port": 8081  # Use different port
+  }
+}
+```
+
+### Problem: Memory/database errors
+```bash
+# Reset databases:
+rm -rf data/db/*.db
+# iTaK will recreate them on next run
+```
+
+---
+
+## 🎓 Next Steps
+
+### 1. **Explore the Web Dashboard**
+```bash
+python main.py --webui
+# Open http://localhost:8080
+```
+
+**Dashboard Features:**
+- 📊 Monitor tab: Real-time logs and stats
+- 🎯 Mission Control: Task board (Kanban)
+- 🔧 Tools: See all loaded tools
+- 📚 Memory: Browse saved memories
+- 👥 Users: Manage RBAC permissions
+
+### 2. **Run System Diagnostics**
+```bash
+python main.py --doctor
+```
+This checks:
+- Python version
+- Dependencies
+- Configuration
+- Security modules
+- Database connections
+- API key validity
+
+### 3. **Explore Advanced Features**
+
+**Neo4j Knowledge Graph:**
+```bash
+# Install Neo4j (Docker):
+docker run -p 7687:7687 -p 7474:7474 neo4j:latest
+
+# Add to .env:
+NEO4J_URI=bolt://localhost:7687
+NEO4J_PASSWORD=your_password
+
+# iTaK will now build knowledge graphs of entities and relationships
+```
+
+**Discord Bot:**
+```bash
+# 1. Create Discord bot at: https://discord.com/developers/applications
+# 2. Copy bot token
+# 3. Add to .env:
+DISCORD_TOKEN=your_token_here
+
+# 4. Run:
+python main.py --adapter discord
+```
+
+**MCP Integration:**
+```bash
+# Connect to GitHub MCP server:
+# Edit config.json mcp.clients section
+# iTaK can now access your GitHub repos as a tool
+```
+
+### 4. **Read More Documentation**
+
+- **[TESTING.md](TESTING.md)** - How to run the 258 tests (85% coverage)
+- **[READY_TO_TEST.md](READY_TO_TEST.md)** - Quick reference for testing
+- **[PHASE_4_COMPLETE.md](PHASE_4_COMPLETE.md)** - Production readiness details
+- **[README.md](README.md)** - Full feature list and architecture
+
+### 5. **Join the Community**
+
+- **GitHub Issues**: Report bugs or request features
+- **Discord**: [Link to Discord community]
+- **Documentation**: [Link to full docs]
+
+### 6. **Customize iTaK**
+
+**Create custom tools:**
+```python
+# tools/my_tool.py
+from tools.base import BaseTool
+
+class MyTool(BaseTool):
+    name = "my_custom_tool"
+    description = "Does something awesome"
+    
+    def execute(self, **kwargs):
+        return {"result": "awesome"}
+```
+
+**Create agent profiles:**
+```markdown
+# agents/profiles/expert.md
+You are an expert Python developer with 10 years experience.
+You write clean, well-documented code following PEP 8.
+```
+
+**Add extensions:**
+```python
+# extensions/my_extension.py
+def on_message_loop_start(agent, message):
+    print(f"New message: {message}")
+    # Your custom logic here
+```
+
+---
+
+## 🎉 You're Ready!
+
+You now have iTaK installed and understand what it does. Start experimenting:
+
+```bash
+# Start chatting
+python main.py
+
+# Or with web dashboard
+python main.py --webui
+```
+
+**First Commands to Try:**
+1. `Hello! What can you do?`
+2. `Create a Python script that prints "Hello, World!"`
+3. `Search the web for today's top tech news`
+4. `Remember that I'm learning Python`
+5. `Show me what tasks are on the board`
+
+**Happy automating! 🚀**
+
+---
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/David2024patton/iTaK/issues)
+- **Documentation**: See docs/ folder
+- **Diagnostics**: Run `python main.py --doctor` for health check
+
+---
+
+**Last Updated**: February 2026  
+**iTaK Version**: 4.0  
+**Test Coverage**: 85% (258 tests)  
+**Production Ready**: ✅ Yes (Mission-Critical)
