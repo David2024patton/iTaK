@@ -138,6 +138,8 @@ Detailed guides for every module, config option, and API endpoint:
 | [Prompts & Skills](docs/prompts.md) | Prompt assembly pipeline and skill system |
 | [WebUI & API](docs/webui.md) | Dashboard features and complete REST API reference |
 | [Configuration](docs/config.md) | Complete config.json reference with every option |
+| **[Testing Guide](TESTING.md)** | **Comprehensive testing guide - writing tests, running tests, coverage** |
+| **[Ready to Test](READY_TO_TEST.md)** | **Quick readiness checklist - validate your setup in 5 minutes** |
 
 ---
 
@@ -264,6 +266,19 @@ python main.py --webui-only
 ```bash
 docker-compose up -d
 ```
+
+### ✅ Verify Installation
+
+```bash
+# Run comprehensive diagnostics
+python main.py --doctor
+
+# Run tests
+pytest -v
+```
+
+📖 **See [READY_TO_TEST.md](READY_TO_TEST.md)** for complete testing readiness checklist  
+📖 **See [TESTING.md](TESTING.md)** for comprehensive testing guide
 
 ---
 
