@@ -16,34 +16,40 @@
 
 ## 🚀 Quick Start
 
-### ⚡ Minimal Install (iTaK Only - 2 minutes)
+### ⚡ ONE-COMMAND INSTALL (All Platforms - 2 minutes)
 
-**Best for:** Quick testing, demos, learning
-
-```bash
-# Linux/macOS
-git clone https://github.com/David2024patton/iTaK.git && cd iTaK && ./quick-install.sh
-
-# Windows
-git clone https://github.com/David2024patton/iTaK.git && cd iTaK && quick-install.bat
-```
-
-### 🏢 Full Stack Install (Production-Ready - 5 minutes)
-
-**Includes:** iTaK + Neo4j + SearXNG + Weaviate
+**One Python script works everywhere** — Linux, macOS, Windows (WSL), WSL directly
 
 ```bash
-# One command for complete setup:
-git clone https://github.com/David2024patton/iTaK.git && cd iTaK && ./install-full-stack.sh
-
-# Or via docker-compose:
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
-cp .env.example .env  # Add your API keys
-docker-compose up -d
+python install.py
 ```
 
+**That's it!** The installer will:
+- ✅ Detect your OS automatically
+- ✅ Install prerequisites (Docker, Git)
+- ✅ Let you choose: Minimal or Full Stack
+- ✅ Configure everything
+- ✅ Start iTaK
+
 **Then visit http://localhost:8000 and configure via Web UI!**
+
+### Installation Options
+
+```bash
+python install.py              # Interactive - choose minimal or full stack
+python install.py --full-stack # Install with Neo4j, Weaviate, SearXNG
+python install.py --minimal    # Install iTaK only (fastest)
+python install.py --help       # Show all options
+```
+
+### What Gets Installed
+
+| Option | iTaK | Neo4j | Weaviate | SearXNG | Time |
+|--------|------|-------|----------|---------|------|
+| **Minimal** | ✅ | ❌ | ❌ | ❌ | 2 min |
+| **Full Stack** | ✅ | ✅ | ✅ | ✅ | 5 min |
 
 📚 **[QUICK START GUIDE](QUICK_START.md)** — Complete installation walkthrough  
 🆚 **Coming from Agent-Zero?** [iTAK vs Agent-Zero](iTAK_VS_AGENT_ZERO.md)

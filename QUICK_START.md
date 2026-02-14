@@ -1,6 +1,33 @@
 # iTaK Quick Start Guide
 
-Get iTaK running in **2 minutes** — just like Agent-Zero!
+Get iTaK up and running in **2 minutes** with ONE Python script!
+
+## 🎯 Universal Installer (Recommended)
+
+**ONE command works on ALL platforms** — Linux, macOS, Windows (WSL), and WSL directly!
+
+```bash
+git clone https://github.com/David2024patton/iTaK.git
+cd iTaK
+python install.py
+```
+
+That's it! The installer will:
+- ✅ Auto-detect your OS (Linux, macOS, Windows, WSL)
+- ✅ Install prerequisites (Docker, Git) if needed
+- ✅ Ask you: Minimal or Full Stack?
+- ✅ Configure everything automatically
+- ✅ Start iTaK
+
+**Installation Options:**
+```bash
+python install.py              # Interactive (recommended)
+python install.py --full-stack # Full stack with databases
+python install.py --minimal    # iTaK only (fastest)
+python install.py --help       # Show all options
+```
+
+---
 
 ## 🖥️ OS Detection & Platform Support
 
