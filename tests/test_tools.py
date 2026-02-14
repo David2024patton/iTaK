@@ -302,7 +302,7 @@ class TestMemoryTools:
         )
         
         # Should fail gracefully
-        assert result.success is False or result.error
+        assert result.success is False or (hasattr(result, 'error') and bool(result.error))
 
 
 # ============================================================
