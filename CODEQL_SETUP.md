@@ -48,5 +48,6 @@ Note: The default setup is simpler but provides less control and fewer customiza
 
 ## References
 
-- [GitHub Docs: Default vs Advanced Setup](https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning-for-a-repository)
-- [Troubleshooting Code Scanning](https://docs.github.com/en/code-security/code-scanning/troubleshooting-code-scanning)
+- [GitHub Docs: Configuring Code Scanning](https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning-for-a-repository)
+- [GitHub Docs: About CodeQL](https://docs.github.com/en/code-security/code-scanning/introduction-to-code-scanning/about-code-scanning-with-codeql)
+- [Troubleshooting Default Setup Overrides](https://docs.github.com/en/enterprise-cloud@latest/code-security/securing-your-organization/troubleshooting-security-configurations/unexpected-default-setup)
