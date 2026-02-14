@@ -167,7 +167,7 @@ Expected output (example):
   ...
 
 ========================================================
-  XX passed, Y failed (optional services)
+  N passed, M failed (optional services)
 ========================================================
 ```
 
@@ -180,7 +180,7 @@ python -m pytest tests/ -q
 
 All tests should pass (example):
 ```
-XX passed in Y.YYs
+N passed in X.XXs
 ```
 
 ### Test basic functionality
