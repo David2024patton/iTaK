@@ -130,6 +130,70 @@ This starts:
 
 ---
 
+## Verification
+
+After setup, verify everything is working:
+
+### Run the diagnostic tool
+```bash
+python main.py --doctor
+```
+
+This checks:
+- ✅ Python version (3.11+)
+- ✅ All required packages
+- ✅ Configuration files
+- ✅ API keys
+- ✅ Security systems
+- ✅ Tool availability
+
+Expected output:
+```
+========================================================
+   iTaK Doctor - Full System Diagnostic
+========================================================
+
+-- Preflight (Python, packages, config) --
+  [OK]  Python 3.11+
+  [OK]  Package: litellm
+  [OK]  Package: pydantic
+  ...
+  [OK]  config.json found
+  [OK]  .env file found
+
+-- Security Hardening --
+  [OK]  SSRF Guard functional
+  [OK]  Path Guard functional
+  ...
+
+========================================================
+  61 passed, 5 failed (optional services)
+========================================================
+```
+
+The 5 failures are optional services (Neo4j, Weaviate, SearXNG) - these don't prevent basic operation.
+
+### Run the test suite
+```bash
+python -m pytest tests/ -q
+```
+
+All tests should pass:
+```
+17 passed in 3.30s
+```
+
+### Test basic functionality
+```bash
+# Start in CLI mode
+python main.py
+
+# In another terminal, check if the agent responds
+# Type a simple question like "What's 2+2?"
+```
+
+---
+
 ## Troubleshooting
 
 | Problem | Solution |
