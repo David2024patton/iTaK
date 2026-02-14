@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <title>iTaK - Intelligent Task Automation Kernel</title>
+    <title>Agent Zero</title>
     <link rel="icon" type="image/svg+xml" href="public/favicon.svg">
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="css/messages.css">
@@ -38,6 +38,7 @@
         crossorigin="anonymous"></script>
 
     <!-- Then load Alpine.js -->
+    <!-- <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script> -->
     <script type="module" src="js/initFw.js"></script>
 
     <script src="vendor/ace-min/ace.js"></script>
@@ -60,7 +61,7 @@
 
     <script>
         // Expose git info for sidebar component
-        globalThis.gitinfo = { version: "iTaK v4.0", commit_time: "{{version_time}}" };
+        globalThis.gitinfo = { version: "{{version_no}}", commit_time: "{{version_time}}" };
 
         // Expose runtime info for frontend components (development gating, runtime-scoped cookies).
         globalThis.runtimeInfo = {
@@ -118,7 +119,7 @@
                 <x-component path="chat/input/chat-bar.html"></x-component>
             </div>
         </div>
-    </div>
+                        </div>
 
     <!-- Drag and Drop Overlay Component -->
     <x-component path="chat/attachments/dragDropOverlay.html"></x-component>
