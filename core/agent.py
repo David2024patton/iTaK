@@ -297,7 +297,7 @@ class Agent:
         if self.memory:
             await self.memory.close()
         await self.checkpoint.save()
-        logger.info("Shutdown complete")
+        self.logger.log(EventType.SYSTEM, "Shutdown complete")
 
     def _load_config(self, config: Optional[dict] = None) -> dict:
         """Load config from dict or config.json."""
