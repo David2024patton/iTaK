@@ -157,7 +157,7 @@ Maximum iterations: {self.max_iterations}
                 data = dirtyjson.loads(response)
             else:
                 data = json.loads(response)
-                
+
             if isinstance(data, dict):
                 tool_calls = data.get("tool_calls", data.get("tools", []))
                 if isinstance(tool_calls, list):
