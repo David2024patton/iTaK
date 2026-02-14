@@ -31,7 +31,7 @@ class SocialMediaTool(BaseTool):
 
         Args:
             platform: Platform name (facebook, twitter, linkedin, instagram)
-            action: Action to perform (post, read, reply, like, get_profile)
+            action: Action to perform (post, read, reply, like)
             message: Message content (for post/reply actions)
             post_id: Post/tweet ID (for reply/like actions)
             user: Username to interact with

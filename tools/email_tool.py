@@ -95,9 +95,9 @@ class EmailTool(BaseTool):
             msg["Subject"] = subject
             msg.attach(MIMEText(body, "plain"))
 
-            # Send email
-            with smtplib.SMTP(smtp_server, smtp_port) as server:
-                server.starttls()
+            # Send email with TLS
+            with smtplib.SMTP(smtp_server, smtp_port, timeout=30) as server:
+                server.starttls()  # Upgrade to TLS
                 server.login(smtp_user, smtp_password)
                 server.send_message(msg)
 

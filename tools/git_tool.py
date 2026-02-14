@@ -25,6 +25,7 @@ class GitTool(BaseTool):
         message: str = "",
         branch: str = "",
         files: Optional[list] = None,
+        limit: int = 10,
         **kwargs,
     ) -> ToolResult:
         """Execute a Git operation.
@@ -35,6 +36,7 @@ class GitTool(BaseTool):
             message: Commit message (for commit action)
             branch: Branch name (for checkout, push, pull actions)
             files: List of files to add (for commit action)
+            limit: Number of commits to show (for log action, default: 10)
         """
         if not action:
             return ToolResult(output="Error: 'action' is required.", error=True)
@@ -57,7 +59,7 @@ class GitTool(BaseTool):
             elif action == "checkout":
                 return await self._git_checkout(repo, branch)
             elif action == "log":
-                return await self._git_log(repo)
+                return await self._git_log(repo, limit)
             else:
                 return ToolResult(
                     output=f"Unknown Git action: {action}. Supported: clone, status, diff, add, commit, push, pull, checkout, log",
