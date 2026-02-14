@@ -13,6 +13,11 @@ function switchTab(tab) {
     else if (tab === 'logs') loadLogs();
     else if (tab === 'subsystems') loadSubsystems();
     else if (tab === 'users') loadUsers();
+    else if (tab === 'heartbeat') loadHeartbeat();
+    else if (tab === 'webhooks') loadWebhooks();
+    else if (tab === 'swarm') loadSwarm();
+    else if (tab === 'mcp') loadMCP();
+    else if (tab === 'config') loadConfig();
 }
 
 // ==================== WEBSOCKET ====================
@@ -458,6 +463,207 @@ async function deleteUser(userId) {
         await fetch(`${API}/api/users/${userId}`, { method: 'DELETE' });
         loadUsers();
     } catch (e) { console.error('Failed to delete user:', e); }
+}
+
+// ======================================================
+//                  HEARTBEAT TAB
+// ======================================================
+
+async function loadHeartbeat() {
+    try {
+        // Load uptime stats
+        const uptimeRes = await fetch(`${API}/api/heartbeat/uptime`);
+        const uptimeData = await uptimeRes.json();
+        const uptimeContainer = document.getElementById('heartbeatUptime');
+        uptimeContainer.innerHTML = `
+            <div class="stat-grid" style="padding:16px;">
+                ${Object.entries(uptimeData).map(([key, value]) => `
+                    <div class="stat-box">
+                        <div class="stat-label">${key.replace(/_/g, ' ')}</div>
+                        <div class="stat-value">${typeof value === 'object' ? JSON.stringify(value) : value}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        // Load health check history
+        const historyRes = await fetch(`${API}/api/heartbeat/history?limit=20`);
+        const historyData = await historyRes.json();
+        const history = historyData.history || [];
+        
+        const historyContainer = document.getElementById('heartbeatHistory');
+        if (history.length === 0) {
+            historyContainer.innerHTML = '<div style="color:var(--text-muted);padding:20px;">No heartbeat history</div>';
+            return;
+        }
+        
+        historyContainer.innerHTML = history.map(h => `
+            <div class="heartbeat-item">
+                <div class="heartbeat-time">${new Date(h.timestamp * 1000).toLocaleString()}</div>
+                <div class="heartbeat-status ${h.status === 'healthy' ? 'status-healthy' : 'status-unhealthy'}">${h.status}</div>
+                ${h.details ? `<div class="heartbeat-details">${h.details}</div>` : ''}
+            </div>
+        `).join('');
+    } catch (e) {
+        console.error('Failed to load heartbeat:', e);
+        document.getElementById('heartbeatUptime').innerHTML = '<div style="color:var(--accent-red);padding:20px;">Failed to load heartbeat data</div>';
+    }
+}
+
+// ======================================================
+//                  WEBHOOKS TAB
+// ======================================================
+
+async function loadWebhooks() {
+    try {
+        const res = await fetch(`${API}/api/webhooks/stats`);
+        const data = await res.json();
+        
+        const container = document.getElementById('webhooksStats');
+        container.innerHTML = `
+            <div class="stat-grid" style="padding:16px;">
+                <div class="stat-box">
+                    <div class="stat-label">Inbound Received</div>
+                    <div class="stat-value blue">${data.inbound_received || 0}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Outbound Fired</div>
+                    <div class="stat-value purple">${data.outbound_fired || 0}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Active Targets</div>
+                    <div class="stat-value green">${Object.keys(data.targets || {}).length}</div>
+                </div>
+            </div>
+            ${Object.keys(data.targets || {}).length > 0 ? `
+                <div style="padding:16px;">
+                    <h3 style="margin-bottom:12px;color:var(--text-primary);">Webhook Targets</h3>
+                    ${Object.entries(data.targets || {}).map(([name, count]) => `
+                        <div class="webhook-target">
+                            <span class="webhook-name">${name}</span>
+                            <span class="webhook-count">${count} calls</span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+        `;
+    } catch (e) {
+        console.error('Failed to load webhooks:', e);
+        document.getElementById('webhooksStats').innerHTML = '<div style="color:var(--accent-red);padding:20px;">Failed to load webhook statistics</div>';
+    }
+}
+
+// ======================================================
+//                    SWARM TAB
+// ======================================================
+
+async function loadSwarm() {
+    try {
+        // Load swarm stats
+        const statsRes = await fetch(`${API}/api/swarm/stats`);
+        const statsData = await statsRes.json();
+        
+        const statsContainer = document.getElementById('swarmStats');
+        statsContainer.innerHTML = `
+            <div class="stat-grid" style="padding:16px;">
+                <div class="stat-box">
+                    <div class="stat-label">Profiles Loaded</div>
+                    <div class="stat-value blue">${statsData.profiles_loaded || 0}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Total Swarms</div>
+                    <div class="stat-value purple">${statsData.total_swarms || 0}</div>
+                </div>
+            </div>
+        `;
+
+        // Load agent profiles
+        const profilesRes = await fetch(`${API}/api/swarm/profiles`);
+        const profilesData = await profilesRes.json();
+        const profiles = profilesData.profiles || [];
+        
+        const profilesContainer = document.getElementById('swarmProfiles');
+        if (profiles.length === 0) {
+            profilesContainer.innerHTML = '<div style="color:var(--text-muted);padding:20px;">No agent profiles available</div>';
+            return;
+        }
+        
+        profilesContainer.innerHTML = `
+            <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+                ${profiles.map(p => `
+                    <div class="profile-item">
+                        <div class="profile-name">${p.name || p}</div>
+                        ${p.description ? `<div class="profile-desc">${p.description}</div>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } catch (e) {
+        console.error('Failed to load swarm:', e);
+        document.getElementById('swarmStats').innerHTML = '<div style="color:var(--accent-red);padding:20px;">Failed to load swarm data</div>';
+    }
+}
+
+// ======================================================
+//                     MCP TAB
+// ======================================================
+
+async function loadMCP() {
+    try {
+        // Load MCP status
+        const statusRes = await fetch(`${API}/api/mcp/status`);
+        const statusData = await statusRes.json();
+        
+        const statusContainer = document.getElementById('mcpStatus');
+        statusContainer.innerHTML = `
+            <div class="stat-grid" style="padding:16px;">
+                ${Object.entries(statusData).map(([key, value]) => `
+                    <div class="stat-box">
+                        <div class="stat-label">${key.replace(/_/g, ' ')}</div>
+                        <div class="stat-value">${typeof value === 'object' ? JSON.stringify(value) : value}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        // Load MCP server health
+        const healthRes = await fetch(`${API}/api/mcp-server/health`);
+        const healthData = await healthRes.json();
+        
+        const healthContainer = document.getElementById('mcpHealth');
+        healthContainer.innerHTML = `
+            <div class="stat-grid" style="padding:16px;">
+                ${Object.entries(healthData).map(([key, value]) => `
+                    <div class="stat-box">
+                        <div class="stat-label">${key.replace(/_/g, ' ')}</div>
+                        <div class="stat-value ${value === 'healthy' || value === 'ok' ? 'green' : 'red'}">${typeof value === 'object' ? JSON.stringify(value) : value}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } catch (e) {
+        console.error('Failed to load MCP:', e);
+        document.getElementById('mcpStatus').innerHTML = '<div style="color:var(--accent-red);padding:20px;">Failed to load MCP data</div>';
+    }
+}
+
+// ======================================================
+//                   CONFIG TAB
+// ======================================================
+
+async function loadConfig() {
+    try {
+        const res = await fetch(`${API}/api/config`);
+        const data = await res.json();
+        
+        const container = document.getElementById('configViewer');
+        container.innerHTML = `
+            <pre class="config-json">${JSON.stringify(data, null, 2)}</pre>
+        `;
+    } catch (e) {
+        console.error('Failed to load config:', e);
+        document.getElementById('configViewer').innerHTML = '<div style="color:var(--accent-red);padding:20px;">Failed to load configuration</div>';
+    }
 }
 
 // ===== Keyboard shortcuts =====

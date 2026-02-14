@@ -34,6 +34,11 @@
         <button class="tab-btn" data-tab="logs" onclick="switchTab('logs')">📋 Logs</button>
         <button class="tab-btn" data-tab="subsystems" onclick="switchTab('subsystems')">⚙️ Subsystems</button>
         <button class="tab-btn" data-tab="users" onclick="switchTab('users')">👥 Users</button>
+        <button class="tab-btn" data-tab="heartbeat" onclick="switchTab('heartbeat')">💓 Heartbeat</button>
+        <button class="tab-btn" data-tab="webhooks" onclick="switchTab('webhooks')">🔗 Webhooks</button>
+        <button class="tab-btn" data-tab="swarm" onclick="switchTab('swarm')">🐝 Swarm</button>
+        <button class="tab-btn" data-tab="mcp" onclick="switchTab('mcp')">🔌 MCP</button>
+        <button class="tab-btn" data-tab="config" onclick="switchTab('config')">⚙️ Config</button>
     </nav>
 
     <!-- ==================== MONITOR TAB ==================== -->
@@ -259,6 +264,108 @@
                 </div>
                 <div id="usersList" class="users-list">
                     <div style="color:var(--text-muted);padding:20px;">Loading users...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== HEARTBEAT TAB ==================== -->
+    <main class="tab-content" id="tab-heartbeat">
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Uptime Statistics</span>
+                    <span class="card-icon">⏱️</span>
+                </div>
+                <div id="heartbeatUptime" class="stats-display">
+                    <div style="color:var(--text-muted);padding:20px;">Loading...</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Health Check History</span>
+                    <span class="card-icon">💓</span>
+                </div>
+                <div id="heartbeatHistory" class="heartbeat-history">
+                    <div style="color:var(--text-muted);padding:20px;">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== WEBHOOKS TAB ==================== -->
+    <main class="tab-content" id="tab-webhooks">
+        <div class="dashboard">
+            <div class="card" style="grid-column: span 2;">
+                <div class="card-header">
+                    <span class="card-title">Webhook Statistics</span>
+                    <span class="card-icon">🔗</span>
+                </div>
+                <div id="webhooksStats" class="stats-grid">
+                    <div style="color:var(--text-muted);padding:20px;">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== SWARM TAB ==================== -->
+    <main class="tab-content" id="tab-swarm">
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Swarm Statistics</span>
+                    <span class="card-icon">📊</span>
+                </div>
+                <div id="swarmStats" class="stats-display">
+                    <div style="color:var(--text-muted);padding:20px;">Loading...</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Agent Profiles</span>
+                    <span class="card-icon">🐝</span>
+                </div>
+                <div id="swarmProfiles" class="profiles-list">
+                    <div style="color:var(--text-muted);padding:20px;">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== MCP TAB ==================== -->
+    <main class="tab-content" id="tab-mcp">
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">MCP Server Status</span>
+                    <span class="card-icon">🔌</span>
+                </div>
+                <div id="mcpStatus" class="stats-display">
+                    <div style="color:var(--text-muted);padding:20px;">Loading...</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">MCP Server Health</span>
+                    <span class="card-icon">💚</span>
+                </div>
+                <div id="mcpHealth" class="stats-display">
+                    <div style="color:var(--text-muted);padding:20px;">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== CONFIG TAB ==================== -->
+    <main class="tab-content" id="tab-config">
+        <div class="dashboard">
+            <div class="card" style="grid-column: span 2;">
+                <div class="card-header">
+                    <span class="card-title">Configuration (Secrets Masked)</span>
+                    <span class="card-icon">⚙️</span>
+                </div>
+                <div id="configViewer" class="config-viewer">
+                    <div style="color:var(--text-muted);padding:20px;">Loading...</div>
                 </div>
             </div>
         </div>
