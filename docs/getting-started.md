@@ -147,7 +147,7 @@ This checks:
 - ✅ Security systems
 - ✅ Tool availability
 
-Expected output:
+Expected output (example):
 ```
 ========================================================
    iTaK Doctor - Full System Diagnostic
@@ -167,20 +167,20 @@ Expected output:
   ...
 
 ========================================================
-  61 passed, 5 failed (optional services)
+  XX passed, Y failed (optional services)
 ========================================================
 ```
 
-The 5 failures are optional services (Neo4j, Weaviate, SearXNG) - these don't prevent basic operation.
+Most failures are optional services (Neo4j, Weaviate, SearXNG) - these don't prevent basic operation.
 
 ### Run the test suite
 ```bash
 python -m pytest tests/ -q
 ```
 
-All tests should pass:
+All tests should pass (example):
 ```
-17 passed in 3.30s
+XX passed in Y.YYs
 ```
 
 ### Test basic functionality
