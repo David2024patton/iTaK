@@ -236,7 +236,7 @@
     },
     "users": {
         "enabled": true,
-        "db_path": "data/db/users.db",
+        "registry_path": "data/users.json",
         "default_role": "user",
         "owner_platforms": {
             "cli": "local"
