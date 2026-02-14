@@ -11,8 +11,8 @@ Before you begin, you need **either**:
 
 **Plus:**
 - 📦 **Git** (to clone the repository)
-- 💾 **4GB RAM** minimum (8GB+ recommended)
-- 💿 **5GB disk space** minimum
+- 💾 **4GB RAM** minimum (8GB+ recommended for full stack)
+- 💿 **5GB disk space** minimum (10GB+ for full stack)
 
 ### Quick Prerequisites Check
 
@@ -38,37 +38,70 @@ See [PREREQUISITES.md](PREREQUISITES.md) for complete installation guides.
 
 ---
 
-## 🚀 Super Quick Install (Recommended)
+## 🚀 Installation Options
 
-### Option 1: One-Command Install (Linux/macOS)
+Choose the installation that fits your needs:
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/David2024patton/iTaK/main/quick-install.sh | bash
-```
+### Option 1: Minimal Install (iTaK Only) ⚡ FASTEST
 
-Or download and run:
+**Best for:** Quick testing, demos, learning
+
+**What you get:**
+- ✅ iTaK agent (AI assistant)
+- ✅ Basic memory (SQLite-based)
+- ✅ Web search (via external APIs)
+- ⏱️ Time: 2 minutes
+
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
-chmod +x quick-install.sh
 ./quick-install.sh
+# Choose option 1 when prompted
 ```
 
-### Option 2: One-Command Install (Windows)
+### Option 2: Full Stack Install (Production-Ready) 🏢 RECOMMENDED
 
-```cmd
-git clone https://github.com/David2024patton/iTaK.git
-cd iTaK
-quick-install.bat
-```
+**Best for:** Production use, full features, knowledge graphs
 
-### Option 3: Docker Direct (If you have the image)
+**What you get:**
+- ✅ iTaK agent (AI assistant)
+- ✅ **Neo4j** (knowledge graph database)
+- ✅ **SearXNG** (private web search engine)
+- ✅ **Weaviate** (vector database for memory)
+- ✅ 4-tier advanced memory system
+- ⏱️ Time: 5 minutes
 
 ```bash
-docker run -it --rm -p 8000:8000 david2024patton/itak
+git clone https://github.com/David2024patton/iTaK.git
+cd iTaK
+./install-full-stack.sh
+```
+
+Or use the quick installer and choose option 2:
+```bash
+./quick-install.sh
+# Choose option 2 when prompted
 ```
 
 **That's it!** Visit http://localhost:8000 and start using iTaK.
+
+---
+
+## 📊 What's the Difference?
+
+| Feature | Minimal Install | Full Stack Install |
+|---------|----------------|-------------------|
+| **iTaK Agent** | ✅ | ✅ |
+| **Web UI** | ✅ | ✅ |
+| **Basic Memory** | ✅ SQLite | ✅ SQLite |
+| **Neo4j (Knowledge Graph)** | ❌ | ✅ |
+| **SearXNG (Private Search)** | ❌ | ✅ |
+| **Weaviate (Vector DB)** | ❌ | ✅ |
+| **4-Tier Memory System** | ⚠️ Limited | ✅ Full |
+| **Installation Time** | 2 min | 5 min |
+| **Disk Space** | 500MB | 2-3GB |
+| **RAM Usage** | 512MB | 2-4GB |
+| **Production Ready** | Testing only | ✅ Yes |
 
 ---
 

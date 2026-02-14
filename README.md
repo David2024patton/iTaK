@@ -16,47 +16,62 @@
 
 ## 🚀 Quick Start
 
-**⚡ ONE-COMMAND INSTALL (Like Agent-Zero!):**
+### ⚡ Minimal Install (iTaK Only - 2 minutes)
+
+**Best for:** Quick testing, demos, learning
 
 ```bash
-# Linux/macOS - One command to install and run!
-curl -fsSL https://raw.githubusercontent.com/David2024patton/iTaK/main/quick-install.sh | bash
-
-# Or manually:
+# Linux/macOS
 git clone https://github.com/David2024patton/iTaK.git && cd iTaK && ./quick-install.sh
 
-# Windows:
+# Windows
 git clone https://github.com/David2024patton/iTaK.git && cd iTaK && quick-install.bat
-
-# Direct Docker (if image available):
-docker run -it --rm -p 8000:8000 david2024patton/itak
 ```
 
-**Then visit http://localhost:8000 and configure via Web UI!**
+### 🏢 Full Stack Install (Production-Ready - 5 minutes)
 
-📚 **[QUICK START GUIDE](QUICK_START.md)** — Get running in 2 minutes!
-
----
-
-**Traditional Installation Methods:**
+**Includes:** iTaK + Neo4j + SearXNG + Weaviate
 
 ```bash
-# 🐳 Docker (Full Stack with Neo4j, Weaviate, SearXNG)
+# One command for complete setup:
+git clone https://github.com/David2024patton/iTaK.git && cd iTaK && ./install-full-stack.sh
+
+# Or via docker-compose:
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
 cp .env.example .env  # Add your API keys
 docker-compose up -d
+```
 
-# 🐍 Python (Most Control)
-git clone https://github.com/David2024patton/iTaK.git
-cd iTaK
+**Then visit http://localhost:8000 and configure via Web UI!**
+
+📚 **[QUICK START GUIDE](QUICK_START.md)** — Complete installation walkthrough  
+🆚 **Coming from Agent-Zero?** [iTAK vs Agent-Zero](iTAK_VS_AGENT_ZERO.md)
+
+---
+
+**What Gets Auto-Installed:**
+
+| Component | Minimal | Full Stack |
+|-----------|---------|------------|
+| iTaK Agent | ✅ | ✅ |
+| Docker | Auto-detected | ✅ Auto-installed |
+| Neo4j (Knowledge Graph) | ❌ | ✅ Auto-installed |
+| SearXNG (Private Search) | ❌ | ✅ Auto-installed |
+| Weaviate (Vector DB) | ❌ | ✅ Auto-installed |
+
+---
+
+**Alternative Installation Methods:**
+
+```bash
+# 🐍 Python Only (No Docker)
 pip install -r requirements.txt
 cp .env.example .env  # Add your API keys
 python main.py --webui
 ```
 
-📚 **Detailed Guide:** [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md)  
-🆚 **Coming from Agent-Zero?** [iTAK vs Agent-Zero Comparison](iTAK_VS_AGENT_ZERO.md)
+📚 **Detailed Guide:** [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md)
 
 ---
 

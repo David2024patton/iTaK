@@ -8,6 +8,27 @@ echo "🚀 iTaK Quick Install"
 echo "─────────────────────────────────────"
 echo ""
 
+# Ask for installation type if Docker is available
+if command -v docker &> /dev/null; then
+    echo "📦 Installation Type:"
+    echo ""
+    echo "  1. Minimal (iTaK only, fastest)"
+    echo "  2. Full Stack (iTaK + Neo4j + SearXNG + Weaviate)"
+    echo ""
+    read -p "Choose installation type (1/2, default=1): " -n 1 -r
+    echo ""
+    echo ""
+    
+    if [[ $REPLY == "2" ]]; then
+        echo "🚀 Starting Full Stack Installation..."
+        ./install-full-stack.sh
+        exit 0
+    fi
+    
+    echo "📦 Continuing with Minimal Installation..."
+    echo ""
+fi
+
 # Check if Docker is installed
 if ! command -v docker &> /dev/null; then
     echo "❌ Docker not found"

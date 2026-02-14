@@ -214,10 +214,30 @@ main() {
     echo "════════════════════════════════════════"
     echo -e "${GREEN}🎉 Prerequisites check complete!${NC}"
     echo ""
+    
+    # Offer full stack installation if Docker is available
+    if command_exists docker; then
+        echo "📦 Installation Options:"
+        echo ""
+        echo "  1. Quick Install (iTaK only, minimal setup)"
+        echo "  2. Full Stack (iTaK + Neo4j + SearXNG + Weaviate)"
+        echo ""
+        read -p "Which would you like? (1/2, default=1): " -n 1 -r
+        echo ""
+        echo ""
+        
+        if [[ $REPLY == "2" ]]; then
+            echo "🚀 Starting Full Stack Installation..."
+            ./install-full-stack.sh
+            exit 0
+        fi
+    fi
+    
     echo "Next steps:"
     echo "  1. If Docker was just installed, log out and back in (or run: newgrp docker)"
-    echo "  2. Run: ./quick-install.sh"
-    echo "  3. Visit: http://localhost:8000"
+    echo "  2. Quick install: ./quick-install.sh"
+    echo "  3. OR Full stack: ./install-full-stack.sh"
+    echo "  4. Visit: http://localhost:8000"
     echo ""
     echo "For manual installation, see: PREREQUISITES.md"
 }
