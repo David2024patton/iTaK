@@ -63,9 +63,15 @@ class GuardResult:
 
     @property
     def categories_found(self) -> list[str]:
-        # Pre-allocate set and convert directly to avoid intermediate list
+        # Deduplicate categories while preserving order
         seen = set()
-        return [cat for r in self.redactions if not (cat := r.category.value) in seen and not seen.add(cat)]
+        result = []
+        for r in self.redactions:
+            cat = r.category.value
+            if cat not in seen:
+                seen.add(cat)
+                result.append(cat)
+        return result
 
 
 class OutputGuard:

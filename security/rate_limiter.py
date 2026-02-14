@@ -71,10 +71,10 @@ class RateLimiter:
         cutoff_minute = now - 60
         recent_minute = sum(1 for t in requests_deque if t >= cutoff_minute)
         if recent_minute >= max_pm:
-            # Find the oldest request in the last minute
-            minute_requests = [t for t in requests_deque if t >= cutoff_minute]
-            if minute_requests:
-                wait = 60 - (now - minute_requests[0])
+            # Find the oldest request in the last minute using generator
+            first_in_minute = next((t for t in requests_deque if t >= cutoff_minute), None)
+            if first_in_minute:
+                wait = 60 - (now - first_in_minute)
                 return False, f"Rate limit ({category}): {recent_minute}/{max_pm} per minute. Wait {wait:.0f}s."
 
         # Per-hour check
