@@ -23,10 +23,14 @@
 # Install test dependencies
 pip install -r requirements.txt
 
-# Run all tests
-pytest
+# Set PYTHONPATH to project root (required for imports)
+export PYTHONPATH=/path/to/iTaK
 
-# Run with verbose output
+# Or run from project root with:
+cd /path/to/iTaK
+PYTHONPATH=$(pwd) pytest
+
+# Run all tests
 pytest -v
 
 # Run specific test file
@@ -95,60 +99,61 @@ iTaK/
 ### Basic Commands
 
 ```bash
-# Run all tests
-pytest
+# Run all tests (from project root)
+cd /path/to/iTaK
+PYTHONPATH=$(pwd) pytest
 
 # Verbose mode
-pytest -v
+PYTHONPATH=$(pwd) pytest -v
 
 # Very verbose (show print statements)
-pytest -vv -s
+PYTHONPATH=$(pwd) pytest -vv -s
 
 # Run tests in parallel (requires pytest-xdist)
-pytest -n auto
+PYTHONPATH=$(pwd) pytest -n auto
 
 # Stop on first failure
-pytest -x
+PYTHONPATH=$(pwd) pytest -x
 
 # Run last failed tests only
-pytest --lf
+PYTHONPATH=$(pwd) pytest --lf
 
 # Run failed tests first, then others
-pytest --ff
+PYTHONPATH=$(pwd) pytest --ff
 ```
 
 ### Coverage Reports
 
 ```bash
 # Terminal coverage report
-pytest --cov=. --cov-report=term
+PYTHONPATH=$(pwd) pytest --cov=. --cov-report=term
 
 # HTML coverage report
-pytest --cov=. --cov-report=html
+PYTHONPATH=$(pwd) pytest --cov=. --cov-report=html
 open htmlcov/index.html
 
 # Generate XML for CI
-pytest --cov=. --cov-report=xml
+PYTHONPATH=$(pwd) pytest --cov=. --cov-report=xml
 
 # Show missing lines
-pytest --cov=. --cov-report=term-missing
+PYTHONPATH=$(pwd) pytest --cov=. --cov-report=term-missing
 ```
 
 ### Filtering Tests
 
 ```bash
 # Run tests by keyword
-pytest -k "logger"
+PYTHONPATH=$(pwd) pytest -k "logger"
 
 # Run tests by marker (requires markers in pytest.ini)
-pytest -m "slow"
-pytest -m "not slow"
+PYTHONPATH=$(pwd) pytest -m "slow"
+PYTHONPATH=$(pwd) pytest -m "not slow"
 
 # Run specific directory
-pytest tests/
+PYTHONPATH=$(pwd) pytest tests/
 
 # Run specific file
-pytest tests/test_core.py
+PYTHONPATH=$(pwd) pytest tests/test_core.py
 ```
 
 ---
@@ -625,7 +630,7 @@ jobs:
         run: ruff check .
       
       - name: Run tests
-        run: pytest -v
+        run: PYTHONPATH=$(pwd) pytest -v
       
       - name: Run doctor checks
         run: python main.py --doctor
@@ -665,12 +670,15 @@ touch tests/__init__.py
 
 **"Import errors in tests"**
 ```bash
-# Ensure project root is in PYTHONPATH
+# Ensure project root is in PYTHONPATH (REQUIRED)
 export PYTHONPATH="${PYTHONPATH}:$(pwd)"
 
-# Or run from project root
+# Or run tests with PYTHONPATH inline
 cd /path/to/iTaK
-pytest
+PYTHONPATH=$(pwd) pytest
+
+# For permanent solution, add to pytest config
+# or run tests from project root with PYTHONPATH set
 ```
 
 **"Async tests hanging"**

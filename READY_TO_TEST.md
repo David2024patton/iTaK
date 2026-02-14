@@ -49,14 +49,15 @@ python main.py --doctor
 
 ### 5️⃣ Run Existing Tests
 ```bash
-# Run all tests
-pytest
+# Run all tests (from project root)
+cd /path/to/iTaK
+PYTHONPATH=$(pwd) pytest
 
 # Run with verbose output
-pytest -v
+PYTHONPATH=$(pwd) pytest -v
 
 # Run with coverage (if pytest-cov installed)
-pytest --cov=. --cov-report=term-missing
+PYTHONPATH=$(pwd) pytest --cov=. --cov-report=term-missing
 ```
 
 ---
@@ -109,7 +110,7 @@ pytest --cov=. --cov-report=term-missing
 python main.py --doctor
 
 # 2. Run existing unit tests
-pytest -v
+PYTHONPATH=$(pwd) pytest -v
 
 # 3. Start CLI mode and have a conversation
 python main.py
@@ -121,7 +122,7 @@ python main.py
 python main.py --doctor
 
 # 2. Run unit tests
-pytest -v
+PYTHONPATH=$(pwd) pytest -v
 
 # 3. Test CLI mode
 python main.py
@@ -140,7 +141,7 @@ python main.py --adapter discord --webui
 ### Option 3: Developer Testing
 ```bash
 # 1. Run tests with coverage
-pytest --cov=. --cov-report=html
+PYTHONPATH=$(pwd) pytest --cov=. --cov-report=html
 open htmlcov/index.html
 
 # 2. Run security checks
@@ -201,7 +202,13 @@ pytest --collect-only
 # Ensure you're in the project root
 cd /path/to/iTaK
 
-# Reinstall dependencies
+# Set PYTHONPATH to project root
+export PYTHONPATH=$(pwd)
+
+# Run tests with PYTHONPATH
+PYTHONPATH=$(pwd) pytest -v
+
+# Reinstall dependencies if needed
 pip install -r requirements.txt
 ```
 
