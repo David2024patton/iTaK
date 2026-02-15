@@ -117,7 +117,7 @@ import sys
 sys.path.insert(0, '{path}')
 from install import check_python_version
 result = check_python_version()
-assert result == True, "Current Python version should pass the check"
+assert result is True, "Current Python version should pass the check"
 """.format(path=install_py.parent)
     
     result = subprocess.run(

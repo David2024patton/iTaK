@@ -194,6 +194,9 @@ def install_dependencies(minimal: bool = False) -> bool:
     # Determine pip command
     pip_cmd = "pip3" if check_command("pip3") else "pip"
     
+    # Timeout in seconds
+    install_timeout = 600  # 10 minutes
+    
     try:
         # Install requirements
         cmd = [pip_cmd, "install", "-r", str(requirements_file)]
@@ -202,7 +205,7 @@ def install_dependencies(minimal: bool = False) -> bool:
             cmd,
             capture_output=True,
             text=True,
-            timeout=600  # 10 minutes timeout
+            timeout=install_timeout
         )
         
         if result.returncode == 0:
@@ -228,7 +231,7 @@ def install_dependencies(minimal: bool = False) -> bool:
             return False
     
     except subprocess.TimeoutExpired:
-        print_error("Installation timeout (10 minutes)")
+        print_error(f"Installation timeout ({install_timeout // 60} minutes)")
         return False
     except Exception as e:
         print_error(f"Installation error: {e}")
