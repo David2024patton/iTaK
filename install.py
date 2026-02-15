@@ -1,489 +1,418 @@
 #!/usr/bin/env python3
 """
 iTaK Universal Installer
-========================
-
-One script to install iTaK on any platform:
-- Linux (Ubuntu, Debian, Fedora, RHEL, CentOS, Arch)
-- macOS (Intel and Apple Silicon)
-- Windows (with WSL auto-install)
-- WSL (Windows Subsystem for Linux)
-
-Usage:
-    python install.py              # Interactive installation
-    python install.py --full-stack # Install with all databases
-    python install.py --minimal    # Install iTaK only
-    python install.py --help       # Show help
-
-No external dependencies required - uses Python standard library only.
+Cross-platform installation script for Linux, macOS, Windows, and WSL.
+No external dependencies - uses only Python standard library.
 """
 
-import os
 import sys
+import os
 import platform
 import subprocess
 import shutil
-import json
-import time
 import argparse
 from pathlib import Path
-from typing import Optional, Tuple, List
+from typing import Tuple, Optional
 
-# ANSI color codes for terminal output
+# Version
+VERSION = "1.0.0"
+
+# Minimum requirements
+MIN_PYTHON_VERSION = (3, 11)
+
+
 class Colors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
-    @classmethod
-    def supports_color(cls) -> bool:
-        """Check if terminal supports colors"""
-        return (
-            hasattr(sys.stdout, 'isatty') and
-            sys.stdout.isatty() and
-            os.getenv('TERM') != 'dumb' and
-            sys.platform != 'win32'  # Windows CMD doesn't support ANSI by default
-        )
-
-# Disable colors on Windows or unsupported terminals
-if not Colors.supports_color():
-    for attr in dir(Colors):
-        if not attr.startswith('_') and attr != 'supports_color':
-            setattr(Colors, attr, '')
+    """ANSI color codes for terminal output"""
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
+    RED = "\033[91m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    BLUE = "\033[94m"
+    MAGENTA = "\033[95m"
+    CYAN = "\033[96m"
 
 
-def print_header(text: str):
-    """Print a header with formatting"""
-    print(f"\n{Colors.BOLD}{Colors.HEADER}{'=' * 60}{Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.HEADER}{text}{Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.HEADER}{'=' * 60}{Colors.ENDC}\n")
+def print_header(text: str) -> None:
+    """Print a formatted header"""
+    print(f"\n{Colors.BOLD}{Colors.CYAN}{'=' * 60}{Colors.RESET}")
+    print(f"{Colors.BOLD}{Colors.CYAN}{text.center(60)}{Colors.RESET}")
+    print(f"{Colors.BOLD}{Colors.CYAN}{'=' * 60}{Colors.RESET}\n")
 
 
-def print_success(text: str):
+def print_success(text: str) -> None:
     """Print success message"""
-    print(f"{Colors.OKGREEN}✓ {text}{Colors.ENDC}")
+    print(f"{Colors.GREEN}✓ {text}{Colors.RESET}")
 
 
-def print_error(text: str):
+def print_error(text: str) -> None:
     """Print error message"""
-    print(f"{Colors.FAIL}✗ {text}{Colors.ENDC}")
+    print(f"{Colors.RED}✗ {text}{Colors.RESET}")
 
 
-def print_warning(text: str):
+def print_warning(text: str) -> None:
     """Print warning message"""
-    print(f"{Colors.WARNING}⚠ {text}{Colors.ENDC}")
+    print(f"{Colors.YELLOW}⚠ {text}{Colors.RESET}")
 
 
-def print_info(text: str):
+def print_info(text: str) -> None:
     """Print info message"""
-    print(f"{Colors.OKCYAN}ℹ {text}{Colors.ENDC}")
+    print(f"{Colors.BLUE}ℹ {text}{Colors.RESET}")
 
 
-def run_command(cmd: List[str], check: bool = True, capture: bool = False) -> Tuple[int, str, str]:
+def detect_os() -> Tuple[str, str]:
     """
-    Run a command and return (returncode, stdout, stderr)
+    Detect operating system and return (os_type, os_name).
     
-    Args:
-        cmd: Command as list of strings
-        check: Raise exception on non-zero exit
-        capture: Capture output instead of streaming
+    Returns:
+        Tuple of (os_type, os_name) where os_type is one of:
+        'linux', 'macos', 'windows', 'wsl'
     """
-    try:
-        if capture:
-            result = subprocess.run(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                check=check
-            )
-            return result.returncode, result.stdout, result.stderr
-        else:
-            result = subprocess.run(cmd, check=check)
-            return result.returncode, "", ""
-    except subprocess.CalledProcessError as e:
-        return e.returncode, "", str(e)
-    except FileNotFoundError:
-        return 127, "", f"Command not found: {cmd[0]}"
-
-
-def detect_os() -> dict:
-    """Detect operating system and environment details"""
-    info = {
-        'system': platform.system(),
-        'release': platform.release(),
-        'version': platform.version(),
-        'machine': platform.machine(),
-        'is_wsl': False,
-        'is_windows': False,
-        'is_linux': False,
-        'is_macos': False,
-        'distro': None,
-        'distro_version': None,
-    }
+    system = platform.system().lower()
     
-    # Check for WSL
-    if os.path.exists('/proc/version'):
-        with open('/proc/version', 'r') as f:
-            if 'microsoft' in f.read().lower() or 'wsl' in f.read().lower():
-                info['is_wsl'] = True
+    # Check for WSL (Windows Subsystem for Linux)
+    if system == "linux" and os.path.exists("/proc/version"):
+        with open("/proc/version", "r") as f:
+            if "microsoft" in f.read().lower():
+                return ("wsl", "Windows Subsystem for Linux")
     
-    system = info['system'].lower()
-    
-    if system == 'windows':
-        info['is_windows'] = True
-    elif system == 'linux':
-        info['is_linux'] = True
-        # Detect Linux distribution
+    if system == "linux":
+        # Try to detect Linux distribution
         try:
-            if os.path.exists('/etc/os-release'):
-                with open('/etc/os-release', 'r') as f:
-                    lines = f.readlines()
-                    for line in lines:
-                        if line.startswith('ID='):
-                            info['distro'] = line.split('=')[1].strip().strip('"')
-                        elif line.startswith('VERSION_ID='):
-                            info['distro_version'] = line.split('=')[1].strip().strip('"')
-        except:
-            pass
-    elif system == 'darwin':
-        info['is_macos'] = True
-        # Detect macOS version
-        try:
-            code, stdout, _ = run_command(['sw_vers', '-productVersion'], capture=True)
-            if code == 0:
-                info['distro_version'] = stdout.strip()
-        except:
-            pass
-    
-    return info
+            if os.path.exists("/etc/os-release"):
+                with open("/etc/os-release") as f:
+                    for line in f:
+                        if line.startswith("PRETTY_NAME="):
+                            os_name = line.split("=")[1].strip().strip('"')
+                            return ("linux", os_name)
+            return ("linux", "Linux")
+        except Exception:
+            return ("linux", "Linux")
+    elif system == "darwin":
+        return ("macos", f"macOS {platform.mac_ver()[0]}")
+    elif system == "windows":
+        return ("windows", f"Windows {platform.release()}")
+    else:
+        return ("unknown", system)
 
 
 def check_python_version() -> bool:
-    """Check if Python version is 3.11+"""
-    version = sys.version_info
-    return version >= (3, 11)
+    """Check if Python version meets minimum requirements"""
+    current = sys.version_info
+    required = MIN_PYTHON_VERSION
+    
+    if current >= required:
+        print_success(f"Python {current.major}.{current.minor}.{current.micro} detected")
+        return True
+    else:
+        print_error(f"Python {required[0]}.{required[1]}+ required, but {current.major}.{current.minor}.{current.micro} found")
+        return False
 
 
-def check_command_exists(command: str) -> bool:
-    """Check if a command exists in PATH"""
+def check_command(command: str) -> bool:
+    """Check if a command is available in PATH"""
     return shutil.which(command) is not None
 
 
-def install_prerequisites_linux(os_info: dict) -> bool:
-    """Install prerequisites on Linux"""
-    distro = os_info.get('distro', '').lower()
+def check_prerequisites() -> dict:
+    """Check all prerequisites and return status dict"""
+    print_header("Checking Prerequisites")
     
-    print_info("Installing prerequisites for Linux...")
+    results = {}
     
-    # Check for Docker
-    has_docker = check_command_exists('docker')
-    if not has_docker:
-        print_info("Installing Docker...")
+    # Python
+    results["python"] = check_python_version()
+    
+    # pip
+    if check_command("pip") or check_command("pip3"):
+        print_success("pip is installed")
+        results["pip"] = True
+    else:
+        print_error("pip not found")
+        results["pip"] = False
+    
+    # Git
+    if check_command("git"):
+        try:
+            result = subprocess.run(
+                ["git", "--version"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if result.returncode == 0:
+                version = result.stdout.strip()
+                print_success(f"Git is installed: {version}")
+                results["git"] = True
+            else:
+                print_warning("Git found but version check failed")
+                results["git"] = True
+        except Exception:
+            print_warning("Git found but version check failed")
+            results["git"] = True
+    else:
+        print_warning("Git not found (optional for installation)")
+        results["git"] = False
+    
+    # Docker (optional)
+    if check_command("docker"):
+        try:
+            result = subprocess.run(
+                ["docker", "--version"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if result.returncode == 0:
+                version = result.stdout.strip()
+                print_success(f"Docker is installed: {version}")
+                results["docker"] = True
+            else:
+                print_warning("Docker found but not working properly")
+                results["docker"] = False
+        except Exception:
+            print_warning("Docker found but not accessible")
+            results["docker"] = False
+    else:
+        print_info("Docker not found (optional, needed for full-stack mode)")
+        results["docker"] = False
+    
+    return results
+
+
+def install_dependencies(minimal: bool = False) -> bool:
+    """Install Python dependencies"""
+    print_header("Installing Dependencies")
+    
+    requirements_file = Path("requirements.txt")
+    if not requirements_file.exists():
+        print_error(f"{requirements_file} not found")
+        return False
+    
+    print_info(f"Installing packages from {requirements_file}...")
+    
+    # Determine pip command
+    pip_cmd = "pip3" if check_command("pip3") else "pip"
+    
+    # Timeout in seconds
+    install_timeout = 600  # 10 minutes
+    
+    try:
+        # Install requirements
+        cmd = [pip_cmd, "install", "-r", str(requirements_file)]
         
-        if distro in ['ubuntu', 'debian']:
-            commands = [
-                ['sudo', 'apt-get', 'update'],
-                ['sudo', 'apt-get', 'install', '-y', 'apt-transport-https', 'ca-certificates', 'curl', 'gnupg', 'lsb-release'],
-                ['curl', '-fsSL', 'https://get.docker.com', '-o', 'get-docker.sh'],
-                ['sudo', 'sh', 'get-docker.sh'],
-                ['sudo', 'usermod', '-aG', 'docker', os.getenv('USER', 'root')],
-            ]
-        elif distro in ['fedora', 'rhel', 'centos']:
-            commands = [
-                ['sudo', 'dnf', 'install', '-y', 'dnf-plugins-core'],
-                ['sudo', 'dnf', 'config-manager', '--add-repo', 'https://download.docker.com/linux/fedora/docker-ce.repo'],
-                ['sudo', 'dnf', 'install', '-y', 'docker-ce', 'docker-ce-cli', 'containerd.io'],
-                ['sudo', 'systemctl', 'start', 'docker'],
-                ['sudo', 'systemctl', 'enable', 'docker'],
-                ['sudo', 'usermod', '-aG', 'docker', os.getenv('USER', 'root')],
-            ]
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=install_timeout
+        )
+        
+        if result.returncode == 0:
+            print_success("Dependencies installed successfully")
+            
+            # Install Playwright browsers if not minimal
+            if not minimal:
+                print_info("Installing Playwright browsers...")
+                try:
+                    subprocess.run(
+                        ["playwright", "install", "chromium"],
+                        capture_output=True,
+                        timeout=300
+                    )
+                    print_success("Playwright browsers installed")
+                except Exception as e:
+                    print_warning(f"Playwright browser installation skipped: {e}")
+            
+            return True
         else:
-            print_warning(f"Unsupported distribution: {distro}")
-            print_info("Please install Docker manually: https://docs.docker.com/engine/install/")
+            print_error("Dependency installation failed")
+            print(f"Error: {result.stderr}")
             return False
-        
-        for cmd in commands:
-            code, _, _ = run_command(cmd, check=False)
-            if code != 0:
-                print_warning(f"Command failed: {' '.join(cmd)}")
-        
-        print_success("Docker installed")
-        print_warning("You may need to log out and back in for Docker permissions to take effect")
     
-    # Check for Git
-    if not check_command_exists('git'):
-        print_info("Installing Git...")
-        if distro in ['ubuntu', 'debian']:
-            run_command(['sudo', 'apt-get', 'install', '-y', 'git'], check=False)
-        elif distro in ['fedora', 'rhel', 'centos']:
-            run_command(['sudo', 'dnf', 'install', '-y', 'git'], check=False)
-        print_success("Git installed")
-    
-    return True
-
-
-def install_prerequisites_macos(os_info: dict) -> bool:
-    """Install prerequisites on macOS"""
-    print_info("Installing prerequisites for macOS...")
-    
-    # Check for Homebrew
-    if not check_command_exists('brew'):
-        print_info("Installing Homebrew...")
-        cmd = ['/bin/bash', '-c', '$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)']
-        run_command(cmd, check=False)
-    
-    # Install Docker Desktop
-    if not check_command_exists('docker'):
-        print_info("Please install Docker Desktop for Mac from:")
-        print_info("  https://docs.docker.com/desktop/install/mac-install/")
-        print_warning("Docker Desktop is required for full stack installation")
-    
-    # Install Git
-    if not check_command_exists('git'):
-        print_info("Installing Git...")
-        run_command(['brew', 'install', 'git'], check=False)
-        print_success("Git installed")
-    
-    return True
-
-
-def install_prerequisites_windows(os_info: dict) -> bool:
-    """Install prerequisites on Windows (via WSL)"""
-    print_warning("Windows detected. iTaK works best in WSL (Windows Subsystem for Linux)")
-    print_info("\nPlease install WSL and run this installer from within WSL:")
-    print_info("  1. Open PowerShell as Administrator")
-    print_info("  2. Run: wsl --install")
-    print_info("  3. Restart your computer")
-    print_info("  4. Open Ubuntu from Start Menu")
-    print_info("  5. Run: python3 install.py")
-    print_info("\nFor detailed instructions, see:")
-    print_info("  https://learn.microsoft.com/en-us/windows/wsl/install")
-    
-    return False
-
-
-def create_env_file() -> bool:
-    """Create .env file from example if it doesn't exist"""
-    env_file = Path('.env')
-    env_example = Path('.env.example')
-    
-    if env_file.exists():
-        print_info(".env file already exists")
-        return True
-    
-    if not env_example.exists():
-        print_error(".env.example not found!")
+    except subprocess.TimeoutExpired:
+        print_error(f"Installation timeout ({install_timeout // 60} minutes)")
         return False
-    
-    print_info("Creating .env file...")
-    shutil.copy(env_example, env_file)
-    print_success(".env file created")
-    print_warning("Please edit .env and add at least ONE API key:")
-    print_info("  - GEMINI_API_KEY=your_key_here")
-    print_info("  - OPENAI_API_KEY=your_key_here")
-    print_info("  - ANTHROPIC_API_KEY=your_key_here")
-    
-    return True
-
-
-def install_python_dependencies() -> bool:
-    """Install Python dependencies from requirements.txt"""
-    print_info("Installing Python dependencies...")
-    
-    if not Path('requirements.txt').exists():
-        print_error("requirements.txt not found!")
+    except Exception as e:
+        print_error(f"Installation error: {e}")
         return False
+
+
+def setup_configuration() -> bool:
+    """Set up configuration files"""
+    print_header("Setting Up Configuration")
     
-    code, _, _ = run_command([sys.executable, '-m', 'pip', 'install', '-r', 'requirements.txt'], check=False)
+    success = True
     
-    if code == 0:
-        print_success("Python dependencies installed")
-        return True
+    # Copy .env.example to .env if it doesn't exist
+    env_example = Path(".env.example")
+    env_file = Path(".env")
+    
+    if env_example.exists():
+        if not env_file.exists():
+            try:
+                shutil.copy(env_example, env_file)
+                print_success(f"Created {env_file} from {env_example}")
+                print_warning(f"Please edit {env_file} and add your API keys")
+            except Exception as e:
+                print_error(f"Failed to copy {env_example}: {e}")
+                success = False
+        else:
+            print_info(f"{env_file} already exists, skipping")
     else:
-        print_error("Failed to install Python dependencies")
-        return False
-
-
-def start_full_stack() -> bool:
-    """Start full stack with docker-compose"""
-    print_info("Starting full stack (iTaK + Neo4j + Weaviate + SearXNG)...")
+        print_warning(f"{env_example} not found")
     
-    if not check_command_exists('docker'):
-        print_error("Docker not found! Cannot start full stack.")
-        print_info("Please install Docker or use --minimal option")
-        return False
+    # Copy config.json.example to config.json if it doesn't exist
+    config_example = Path("config.json.example")
+    config_file = Path("config.json")
     
-    if not Path('docker-compose.yml').exists():
-        print_error("docker-compose.yml not found!")
-        return False
-    
-    # Start services
-    code, _, _ = run_command(['docker', 'compose', 'up', '-d'], check=False)
-    
-    if code == 0:
-        print_success("Full stack started")
-        print_info("\nServices running:")
-        print_info("  iTaK Web UI:  http://localhost:8000")
-        print_info("  Neo4j:        http://localhost:47474 (neo4j/changeme)")
-        print_info("  Weaviate:     http://localhost:48080")
-        print_info("  SearXNG:      http://localhost:48888")
-        return True
+    if config_example.exists():
+        if not config_file.exists():
+            try:
+                shutil.copy(config_example, config_file)
+                print_success(f"Created {config_file} from {config_example}")
+            except Exception as e:
+                print_error(f"Failed to copy {config_example}: {e}")
+                success = False
+        else:
+            print_info(f"{config_file} already exists, skipping")
     else:
-        print_error("Failed to start full stack")
-        return False
-
-
-def start_minimal() -> bool:
-    """Start iTaK in minimal mode (Python only)"""
-    print_info("Starting iTaK in minimal mode...")
+        print_warning(f"{config_example} not found")
     
-    print_success("iTaK configured for minimal mode")
-    print_info("\nTo start iTaK:")
-    print_info("  python main.py --webui")
-    print_info("\nThen visit: http://localhost:8000")
+    return success
+
+
+def create_data_directories() -> bool:
+    """Create necessary data directories"""
+    print_header("Creating Data Directories")
     
-    return True
+    directories = [
+        "data",
+        "data/db",
+        "data/logs",
+        "data/media",
+    ]
+    
+    success = True
+    for directory in directories:
+        dir_path = Path(directory)
+        try:
+            dir_path.mkdir(parents=True, exist_ok=True)
+            print_success(f"Created directory: {directory}")
+        except Exception as e:
+            print_error(f"Failed to create {directory}: {e}")
+            success = False
+    
+    return success
 
 
-def main():
-    """Main installer function"""
+def display_next_steps(minimal: bool = False) -> None:
+    """Display next steps for the user"""
+    print_header("Installation Complete!")
+    
+    print(f"{Colors.BOLD}Next Steps:{Colors.RESET}\n")
+    
+    print(f"{Colors.YELLOW}1.{Colors.RESET} Configure your API keys:")
+    print(f"   Edit .env and add at least one LLM API key:")
+    print(f"   {Colors.CYAN}GEMINI_API_KEY=your_key_here{Colors.RESET}")
+    print(f"   or")
+    print(f"   {Colors.CYAN}OPENAI_API_KEY=your_key_here{Colors.RESET}\n")
+    
+    print(f"{Colors.YELLOW}2.{Colors.RESET} Run iTaK:")
+    print(f"   {Colors.GREEN}python main.py{Colors.RESET}  # CLI mode")
+    print(f"   {Colors.GREEN}python main.py --webui{Colors.RESET}  # With web dashboard")
+    print(f"   {Colors.GREEN}python main.py --adapter discord --webui{Colors.RESET}  # Discord bot\n")
+    
+    if not minimal:
+        print(f"{Colors.YELLOW}3.{Colors.RESET} Optional - Full Stack (Docker required):")
+        print(f"   {Colors.GREEN}docker compose up -d{Colors.RESET}  # Starts Neo4j, Weaviate, SearXNG\n")
+    
+    print(f"{Colors.BOLD}Documentation:{Colors.RESET}")
+    print(f"   {Colors.CYAN}docs/getting-started.md{Colors.RESET}  - Quick start guide")
+    print(f"   {Colors.CYAN}docs/architecture.md{Colors.RESET}     - System architecture")
+    print(f"   {Colors.CYAN}docs/config.md{Colors.RESET}          - Configuration reference\n")
+
+
+def main() -> int:
+    """Main installation function"""
     parser = argparse.ArgumentParser(
-        description='iTaK Universal Installer - One script for all platforms',
+        description="iTaK Universal Installer",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python install.py              # Interactive installation
-  python install.py --full-stack # Install with all databases
-  python install.py --minimal    # Install iTaK only
-  
-For more information: https://github.com/David2024patton/iTaK
+  python install.py                 # Full installation
+  python install.py --minimal       # Minimal installation (skip optional components)
+  python install.py --help          # Show this help message
         """
     )
-    parser.add_argument('--full-stack', action='store_true',
-                        help='Install full stack (iTaK + Neo4j + Weaviate + SearXNG)')
-    parser.add_argument('--minimal', action='store_true',
-                        help='Install minimal (iTaK only, no databases)')
-    parser.add_argument('--skip-prereq', action='store_true',
-                        help='Skip prerequisite installation')
+    
+    parser.add_argument(
+        "--minimal",
+        action="store_true",
+        help="Minimal installation (skip Playwright browsers and Docker components)"
+    )
+    
+    parser.add_argument(
+        "--skip-deps",
+        action="store_true",
+        help="Skip dependency installation (only setup config files)"
+    )
+    
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"iTaK Installer v{VERSION}"
+    )
     
     args = parser.parse_args()
     
-    # Print header
-    print_header("🚀 iTaK Universal Installer")
-    print(f"{Colors.BOLD}One script to install iTaK on any platform{Colors.ENDC}\n")
-    
-    # Check Python version
-    if not check_python_version():
-        print_error(f"Python 3.11+ required, but you have {sys.version_info.major}.{sys.version_info.minor}")
-        print_info("Please upgrade Python: https://www.python.org/downloads/")
-        return 1
-    
-    print_success(f"Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro} detected")
+    # Print welcome banner
+    print_header(f"iTaK Universal Installer v{VERSION}")
     
     # Detect OS
-    print_info("Detecting environment...")
-    os_info = detect_os()
+    os_type, os_name = detect_os()
+    print_info(f"Detected OS: {os_name} ({os_type})")
     
-    if os_info['is_wsl']:
-        print_success(f"Detected: WSL ({os_info.get('distro', 'Linux').capitalize()} {os_info.get('distro_version', '')})")
-    elif os_info['is_linux']:
-        print_success(f"Detected: Linux ({os_info.get('distro', 'Unknown').capitalize()} {os_info.get('distro_version', '')})")
-    elif os_info['is_macos']:
-        arch = "Apple Silicon" if os_info['machine'] == 'arm64' else "Intel"
-        print_success(f"Detected: macOS {os_info.get('distro_version', '')} ({arch})")
-    elif os_info['is_windows']:
-        print_success("Detected: Windows")
+    # Check prerequisites
+    prereqs = check_prerequisites()
     
-    # Install prerequisites
-    if not args.skip_prereq:
-        print_header("📦 Installing Prerequisites")
-        
-        if os_info['is_windows']:
-            if not install_prerequisites_windows(os_info):
-                return 1
-        elif os_info['is_linux'] or os_info['is_wsl']:
-            if not install_prerequisites_linux(os_info):
-                print_warning("Some prerequisites failed to install")
-        elif os_info['is_macos']:
-            if not install_prerequisites_macos(os_info):
-                print_warning("Some prerequisites failed to install")
-    
-    # Determine installation type
-    if not args.full_stack and not args.minimal:
-        print_header("📋 Installation Options")
-        print("1. Full Stack (Recommended - includes Neo4j, Weaviate, SearXNG)")
-        print("2. Minimal (iTaK only, no databases)")
-        
-        choice = input("\nChoose installation type (1/2, default=1): ").strip() or "1"
-        
-        if choice == "1":
-            args.full_stack = True
-        else:
-            args.minimal = True
-    
-    # Create .env file
-    print_header("⚙️  Configuration")
-    if not create_env_file():
-        print_warning("Failed to create .env file")
-    
-    # Install Python dependencies
-    print_header("🐍 Python Dependencies")
-    if not install_python_dependencies():
-        print_error("Installation failed!")
+    # Check critical prerequisites
+    if not prereqs["python"]:
+        print_error(f"Python {MIN_PYTHON_VERSION[0]}.{MIN_PYTHON_VERSION[1]}+ is required")
         return 1
     
-    # Start services
-    print_header("🚀 Starting Services")
+    if not prereqs["pip"]:
+        print_error("pip is required for installation")
+        return 1
     
-    if args.full_stack:
-        if not start_full_stack():
-            print_error("Failed to start full stack")
-            print_info("Falling back to minimal mode...")
-            start_minimal()
+    # Install dependencies
+    if not args.skip_deps:
+        if not install_dependencies(minimal=args.minimal):
+            print_error("Dependency installation failed")
+            return 1
     else:
-        start_minimal()
+        print_info("Skipping dependency installation (--skip-deps)")
     
-    # Print success summary
-    print_header("✅ Installation Complete!")
+    # Setup configuration
+    if not setup_configuration():
+        print_warning("Configuration setup had some issues")
     
-    print(f"{Colors.OKGREEN}{Colors.BOLD}iTaK is ready to use!{Colors.ENDC}\n")
+    # Create data directories
+    if not create_data_directories():
+        print_warning("Some data directories could not be created")
     
-    print("Next steps:")
-    print("1. Edit .env and add your API key (if not done already)")
-    
-    if args.full_stack:
-        print("2. All services are running in Docker")
-        print("3. Visit http://localhost:8000 to access iTaK")
-    else:
-        print("2. Run: python main.py --webui")
-        print("3. Visit http://localhost:8000 to access iTaK")
-    
-    print("\nFor help and documentation:")
-    print("  README.md - Quick start guide")
-    print("  QUICK_START.md - Detailed installation guide")
-    print("  TESTING.md - Testing guide")
-    print("\nGitHub: https://github.com/David2024patton/iTaK")
-    
-    print(f"\n{Colors.BOLD}{'=' * 60}{Colors.ENDC}")
+    # Display next steps
+    display_next_steps(minimal=args.minimal)
     
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         sys.exit(main())
     except KeyboardInterrupt:
-        print(f"\n\n{Colors.WARNING}Installation cancelled by user{Colors.ENDC}")
+        print(f"\n\n{Colors.YELLOW}Installation cancelled by user{Colors.RESET}")
         sys.exit(130)
     except Exception as e:
         print_error(f"Unexpected error: {e}")
-        import traceback
-        traceback.print_exc()
         sys.exit(1)

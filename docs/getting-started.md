@@ -13,6 +13,39 @@
 
 ## Quick Setup
 
+### Option A: Universal Installer (Recommended)
+
+The fastest way to get started:
+
+```bash
+# Clone the repository
+git clone https://github.com/David2024patton/iTaK.git
+cd iTaK
+
+# Run the universal installer
+python install.py
+
+# The installer will:
+# - Detect your OS (Linux, macOS, Windows, WSL)
+# - Check prerequisites (Python, pip, Git, Docker)
+# - Install all dependencies
+# - Set up configuration files (.env, config.json)
+# - Create necessary data directories
+```
+
+**Installation options:**
+
+```bash
+python install.py              # Full installation (recommended)
+python install.py --minimal    # Skip Playwright browsers and Docker components
+python install.py --skip-deps  # Only setup config files (skip dependency install)
+python install.py --help       # Show all options
+```
+
+After installation, edit `.env` with your API keys and run `python main.py`.
+
+### Option B: Manual Setup
+
 ### 1. Clone the repo
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
