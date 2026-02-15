@@ -7,7 +7,7 @@ import asyncio
 from pathlib import Path
 
 # Ensure project root is in path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 async def test_webui_launch():
     """Test that iTaK WebUI can initialize."""
