@@ -142,6 +142,9 @@ def create_app(agent: "Agent"):
     @app.get("/api/logs")
     async def logs(search: str = "", limit: int = 50, offset: int = 0):
         """Query agent logs."""
+        limit = max(1, min(limit, 200))
+        offset = max(0, offset)
+        search = search[:500] if search else ""
         if hasattr(agent, "logger"):
             results = agent.logger.query(
                 search=search if search else None,
@@ -154,6 +157,9 @@ def create_app(agent: "Agent"):
     @app.get("/api/memory/search")
     async def memory_search(query: str, category: str = "", limit: int = 10):
         """Search agent memory."""
+        limit = max(1, min(limit, 100))
+        query = query[:1000]
+        category = category[:100] if category else ""
         if hasattr(agent, "memory") and agent.memory:
             results = await agent.memory.search(
                 query=query,
@@ -412,20 +418,27 @@ def create_app(agent: "Agent"):
             return agent.heartbeat.get_uptime()
         return {}
 
-    @app.get("/api/config")
-    async def get_config():
-        """Get safe-to-share config (no secrets)."""
-        config = dict(agent.config) if hasattr(agent, "config") else {}
-        # Redact sensitive fields
+    _SENSITIVE_KEYS = {"key", "token", "password", "secret"}
+
+    def _is_sensitive_key(name: str) -> bool:
+        return any(s in name.lower() for s in _SENSITIVE_KEYS)
+
+    def _redact_dict(d: dict) -> dict:
         safe = {}
-        for k, v in config.items():
+        for k, v in d.items():
             if isinstance(v, dict):
-                safe[k] = {sk: "***" if "key" in sk.lower() or "token" in sk.lower() or "password" in sk.lower() else sv for sk, sv in v.items()}
-            elif isinstance(v, str) and any(s in k.lower() for s in ["key", "token", "password", "secret"]):
+                safe[k] = _redact_dict(v)
+            elif isinstance(v, str) and _is_sensitive_key(k):
                 safe[k] = "***"
             else:
                 safe[k] = v
         return safe
+
+    @app.get("/api/config")
+    async def get_config():
+        """Get safe-to-share config (no secrets)."""
+        config = dict(agent.config) if hasattr(agent, "config") else {}
+        return _redact_dict(config)
 
     @app.post("/api/chat")
     async def chat(payload: dict):
