@@ -842,8 +842,8 @@ class Agent:
 
             # Try dirty JSON parse first, fall back to strict
             try:
-                import dirty_json
-                return dirty_json.loads(json_str)
+                import dirtyjson
+                return dirtyjson.loads(json_str)
             except Exception:
                 return json.loads(json_str)
         except (ValueError, json.JSONDecodeError):

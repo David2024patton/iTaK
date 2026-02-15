@@ -9,6 +9,13 @@ import logging
 import uuid
 from typing import TYPE_CHECKING, Any, Optional
 
+# Optional import for better JSON parsing
+try:
+    import dirtyjson
+    HAS_DIRTYJSON = True
+except ImportError:
+    HAS_DIRTYJSON = False
+
 if TYPE_CHECKING:
     from core.agent import Agent
 
@@ -140,9 +147,17 @@ Maximum iterations: {self.max_iterations}
 """
 
     def _parse_tool_calls(self, response: str) -> list[dict]:
-        """Parse tool calls from LLM response (JSON format)."""
+        """Parse tool calls from LLM response (JSON format).
+        
+        Uses dirtyjson to handle malformed JSON from LLM responses.
+        """
         try:
-            data = json.loads(response)
+            # Try dirtyjson first for better handling of malformed JSON
+            if HAS_DIRTYJSON:
+                data = dirtyjson.loads(response)
+            else:
+                data = json.loads(response)
+
             if isinstance(data, dict):
                 tool_calls = data.get("tool_calls", data.get("tools", []))
                 if isinstance(tool_calls, list):
@@ -150,7 +165,7 @@ Maximum iterations: {self.max_iterations}
                 # Single tool call format
                 if "tool_name" in data or "name" in data:
                     return [data]
-        except (json.JSONDecodeError, TypeError):
+        except (json.JSONDecodeError, ValueError, TypeError):
             pass
         return []
 
