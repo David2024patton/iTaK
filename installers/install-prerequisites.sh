@@ -4,6 +4,9 @@
 
 set -e
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 echo "🔧 iTaK Prerequisites Installer"
 echo "════════════════════════════════════════"
 echo ""
@@ -249,15 +252,15 @@ main() {
         
         if [[ $REPLY == "2" ]]; then
             echo "🚀 Starting Full Stack Installation..."
-            ./install-full-stack.sh
+            "$SCRIPT_DIR/install-full-stack.sh"
             exit 0
         fi
     fi
     
     echo "Next steps:"
     echo "  1. If Docker was just installed, log out and back in (or run: newgrp docker)"
-    echo "  2. Quick install: ./quick-install.sh"
-    echo "  3. OR Full stack: ./install-full-stack.sh"
+    echo "  2. Quick install: $SCRIPT_DIR/quick-install.sh"
+    echo "  3. OR Full stack: $SCRIPT_DIR/install-full-stack.sh"
     echo "  4. Visit: http://localhost:8000"
     echo ""
     echo "For manual installation, see: PREREQUISITES.md"

@@ -4,6 +4,9 @@
 
 set -e
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 echo "🚀 iTaK Universal Installer"
 echo "════════════════════════════════════════"
 echo ""
@@ -77,14 +80,14 @@ echo ""
 case $REPLY in
     1)
         echo "🔧 Installing prerequisites..."
-        ./install-prerequisites.sh
+        "$SCRIPT_DIR/install-prerequisites.sh"
         ;;
     3)
         echo "🚀 Installing full stack..."
-        ./install-full-stack.sh
+        "$SCRIPT_DIR/install-full-stack.sh"
         ;;
     *)
         echo "⚡ Running quick install..."
-        ./quick-install.sh
+        "$SCRIPT_DIR/quick-install.sh"
         ;;
 esac
