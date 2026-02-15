@@ -206,6 +206,34 @@ iTaK/
 - **Python 3.11+**
 - **At least one LLM API key** (OpenAI, Anthropic, Gemini, or local Ollama)
 
+### Option A: Universal Installer (Recommended)
+
+The fastest way to get started:
+
+```bash
+# Clone the repository
+git clone https://github.com/David2024patton/iTaK.git
+cd iTaK
+
+# Run the universal installer
+python install.py
+
+# Follow the prompts and add your API keys to .env
+# Then run iTaK
+python main.py
+```
+
+The installer automatically:
+- Detects your OS (Linux, macOS, Windows, WSL)
+- Checks prerequisites (Python, pip, Git, Docker)
+- Installs all dependencies
+- Sets up configuration files (.env, config.json)
+- Creates necessary data directories
+
+Use `python install.py --minimal` for a lightweight installation without optional components.
+
+### Option B: Manual Installation
+
 ### 1. Clone
 
 ```bash
