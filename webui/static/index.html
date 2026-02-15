@@ -30,6 +30,15 @@
     <nav class="tab-bar">
         <button class="tab-btn active" data-tab="monitor" onclick="switchTab('monitor')">📊 Monitor</button>
         <button class="tab-btn" data-tab="mission" onclick="switchTab('mission')">📋 Mission Control</button>
+        <button class="tab-btn" data-tab="tools" onclick="switchTab('tools')">🔧 Tools</button>
+        <button class="tab-btn" data-tab="logs" onclick="switchTab('logs')">📋 Logs</button>
+        <button class="tab-btn" data-tab="subsystems" onclick="switchTab('subsystems')">⚙️ Subsystems</button>
+        <button class="tab-btn" data-tab="users" onclick="switchTab('users')">👥 Users</button>
+        <button class="tab-btn" data-tab="heartbeat" onclick="switchTab('heartbeat')">💓 Heartbeat</button>
+        <button class="tab-btn" data-tab="webhooks" onclick="switchTab('webhooks')">🔗 Webhooks</button>
+        <button class="tab-btn" data-tab="swarm" onclick="switchTab('swarm')">🐝 Swarm</button>
+        <button class="tab-btn" data-tab="mcp" onclick="switchTab('mcp')">🔌 MCP</button>
+        <button class="tab-btn" data-tab="config" onclick="switchTab('config')">⚙️ Config</button>
     </nav>
 
     <!-- ==================== MONITOR TAB ==================== -->
@@ -192,6 +201,176 @@
         </div>
     </main>
 
+    <!-- ==================== TOOLS TAB ==================== -->
+    <main class="tab-content" id="tab-tools">
+        <div class="dashboard">
+            <div class="card" style="grid-column: span 2;">
+                <div class="card-header">
+                    <span class="card-title">Loaded Tools</span>
+                    <span class="card-icon">🔧</span>
+                </div>
+                <div id="toolsList" class="tools-list">
+                    <div style="color:var(--text-muted);padding:20px;">Loading tools...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== LOGS TAB ==================== -->
+    <main class="tab-content" id="tab-logs">
+        <div class="dashboard">
+            <div class="card" style="grid-column: span 2;">
+                <div class="card-header">
+                    <span class="card-title">Event Logs</span>
+                    <span class="card-icon">📋</span>
+                </div>
+                <div class="logs-controls">
+                    <input type="text" class="chat-input" id="logsSearch" placeholder="Search logs..." style="flex:1;">
+                    <button class="chat-btn" onclick="loadLogs()">Search</button>
+                    <button class="chat-btn" onclick="clearLogsSearch()">Clear</button>
+                </div>
+                <div id="logsContainer" class="log-stream" style="max-height:600px;overflow-y:auto;">
+                    <div style="color:var(--text-muted);padding:20px;">Loading logs...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== SUBSYSTEMS TAB ==================== -->
+    <main class="tab-content" id="tab-subsystems">
+        <div class="dashboard">
+            <div class="card" style="grid-column: span 2;">
+                <div class="card-header">
+                    <span class="card-title">Subsystem Health</span>
+                    <span class="card-icon">⚙️</span>
+                </div>
+                <div id="subsystemsList" class="subsystems-list">
+                    <div style="color:var(--text-muted);padding:20px;">Loading subsystems...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== USERS TAB ==================== -->
+    <main class="tab-content" id="tab-users">
+        <div class="dashboard">
+            <div class="card" style="grid-column: span 2;">
+                <div class="card-header">
+                    <span class="card-title">User Management</span>
+                    <span class="card-icon">👥</span>
+                </div>
+                <div style="margin-bottom:16px;">
+                    <button class="chat-btn" onclick="openAddUserModal()">+ Add User</button>
+                </div>
+                <div id="usersList" class="users-list">
+                    <div style="color:var(--text-muted);padding:20px;">Loading users...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== HEARTBEAT TAB ==================== -->
+    <main class="tab-content" id="tab-heartbeat">
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Uptime Statistics</span>
+                    <span class="card-icon">⏱️</span>
+                </div>
+                <div id="heartbeatUptime" class="stats-display">
+                    <div style="color:var(--text-muted);padding:20px;">Loading...</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Health Check History</span>
+                    <span class="card-icon">💓</span>
+                </div>
+                <div id="heartbeatHistory" class="heartbeat-history">
+                    <div style="color:var(--text-muted);padding:20px;">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== WEBHOOKS TAB ==================== -->
+    <main class="tab-content" id="tab-webhooks">
+        <div class="dashboard">
+            <div class="card" style="grid-column: span 2;">
+                <div class="card-header">
+                    <span class="card-title">Webhook Statistics</span>
+                    <span class="card-icon">🔗</span>
+                </div>
+                <div id="webhooksStats" class="stats-grid">
+                    <div style="color:var(--text-muted);padding:20px;">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== SWARM TAB ==================== -->
+    <main class="tab-content" id="tab-swarm">
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Swarm Statistics</span>
+                    <span class="card-icon">📊</span>
+                </div>
+                <div id="swarmStats" class="stats-display">
+                    <div style="color:var(--text-muted);padding:20px;">Loading...</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Agent Profiles</span>
+                    <span class="card-icon">🐝</span>
+                </div>
+                <div id="swarmProfiles" class="profiles-list">
+                    <div style="color:var(--text-muted);padding:20px;">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== MCP TAB ==================== -->
+    <main class="tab-content" id="tab-mcp">
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">MCP Server Status</span>
+                    <span class="card-icon">🔌</span>
+                </div>
+                <div id="mcpStatus" class="stats-display">
+                    <div style="color:var(--text-muted);padding:20px;">Loading...</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">MCP Server Health</span>
+                    <span class="card-icon">💚</span>
+                </div>
+                <div id="mcpHealth" class="stats-display">
+                    <div style="color:var(--text-muted);padding:20px;">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== CONFIG TAB ==================== -->
+    <main class="tab-content" id="tab-config">
+        <div class="dashboard">
+            <div class="card" style="grid-column: span 2;">
+                <div class="card-header">
+                    <span class="card-title">Configuration (Secrets Masked)</span>
+                    <span class="card-icon">⚙️</span>
+                </div>
+                <div id="configViewer" class="config-viewer">
+                    <div style="color:var(--text-muted);padding:20px;">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
     <!-- New Task Modal -->
     <div class="modal-overlay" id="newTaskModal" onclick="closeModal(event)">
         <div class="modal" onclick="event.stopPropagation()">
@@ -213,6 +392,27 @@
                     <option value="critical">🔴 Critical</option>
                 </select>
                 <button type="submit" class="chat-btn" style="width:100%;margin-top:16px;">Create Task</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="modal-overlay" id="addUserModal" onclick="closeAddUserModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Add User</h2>
+                <button class="modal-close" onclick="closeAddUserModal()">&times;</button>
+            </div>
+            <form onsubmit="addUser(event)">
+                <label class="form-label">Username</label>
+                <input type="text" class="form-input" id="newUserUsername" required placeholder="username">
+                <label class="form-label">Role</label>
+                <select class="form-input" id="newUserRole">
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                    <option value="owner">Owner</option>
+                </select>
+                <button type="submit" class="chat-btn" style="width:100%;margin-top:16px;">Add User</button>
             </form>
         </div>
     </div>

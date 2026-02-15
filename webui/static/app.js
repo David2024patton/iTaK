@@ -9,6 +9,15 @@ function switchTab(tab) {
     document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
     document.getElementById(`tab-${tab}`).classList.add('active');
     if (tab === 'mission') loadTasks();
+    else if (tab === 'tools') loadTools();
+    else if (tab === 'logs') loadLogs();
+    else if (tab === 'subsystems') loadSubsystems();
+    else if (tab === 'users') loadUsers();
+    else if (tab === 'heartbeat') loadHeartbeat();
+    else if (tab === 'webhooks') loadWebhooks();
+    else if (tab === 'swarm') loadSwarm();
+    else if (tab === 'mcp') loadMCP();
+    else if (tab === 'config') loadConfig();
 }
 
 // ==================== WEBSOCKET ====================
@@ -285,9 +294,384 @@ async function deleteTask(taskId) {
     } catch (e) { console.error('Failed to delete task:', e); }
 }
 
+// ======================================================
+//                    TOOLS TAB
+// ======================================================
+
+async function loadTools() {
+    try {
+        const res = await fetch(`${API}/api/tools`);
+        const data = await res.json();
+        const tools = data.tools || [];
+        
+        const container = document.getElementById('toolsList');
+        if (tools.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted);padding:20px;">No tools loaded</div>';
+            return;
+        }
+        
+        container.innerHTML = tools.map(t => `
+            <div class="tool-item">
+                <div class="tool-name">${t.name}</div>
+                <div class="tool-desc">${t.description || 'No description'}</div>
+            </div>
+        `).join('');
+    } catch (e) {
+        console.error('Failed to load tools:', e);
+        document.getElementById('toolsList').innerHTML = '<div style="color:var(--accent-red);padding:20px;">Failed to load tools</div>';
+    }
+}
+
+// ======================================================
+//                    LOGS TAB
+// ======================================================
+
+async function loadLogs() {
+    const search = document.getElementById('logsSearch').value.trim();
+    try {
+        const url = search 
+            ? `${API}/api/logs?search=${encodeURIComponent(search)}&limit=100`
+            : `${API}/api/logs?limit=100`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const logs = data.logs || [];
+        
+        const container = document.getElementById('logsContainer');
+        if (logs.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted);padding:20px;">No logs found</div>';
+            return;
+        }
+        
+        container.innerHTML = logs.map(log => {
+            const time = new Date(log.timestamp * 1000).toLocaleString();
+            const type = log.event_type || 'system';
+            const typeClass = type.includes('error') ? 'error' : type.includes('tool') ? 'tool' : type.includes('user') ? 'user' : type.includes('agent') ? 'agent' : 'system';
+            const data = typeof log.data === 'string' ? log.data : JSON.stringify(log.data);
+            return `
+                <div class="log-entry">
+                    <span class="log-time">${time}</span>
+                    <span class="log-type ${typeClass}">${type}</span>
+                    <span class="log-data">${data}</span>
+                </div>
+            `;
+        }).join('');
+    } catch (e) {
+        console.error('Failed to load logs:', e);
+        document.getElementById('logsContainer').innerHTML = '<div style="color:var(--accent-red);padding:20px;">Failed to load logs</div>';
+    }
+}
+
+function clearLogsSearch() {
+    document.getElementById('logsSearch').value = '';
+    loadLogs();
+}
+
+// ======================================================
+//                  SUBSYSTEMS TAB
+// ======================================================
+
+async function loadSubsystems() {
+    try {
+        const res = await fetch(`${API}/api/subsystems`);
+        const data = await res.json();
+        
+        const container = document.getElementById('subsystemsList');
+        if (Object.keys(data).length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted);padding:20px;">No subsystems available</div>';
+            return;
+        }
+        
+        container.innerHTML = Object.entries(data).map(([name, status]) => {
+            const statusText = typeof status === 'object' ? JSON.stringify(status) : status;
+            const isHealthy = statusText.toLowerCase().includes('healthy') || statusText.toLowerCase().includes('ok') || statusText.toLowerCase().includes('connected');
+            const statusClass = isHealthy ? 'status-healthy' : 'status-unhealthy';
+            return `
+                <div class="subsystem-item">
+                    <div class="subsystem-name">${name}</div>
+                    <div class="subsystem-status ${statusClass}">${statusText}</div>
+                </div>
+            `;
+        }).join('');
+    } catch (e) {
+        console.error('Failed to load subsystems:', e);
+        document.getElementById('subsystemsList').innerHTML = '<div style="color:var(--accent-red);padding:20px;">Failed to load subsystems</div>';
+    }
+}
+
+// ======================================================
+//                    USERS TAB
+// ======================================================
+
+async function loadUsers() {
+    try {
+        const res = await fetch(`${API}/api/users`);
+        const data = await res.json();
+        const users = data.users || [];
+        
+        const container = document.getElementById('usersList');
+        if (users.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted);padding:20px;">No users registered</div>';
+            return;
+        }
+        
+        container.innerHTML = users.map(u => `
+            <div class="user-item">
+                <div class="user-info">
+                    <div class="user-name">${u.username || u.id}</div>
+                    <div class="user-role">${u.role || 'user'}</div>
+                </div>
+                <button class="delete-btn" onclick="deleteUser('${u.id}')" title="Delete user">✕</button>
+            </div>
+        `).join('');
+    } catch (e) {
+        console.error('Failed to load users:', e);
+        document.getElementById('usersList').innerHTML = '<div style="color:var(--accent-red);padding:20px;">Failed to load users</div>';
+    }
+}
+
+function openAddUserModal() {
+    document.getElementById('addUserModal').classList.add('open');
+    document.getElementById('newUserUsername').focus();
+}
+
+function closeAddUserModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('addUserModal').classList.remove('open');
+}
+
+async function addUser(e) {
+    e.preventDefault();
+    const username = document.getElementById('newUserUsername').value.trim();
+    const role = document.getElementById('newUserRole').value;
+    if (!username) return;
+    try {
+        await fetch(`${API}/api/users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, role }),
+        });
+        document.getElementById('newUserUsername').value = '';
+        document.getElementById('newUserRole').value = 'user';
+        closeAddUserModal();
+        loadUsers();
+    } catch (e) { console.error('Failed to add user:', e); }
+}
+
+async function deleteUser(userId) {
+    if (!confirm('Delete this user?')) return;
+    try {
+        await fetch(`${API}/api/users/${userId}`, { method: 'DELETE' });
+        loadUsers();
+    } catch (e) { console.error('Failed to delete user:', e); }
+}
+
+// ======================================================
+//                  HEARTBEAT TAB
+// ======================================================
+
+async function loadHeartbeat() {
+    try {
+        // Load uptime stats
+        const uptimeRes = await fetch(`${API}/api/heartbeat/uptime`);
+        const uptimeData = await uptimeRes.json();
+        const uptimeContainer = document.getElementById('heartbeatUptime');
+        uptimeContainer.innerHTML = `
+            <div class="stat-grid" style="padding:16px;">
+                ${Object.entries(uptimeData).map(([key, value]) => `
+                    <div class="stat-box">
+                        <div class="stat-label">${key.replace(/_/g, ' ')}</div>
+                        <div class="stat-value">${typeof value === 'object' ? JSON.stringify(value) : value}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        // Load health check history
+        const historyRes = await fetch(`${API}/api/heartbeat/history?limit=20`);
+        const historyData = await historyRes.json();
+        const history = historyData.history || [];
+        
+        const historyContainer = document.getElementById('heartbeatHistory');
+        if (history.length === 0) {
+            historyContainer.innerHTML = '<div style="color:var(--text-muted);padding:20px;">No heartbeat history</div>';
+            return;
+        }
+        
+        historyContainer.innerHTML = history.map(h => `
+            <div class="heartbeat-item">
+                <div class="heartbeat-time">${new Date(h.timestamp * 1000).toLocaleString()}</div>
+                <div class="heartbeat-status ${h.status === 'healthy' ? 'status-healthy' : 'status-unhealthy'}">${h.status}</div>
+                ${h.details ? `<div class="heartbeat-details">${h.details}</div>` : ''}
+            </div>
+        `).join('');
+    } catch (e) {
+        console.error('Failed to load heartbeat:', e);
+        document.getElementById('heartbeatUptime').innerHTML = '<div style="color:var(--accent-red);padding:20px;">Failed to load heartbeat data</div>';
+    }
+}
+
+// ======================================================
+//                  WEBHOOKS TAB
+// ======================================================
+
+async function loadWebhooks() {
+    try {
+        const res = await fetch(`${API}/api/webhooks/stats`);
+        const data = await res.json();
+        
+        const container = document.getElementById('webhooksStats');
+        container.innerHTML = `
+            <div class="stat-grid" style="padding:16px;">
+                <div class="stat-box">
+                    <div class="stat-label">Inbound Received</div>
+                    <div class="stat-value blue">${data.inbound_received || 0}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Outbound Fired</div>
+                    <div class="stat-value purple">${data.outbound_fired || 0}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Active Targets</div>
+                    <div class="stat-value green">${Object.keys(data.targets || {}).length}</div>
+                </div>
+            </div>
+            ${Object.keys(data.targets || {}).length > 0 ? `
+                <div style="padding:16px;">
+                    <h3 style="margin-bottom:12px;color:var(--text-primary);">Webhook Targets</h3>
+                    ${Object.entries(data.targets || {}).map(([name, count]) => `
+                        <div class="webhook-target">
+                            <span class="webhook-name">${name}</span>
+                            <span class="webhook-count">${count} calls</span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+        `;
+    } catch (e) {
+        console.error('Failed to load webhooks:', e);
+        document.getElementById('webhooksStats').innerHTML = '<div style="color:var(--accent-red);padding:20px;">Failed to load webhook statistics</div>';
+    }
+}
+
+// ======================================================
+//                    SWARM TAB
+// ======================================================
+
+async function loadSwarm() {
+    try {
+        // Load swarm stats
+        const statsRes = await fetch(`${API}/api/swarm/stats`);
+        const statsData = await statsRes.json();
+        
+        const statsContainer = document.getElementById('swarmStats');
+        statsContainer.innerHTML = `
+            <div class="stat-grid" style="padding:16px;">
+                <div class="stat-box">
+                    <div class="stat-label">Profiles Loaded</div>
+                    <div class="stat-value blue">${statsData.profiles_loaded || 0}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Total Swarms</div>
+                    <div class="stat-value purple">${statsData.total_swarms || 0}</div>
+                </div>
+            </div>
+        `;
+
+        // Load agent profiles
+        const profilesRes = await fetch(`${API}/api/swarm/profiles`);
+        const profilesData = await profilesRes.json();
+        const profiles = profilesData.profiles || [];
+        
+        const profilesContainer = document.getElementById('swarmProfiles');
+        if (profiles.length === 0) {
+            profilesContainer.innerHTML = '<div style="color:var(--text-muted);padding:20px;">No agent profiles available</div>';
+            return;
+        }
+        
+        profilesContainer.innerHTML = `
+            <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+                ${profiles.map(p => `
+                    <div class="profile-item">
+                        <div class="profile-name">${p.name || p}</div>
+                        ${p.description ? `<div class="profile-desc">${p.description}</div>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } catch (e) {
+        console.error('Failed to load swarm:', e);
+        document.getElementById('swarmStats').innerHTML = '<div style="color:var(--accent-red);padding:20px;">Failed to load swarm data</div>';
+    }
+}
+
+// ======================================================
+//                     MCP TAB
+// ======================================================
+
+async function loadMCP() {
+    try {
+        // Load MCP status
+        const statusRes = await fetch(`${API}/api/mcp/status`);
+        const statusData = await statusRes.json();
+        
+        const statusContainer = document.getElementById('mcpStatus');
+        statusContainer.innerHTML = `
+            <div class="stat-grid" style="padding:16px;">
+                ${Object.entries(statusData).map(([key, value]) => `
+                    <div class="stat-box">
+                        <div class="stat-label">${key.replace(/_/g, ' ')}</div>
+                        <div class="stat-value">${typeof value === 'object' ? JSON.stringify(value) : value}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        // Load MCP server health
+        const healthRes = await fetch(`${API}/api/mcp-server/health`);
+        const healthData = await healthRes.json();
+        
+        const healthContainer = document.getElementById('mcpHealth');
+        healthContainer.innerHTML = `
+            <div class="stat-grid" style="padding:16px;">
+                ${Object.entries(healthData).map(([key, value]) => `
+                    <div class="stat-box">
+                        <div class="stat-label">${key.replace(/_/g, ' ')}</div>
+                        <div class="stat-value ${value === 'healthy' || value === 'ok' ? 'green' : 'red'}">${typeof value === 'object' ? JSON.stringify(value) : value}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } catch (e) {
+        console.error('Failed to load MCP:', e);
+        document.getElementById('mcpStatus').innerHTML = '<div style="color:var(--accent-red);padding:20px;">Failed to load MCP data</div>';
+    }
+}
+
+// ======================================================
+//                   CONFIG TAB
+// ======================================================
+
+async function loadConfig() {
+    try {
+        const res = await fetch(`${API}/api/config`);
+        const data = await res.json();
+        
+        const container = document.getElementById('configViewer');
+        container.innerHTML = `
+            <pre class="config-json">${JSON.stringify(data, null, 2)}</pre>
+        `;
+    } catch (e) {
+        console.error('Failed to load config:', e);
+        document.getElementById('configViewer').innerHTML = '<div style="color:var(--accent-red);padding:20px;">Failed to load configuration</div>';
+    }
+}
+
 // ===== Keyboard shortcuts =====
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Escape') {
+        closeModal();
+        closeAddUserModal();
+    }
 });
 
 // ==================== INIT ====================
