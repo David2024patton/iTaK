@@ -1,50 +1,86 @@
 # CodeQL Configuration Fix
 
-## Issue
+## Current Status ✅ RESOLVED
 
-The repository currently has both **default** and **advanced** CodeQL setups configured, which causes a conflict. GitHub does not allow both configurations to run simultaneously.
+**The advanced CodeQL workflow has been disabled** to resolve the conflict with GitHub's default CodeQL setup.
 
-Error message:
+The repository now uses **GitHub's default CodeQL analysis**, which automatically scans:
+- Python code
+- JavaScript/TypeScript code
+
+The default setup runs automatically on every push and pull request.
+
+---
+
+## Background: The Conflict Issue
+
+The repository previously had both **default** and **advanced** CodeQL setups configured, which causes a conflict. GitHub does not allow both configurations to run simultaneously.
+
+Error message (now resolved):
 ```
 CodeQL analyses from advanced configurations cannot be processed when the default setup is enabled
 ```
 
-## Solution
+## Current Solution
 
-To fix this issue and use the advanced CodeQL configuration (`.github/workflows/codeql.yml`), you need to disable the default setup:
+✅ **Fixed:** The advanced workflow file has been renamed to `.github/workflows/codeql.yml.disabled`
 
-### Steps to Disable Default Setup:
+This allows the default CodeQL setup to work without conflicts.
 
-1. Go to your repository on GitHub
-2. Navigate to **Settings** → **Code security and analysis**
-3. Find **CodeQL analysis** section
-4. Click the **...** (three dots) menu next to "CodeQL analysis"
-5. Select **Disable** or **Switch to advanced setup**
-6. Confirm the change
+---
+
+## If You Want Advanced Setup (Optional)
+
+To switch back to the advanced CodeQL configuration:
+
+### Steps:
+
+1. **Disable default CodeQL setup in GitHub:**
+   - Go to your repository on GitHub
+   - Navigate to **Settings** → **Code security and analysis**
+   - Find **CodeQL analysis** section
+   - Click the **...** (three dots) menu next to "CodeQL analysis"
+   - Select **Disable**
+   - Confirm the change
+
+2. **Re-enable the advanced workflow:**
+   ```bash
+   cd .github/workflows
+   git mv codeql.yml.disabled codeql.yml
+   git commit -m "Re-enable advanced CodeQL workflow"
+   git push
+   ```
+
+3. **Verify it works:**
+   - Go to **Actions** tab
+   - Check that "CodeQL Advanced" workflow runs successfully
 
 ### Benefits of Advanced Setup:
 
-The advanced configuration in `.github/workflows/codeql.yml` provides:
 - **Extended security queries** for better vulnerability detection
-- **Quality queries** for code improvement suggestions
-- **Multiple language support** (Python, JavaScript/TypeScript)
-- **Scheduled daily scans** at 02:00 UTC
-- **Customizable configuration** for future enhancements
+- **Quality queries** for code improvement suggestions  
+- **Multiple language support** with custom configurations
+- **Scheduled daily scans** at 02:00 UTC (customizable)
+- **Customizable query suites** for future enhancements
 
-### Verification:
+---
 
-After disabling the default setup:
-1. The workflow will automatically run on the next push or pull request
-2. You can manually trigger it from the **Actions** tab
-3. Check the **Security** → **Code scanning** tab for results
+## Recommended Setup: Use Default
 
-## Alternative: Keep Default Setup
+For most users, **GitHub's default CodeQL setup is recommended** because:
+- ✅ Zero configuration required
+- ✅ Automatically updates with latest security queries
+- ✅ Works out-of-the-box
+- ✅ No workflow file maintenance needed
+- ✅ Fully managed by GitHub
 
-If you prefer to keep the default setup instead:
-1. Delete or disable `.github/workflows/codeql.yml`
-2. The default setup will continue to work automatically
+The advanced setup is only needed if you require:
+- Custom query suites
+- Specific scan schedules
+- Fine-grained language configurations
+- Integration with custom tooling
 
-Note: The default setup is simpler but provides less control and fewer customization options compared to the advanced setup.
+---
 
 ## References
 
