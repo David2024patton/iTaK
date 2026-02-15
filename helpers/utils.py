@@ -10,6 +10,13 @@ import time
 from pathlib import Path
 from typing import Any
 
+# Optional import for better JSON parsing
+try:
+    import dirtyjson
+    HAS_DIRTYJSON = True
+except ImportError:
+    HAS_DIRTYJSON = False
+
 # ============================================================
 # Text Utilities
 # ============================================================
@@ -22,7 +29,10 @@ def truncate(text: str, max_length: int = 500, suffix: str = "...") -> str:
 
 
 def extract_json(text: str) -> dict | list | None:
-    """Extract JSON from text, even if wrapped in markdown code blocks."""
+    """Extract JSON from text, even if wrapped in markdown code blocks.
+    
+    Uses dirtyjson to handle malformed JSON gracefully.
+    """
     # Try to find JSON in code blocks
     patterns = [
         r"```json\s*\n(.*?)\n```",
@@ -33,15 +43,24 @@ def extract_json(text: str) -> dict | list | None:
     for pattern in patterns:
         match = re.search(pattern, text, re.DOTALL)
         if match:
+            json_str = match.group(1) if match.lastindex else match.group(0)
             try:
-                return json.loads(match.group(1) if match.lastindex else match.group(0))
-            except (json.JSONDecodeError, IndexError):
+                # Try dirtyjson first for better handling of malformed JSON
+                if HAS_DIRTYJSON:
+                    return dirtyjson.loads(json_str)
+                else:
+                    return json.loads(json_str)
+            except (json.JSONDecodeError, ValueError, IndexError):
                 continue
 
     # Try parsing the entire text
     try:
-        return json.loads(text)
-    except json.JSONDecodeError:
+        # Try dirtyjson first for better handling of malformed JSON
+        if HAS_DIRTYJSON:
+            return dirtyjson.loads(text)
+        else:
+            return json.loads(text)
+    except (json.JSONDecodeError, ValueError):
         return None
 
 

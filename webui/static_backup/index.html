@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iTaK - Dashboard</title>
+    <meta name="description" content="iTaK Intelligent Task Automation Kernel - Agent Monitoring Dashboard">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <!-- Top Bar -->
+    <header class="topbar">
+        <div class="topbar-brand">
+            <h1>🧠 iTaK</h1>
+            <span style="font-size:12px; color:var(--text-muted)">Intelligent Task Automation Kernel</span>
+        </div>
+        <div class="topbar-status">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Connecting...</span>
+        </div>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="tab-bar">
+        <button class="tab-btn active" data-tab="monitor" onclick="switchTab('monitor')">📊 Monitor</button>
+        <button class="tab-btn" data-tab="mission" onclick="switchTab('mission')">📋 Mission Control</button>
+    </nav>
+
+    <!-- ==================== MONITOR TAB ==================== -->
+    <main class="tab-content active" id="tab-monitor">
+        <div class="dashboard">
+            <!-- Stats Row -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Agent Overview</span>
+                    <span class="card-icon">📊</span>
+                </div>
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <div class="stat-label">Uptime</div>
+                        <div class="stat-value green" id="statUptime">--</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Tools</div>
+                        <div class="stat-value blue" id="statTools">--</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Iterations</div>
+                        <div class="stat-value purple" id="statIterations">--</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Budget Left</div>
+                        <div class="stat-value amber" id="statBudget">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Memory Stats -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Memory Layers</span>
+                    <span class="card-icon">🧠</span>
+                </div>
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <div class="stat-label">Markdown</div>
+                        <div class="stat-value cyan" id="memMarkdown">--</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">SQLite</div>
+                        <div class="stat-value blue" id="memSqlite">--</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Neo4j</div>
+                        <div class="stat-value purple" id="memNeo4j">--</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Weaviate</div>
+                        <div class="stat-value green" id="memWeaviate">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Log Stream -->
+            <div class="card" style="grid-column: span 2;">
+                <div class="card-header">
+                    <span class="card-title">Live Log Stream</span>
+                    <span class="card-icon">📋</span>
+                </div>
+                <div class="log-stream" id="logStream">
+                    <div class="log-entry">
+                        <span class="log-time">--:--</span>
+                        <span class="log-type system">system</span>
+                        <span class="log-data">Waiting for connection...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Panel -->
+            <div class="card chat-panel">
+                <div class="card-header">
+                    <span class="card-title">Chat with iTaK</span>
+                    <span class="card-icon">💬</span>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-msg agent">👋 Hello! I'm iTaK. Send me a task or question.</div>
+                </div>
+                <div class="chat-input-row">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Type your message..."
+                        autocomplete="off">
+                    <button class="chat-btn" id="chatSendBtn" onclick="sendChat()">Send</button>
+                </div>
+            </div>
+
+            <!-- Memory Search -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Memory Search</span>
+                    <span class="card-icon">🔍</span>
+                </div>
+                <div class="memory-search-row">
+                    <input type="text" class="chat-input" id="memoryInput" placeholder="Search memories..."
+                        autocomplete="off">
+                    <button class="chat-btn" onclick="searchMemory()">Search</button>
+                </div>
+                <div class="memory-results" id="memoryResults"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== MISSION CONTROL TAB ==================== -->
+    <main class="tab-content" id="tab-mission">
+        <!-- Board Stats Bar -->
+        <div class="mc-stats-bar">
+            <div class="mc-stat"><span class="mc-stat-value" id="mcTotal">0</span><span
+                    class="mc-stat-label">Total</span></div>
+            <div class="mc-stat"><span class="mc-stat-value inbox-color" id="mcInbox">0</span><span
+                    class="mc-stat-label">Inbox</span></div>
+            <div class="mc-stat"><span class="mc-stat-value progress-color" id="mcProgress">0</span><span
+                    class="mc-stat-label">In Progress</span></div>
+            <div class="mc-stat"><span class="mc-stat-value review-color" id="mcReview">0</span><span
+                    class="mc-stat-label">Review</span></div>
+            <div class="mc-stat"><span class="mc-stat-value done-color" id="mcDone">0</span><span
+                    class="mc-stat-label">Done</span></div>
+            <button class="chat-btn mc-new-btn" onclick="openNewTaskModal()">+ New Task</button>
+        </div>
+
+        <!-- Kanban Board -->
+        <div class="kanban-board">
+            <div class="kanban-column" data-status="inbox">
+                <div class="kanban-col-header">
+                    <span class="kanban-col-icon">📥</span>
+                    <span class="kanban-col-title">INBOX</span>
+                    <span class="kanban-col-count" id="colCount-inbox">0</span>
+                </div>
+                <div class="kanban-cards" id="col-inbox" ondragover="allowDrop(event)"
+                    ondrop="dropTask(event, 'inbox')"></div>
+            </div>
+            <div class="kanban-column" data-status="in_progress">
+                <div class="kanban-col-header">
+                    <span class="kanban-col-icon">🔄</span>
+                    <span class="kanban-col-title">IN PROGRESS</span>
+                    <span class="kanban-col-count" id="colCount-in_progress">0</span>
+                </div>
+                <div class="kanban-cards" id="col-in_progress" ondragover="allowDrop(event)"
+                    ondrop="dropTask(event, 'in_progress')"></div>
+            </div>
+            <div class="kanban-column" data-status="review">
+                <div class="kanban-col-header">
+                    <span class="kanban-col-icon">👀</span>
+                    <span class="kanban-col-title">REVIEW</span>
+                    <span class="kanban-col-count" id="colCount-review">0</span>
+                </div>
+                <div class="kanban-cards" id="col-review" ondragover="allowDrop(event)"
+                    ondrop="dropTask(event, 'review')"></div>
+            </div>
+            <div class="kanban-column" data-status="done">
+                <div class="kanban-col-header">
+                    <span class="kanban-col-icon">✅</span>
+                    <span class="kanban-col-title">DONE</span>
+                    <span class="kanban-col-count" id="colCount-done">0</span>
+                </div>
+                <div class="kanban-cards" id="col-done" ondragover="allowDrop(event)" ondrop="dropTask(event, 'done')">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- New Task Modal -->
+    <div class="modal-overlay" id="newTaskModal" onclick="closeModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Create New Task</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form onsubmit="createTask(event)">
+                <label class="form-label">Title</label>
+                <input type="text" class="form-input" id="newTaskTitle" required placeholder="Task title...">
+                <label class="form-label">Description</label>
+                <textarea class="form-input form-textarea" id="newTaskDesc"
+                    placeholder="What needs to be done..."></textarea>
+                <label class="form-label">Priority</label>
+                <select class="form-input" id="newTaskPriority">
+                    <option value="low">🟢 Low</option>
+                    <option value="medium" selected>🟡 Medium</option>
+                    <option value="high">🟠 High</option>
+                    <option value="critical">🔴 Critical</option>
+                </select>
+                <button type="submit" class="chat-btn" style="width:100%;margin-top:16px;">Create Task</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+
+</html>

@@ -69,6 +69,20 @@ iTaK uses a single `config.json` for all configuration. Secrets use `$ENV_VAR` s
         "weaviate": {
             "url": "$WEAVIATE_URL",
             "api_key": "$WEAVIATE_API_KEY"
+        },
+        "memu": {
+            "enabled": false,
+            "mode": "self-hosted",
+            "base_url": "http://localhost:8080",
+            "api_key": "$MEMU_API_KEY",
+            "timeout": 30,
+            "memorize_endpoint": "/memory/memorize",
+            "min_conversation_length": 100,
+            "dedup_window_minutes": 15,
+            "cost_cap_per_hour": 1.0,
+            "max_turns": 5,
+            "memu_weight": 0.8,
+            "append_to_memory_md": true
         }
     },
 
@@ -187,6 +201,19 @@ Layer-by-layer configuration. Missing stores are silently skipped:
 - **sqlite** always works (local file)
 - **neo4j** requires a running Neo4j instance
 - **weaviate** requires a Weaviate cluster
+- **memu** (optional) extraction-only enrichment pipeline:
+  - `enabled: false` - Disabled by default (sovereignty-first)
+  - `mode: "self-hosted"` - Use local memu-server (or "cloud" for API)
+  - `base_url: "http://localhost:8080"` - MemU server endpoint
+  - `api_key` - Only needed for cloud mode
+  - `timeout: 30` - Request timeout in seconds
+  - `memorize_endpoint: "/memory/memorize"` - Custom endpoint path
+  - `min_conversation_length: 100` - Skip conversations under N chars
+  - `dedup_window_minutes: 15` - Skip similar conversations within N minutes
+  - `cost_cap_per_hour: 1.0` - Max USD cost per hour
+  - `max_turns: 5` - Number of conversation turns to send
+  - `memu_weight: 0.8` - Weight for ranking memu-extracted items
+  - `append_to_memory_md: true` - Append extracted facts to MEMORY.md
 
 ### `security`
 - `sandbox_enabled: true` runs code in Docker containers

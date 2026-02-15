@@ -15,10 +15,13 @@ Skills are markdown knowledge files in `skills/`. They teach the agent HOW to do
 | Skill | File | Matches With Tool |
 |-------|------|-------------------|
 | Code Execution | `code_execution.md` | `code_execution.py` |
-| Web Research | `web_research.md` | `web_search.py` |
+| Web Research | `web_research.md` | `web_search.py` (uses SearXNG) |
 | Browser Agent | `browser_agent.md` | `browser_agent.py` |
 | Task Delegation | `delegation.md` | `delegate_task.py` |
 | Knowledge Graph | `knowledge_graph.md` | `knowledge_tool.py` |
+| Git Operations | `git_operations.md` | `git_tool.py` |
+| Email Management | `email_management.md` | `email_tool.py` |
+| Social Media Management | `social_media_management.md` | `social_media_tool.py` |
 | Docker Operations | `docker_ops.md` | `code_execution.py` (terminal) |
 | Linux Commands | `os_linux.md` | `code_execution.py` (terminal) |
 | macOS Commands | `os_macos.md` | `code_execution.py` (terminal) |
@@ -33,14 +36,17 @@ Skills are markdown knowledge files in `skills/`. They teach the agent HOW to do
 The system maintains **1:1 parity** between tools and skills:
 
 ```
-tools/code_execution.py  <-->  skills/code_execution.md
-tools/web_search.py      <-->  skills/web_research.md
-tools/browser_agent.py   <-->  skills/browser_agent.md
-tools/delegate_task.py   <-->  skills/delegation.md
-tools/knowledge_tool.py  <-->  skills/knowledge_graph.md
-tools/memory_save.py     <-->  (covered in web_research.md)
-tools/memory_load.py     <-->  (covered in web_research.md)
-tools/response.py        <-->  (no skill needed - always used)
+tools/code_execution.py    <-->  skills/code_execution.md
+tools/web_search.py        <-->  skills/web_research.md (uses SearXNG)
+tools/browser_agent.py     <-->  skills/browser_agent.md
+tools/delegate_task.py     <-->  skills/delegation.md
+tools/knowledge_tool.py    <-->  skills/knowledge_graph.md
+tools/git_tool.py          <-->  skills/git_operations.md
+tools/email_tool.py        <-->  skills/email_management.md
+tools/social_media_tool.py <-->  skills/social_media_management.md
+tools/memory_save.py       <-->  (covered in web_research.md)
+tools/memory_load.py       <-->  (covered in web_research.md)
+tools/response.py          <-->  (no skill needed - always used)
 ```
 
 ---

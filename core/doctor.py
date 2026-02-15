@@ -386,8 +386,9 @@ def check_security() -> tuple[list[str], int, int]:
     # 1. SSRF Guard
     try:
         from security.ssrf_guard import SSRFGuard
-        guard = SSRFGuard()
-        ok, _ = guard.validate_url("http://example.com", source="doctor")
+        # Use a domain from the allowlist for testing
+        guard = SSRFGuard({"security": {"url_allowlist": ["github.com"]}})
+        ok, _ = guard.validate_url("http://github.com", source="doctor")
         bad, _ = guard.validate_url("file:///etc/passwd", source="doctor")
         if ok and not bad:
             lines.append(_ok("SSRF Guard functional (blocks file:// + private IPs)"))

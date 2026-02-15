@@ -201,3 +201,101 @@ class TestProgressTracker:
         assert "█" in bar
         assert "░" in bar
         assert "50%" in bar
+
+
+# ============================================================
+# Integration Tests
+# ============================================================
+class TestFrameworkIntegration:
+    """Test framework initialization and basic functionality."""
+
+    @pytest.fixture
+    def minimal_config(self):
+        """Provide a minimal test configuration."""
+        return {
+            "agent": {
+                "name": "TestAgent",
+                "max_iterations": 10,
+                "timeout_seconds": 60,
+            },
+            "models": {
+                "chat": {
+                    "provider": "litellm",
+                    "model": "gemini/gemini-2.0-flash",
+                },
+            },
+            "memory": {
+                "sqlite_path": "data/memory.db",
+            },
+            "logging": {
+                "jsonl_dir": "data/logs",
+                "sqlite_path": "data/logs.db",
+            },
+            "security": {
+                "secret_store_path": "data/secrets.db",
+            },
+        }
+
+    @pytest.mark.asyncio
+    async def test_agent_initialization(self, minimal_config):
+        """Agent should initialize with minimal config."""
+        from core.agent import Agent
+
+        agent = Agent(config=minimal_config)
+        assert agent.config["agent"]["name"] == "TestAgent"
+        # Agent tracks total_iterations, not max_iterations as an attribute
+        assert "max_iterations" in agent.config["agent"]
+
+    @pytest.mark.asyncio
+    async def test_tool_loading(self, minimal_config):
+        """Agent should load available tools."""
+        from core.agent import Agent
+
+        agent = Agent(config=minimal_config)
+        tools = agent.get_tool_names()
+        assert isinstance(tools, list)
+        assert len(tools) > 0
+        # Should have at least the response tool
+        assert "response" in tools
+
+    @pytest.mark.asyncio
+    async def test_preflight_check(self):
+        """Preflight check should pass with installed dependencies."""
+        from core.preflight import run_preflight
+
+        result = run_preflight(auto_install=False)
+        # Should have some passed checks
+        assert len(result.passed) > 0
+        # Critical packages should be available
+        passed_str = " ".join(result.passed)
+        assert "litellm" in passed_str
+        assert "pydantic" in passed_str
+
+    def test_ssrf_guard_blocks_dangerous_urls(self):
+        """SSRF guard should block dangerous URLs."""
+        from security.ssrf_guard import SSRFGuard
+
+        guard = SSRFGuard()
+        
+        # Should block file:// URLs
+        allowed, reason = guard.validate_url("file:///etc/passwd", "test")
+        assert not allowed
+        assert "file://" in reason.lower()
+        
+        # Should block dangerous schemes
+        allowed, reason = guard.validate_url("ftp://example.com", "test")
+        assert not allowed
+
+    def test_path_guard_blocks_traversal(self):
+        """Path guard should block directory traversal."""
+        from security.path_guard import validate_path
+
+        # Should block ../ patterns (no allowed_roots needed)
+        allowed, reason = validate_path("../../../etc/passwd")
+        assert not allowed
+        assert ".." in reason.lower()
+        
+        # Should allow normal relative paths when no root restriction
+        allowed, reason = validate_path("data/test.txt")
+        assert allowed
+

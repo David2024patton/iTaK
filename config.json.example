@@ -43,7 +43,21 @@
         "similarity_threshold": 0.7,
         "max_results": 10,
         "auto_memorize": true,
-        "consolidation_threshold": 0.85
+        "consolidation_threshold": 0.85,
+        "memu": {
+            "enabled": false,
+            "mode": "self-hosted",
+            "base_url": "http://localhost:8080",
+            "api_key": "${MEMU_API_KEY}",
+            "timeout": 30,
+            "memorize_endpoint": "/memory/memorize",
+            "min_conversation_length": 100,
+            "dedup_window_minutes": 15,
+            "cost_cap_per_hour": 1.0,
+            "max_turns": 5,
+            "memu_weight": 0.8,
+            "append_to_memory_md": true
+        }
     },
     "security": {
         "secret_store_path": "data/db/secrets.db",
@@ -136,5 +150,36 @@
     },
     "searxng": {
         "url": "${SEARXNG_URL}"
+    },
+    "email": {
+        "smtp": {
+            "server": "smtp.gmail.com",
+            "port": 587,
+            "username": "${EMAIL_USERNAME}",
+            "password": "${EMAIL_PASSWORD}"
+        },
+        "imap": {
+            "server": "imap.gmail.com",
+            "port": 993,
+            "username": "${EMAIL_USERNAME}",
+            "password": "${EMAIL_PASSWORD}"
+        }
+    },
+    "social_media": {
+        "twitter": {
+            "api_key": "${TWITTER_API_KEY}",
+            "api_secret": "${TWITTER_API_SECRET}",
+            "access_token": "${TWITTER_ACCESS_TOKEN}",
+            "access_token_secret": "${TWITTER_ACCESS_TOKEN_SECRET}"
+        },
+        "facebook": {
+            "access_token": "${FACEBOOK_ACCESS_TOKEN}"
+        },
+        "linkedin": {
+            "access_token": "${LINKEDIN_ACCESS_TOKEN}"
+        },
+        "instagram": {
+            "access_token": "${INSTAGRAM_ACCESS_TOKEN}"
+        }
     }
 }

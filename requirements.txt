@@ -12,11 +12,13 @@ dirtyjson>=1.0.8,<2.0.0
 aiosqlite>=0.20.0,<1.0.0
 neo4j>=5.0.0,<6.0.0
 weaviate-client>=4.0.0,<5.0.0
+aiohttp>=3.9.0,<4.0.0
 
 # === Web Dashboard ===
 fastapi>=0.115.0,<1.0.0
 uvicorn[standard]>=0.30.0,<1.0.0
 websockets>=13.0,<15.0
+python-socketio>=5.11.0,<6.0.0
 python-multipart>=0.0.9,<1.0.0
 jinja2>=3.1.0,<4.0.0
 

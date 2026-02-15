@@ -5,7 +5,7 @@ Token-bucket algorithm with per-adapter and per-model limits.
 
 import time
 import logging
-from collections import defaultdict
+from collections import defaultdict, deque
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -41,8 +41,8 @@ class RateLimiter:
         self._daily_cost: float = 0.0
         self._cost_reset_time: float = time.time()
 
-        # Request tracking
-        self._requests: dict[str, list[float]] = defaultdict(list)
+        # Request tracking (using deque for O(1) operations)
+        self._requests: dict[str, deque[float]] = defaultdict(deque)
 
     def check(self, category: str = "global") -> tuple[bool, str]:
         """Check if a request is allowed.
@@ -60,20 +60,27 @@ class RateLimiter:
         # Check category-specific limits
         limits = self.limits.get(category, self.limits.get("global", {}))
 
-        # Clean old entries
-        self._requests[category] = [t for t in self._requests[category] if now - t < 3600]
+        # Clean old entries (O(k) where k is expired entries, not O(n))
+        requests_deque = self._requests[category]
+        cutoff_hour = now - 3600
+        while requests_deque and requests_deque[0] < cutoff_hour:
+            requests_deque.popleft()
 
         # Per-minute check
         max_pm = limits.get("max_per_minute", 120)
-        recent_minute = sum(1 for t in self._requests[category] if now - t < 60)
+        cutoff_minute = now - 60
+        recent_minute = sum(1 for t in requests_deque if t >= cutoff_minute)
         if recent_minute >= max_pm:
-            wait = 60 - (now - self._requests[category][-max_pm])
-            return False, f"Rate limit ({category}): {recent_minute}/{max_pm} per minute. Wait {wait:.0f}s."
+            # Find the oldest request in the last minute using generator
+            first_in_minute = next((t for t in requests_deque if t >= cutoff_minute), None)
+            if first_in_minute:
+                wait = 60 - (now - first_in_minute)
+                return False, f"Rate limit ({category}): {recent_minute}/{max_pm} per minute. Wait {wait:.0f}s."
 
         # Per-hour check
         max_ph = limits.get("max_per_hour")
         if max_ph:
-            recent_hour = len(self._requests[category])
+            recent_hour = len(requests_deque)
             if recent_hour >= max_ph:
                 return False, f"Rate limit ({category}): {recent_hour}/{max_ph} per hour."
 
@@ -108,7 +115,8 @@ class RateLimiter:
         }
 
         for category in self.limits:
-            recent = sum(1 for t in self._requests.get(category, []) if now - t < 60)
+            cutoff = now - 60
+            recent = sum(1 for t in self._requests.get(category, deque()) if t >= cutoff)
             max_pm = self.limits[category].get("max_per_minute", "∞")
             status[f"{category}_rpm"] = f"{recent}/{max_pm}"
 
@@ -133,16 +141,16 @@ class RateLimiter:
         """
         now = time.time()
         if not hasattr(self, "_auth_failures"):
-            self._auth_failures: dict[str, list[float]] = defaultdict(list)
+            self._auth_failures: dict[str, deque[float]] = defaultdict(deque)
             self._auth_lockout_attempts = 5
             self._auth_lockout_seconds = 900  # 15 minutes
 
         self._auth_failures[client_id].append(now)
-        # Keep only recent failures within the lockout window
+        # Keep only recent failures within the lockout window (O(k) cleanup)
         cutoff = now - self._auth_lockout_seconds
-        self._auth_failures[client_id] = [
-            t for t in self._auth_failures[client_id] if t > cutoff
-        ]
+        failures_deque = self._auth_failures[client_id]
+        while failures_deque and failures_deque[0] <= cutoff:
+            failures_deque.popleft()
 
         count = len(self._auth_failures[client_id])
         if count >= self._auth_lockout_attempts:
@@ -161,14 +169,19 @@ class RateLimiter:
             return False, 0
 
         now = time.time()
-        cutoff = now - getattr(self, "_auth_lockout_seconds", 900)
-        failures = [t for t in self._auth_failures.get(client_id, []) if t > cutoff]
+        lockout_seconds = getattr(self, "_auth_lockout_seconds", 900)
+        cutoff = now - lockout_seconds
+        failures_deque = self._auth_failures.get(client_id, deque())
+        
+        # Clean up old failures
+        while failures_deque and failures_deque[0] <= cutoff:
+            failures_deque.popleft()
 
         max_attempts = getattr(self, "_auth_lockout_attempts", 5)
-        if len(failures) >= max_attempts:
+        if len(failures_deque) >= max_attempts:
             # Calculate retry-after from the oldest relevant failure
-            oldest = min(failures)
-            retry_after = int(getattr(self, "_auth_lockout_seconds", 900) - (now - oldest))
+            oldest = failures_deque[0]
+            retry_after = int(lockout_seconds - (now - oldest))
             return True, max(retry_after, 1)
 
         return False, 0

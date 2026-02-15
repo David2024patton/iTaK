@@ -13,6 +13,39 @@
 
 ## Quick Setup
 
+### Option A: Universal Installer (Recommended)
+
+The fastest way to get started:
+
+```bash
+# Clone the repository
+git clone https://github.com/David2024patton/iTaK.git
+cd iTaK
+
+# Run the universal installer
+python install.py
+
+# The installer will:
+# - Detect your OS (Linux, macOS, Windows, WSL)
+# - Check prerequisites (Python, pip, Git, Docker)
+# - Install all dependencies
+# - Set up configuration files (.env, config.json)
+# - Create necessary data directories
+```
+
+**Installation options:**
+
+```bash
+python install.py              # Full installation (recommended)
+python install.py --minimal    # Skip Playwright browsers and Docker components
+python install.py --skip-deps  # Only setup config files (skip dependency install)
+python install.py --help       # Show all options
+```
+
+After installation, edit `.env` with your API keys and run `python main.py`.
+
+### Option B: Manual Setup
+
 ### 1. Clone the repo
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
@@ -27,6 +60,21 @@ pip install -r requirements.txt
 iTaK auto-checks prerequisites at startup. If anything is missing, it tells you what to install.
 
 ### 3. Configure
+
+**Option A: Interactive Setup (Recommended)**
+
+Run the interactive setup script to configure iTaK, including Neo4j memory:
+
+```bash
+python setup.py
+```
+
+This will guide you through:
+- Creating config.json and .env files
+- Configuring Neo4j (use your own or install via Docker)
+- Configuring Weaviate (optional)
+
+**Option B: Manual Setup**
 
 Copy the example config and add your API keys:
 
@@ -45,6 +93,10 @@ OPENAI_API_KEY=your_key_here
 # Optional: platform adapters
 DISCORD_TOKEN=your_token_here
 TELEGRAM_TOKEN=your_token_here
+
+# Optional: Neo4j knowledge graph
+NEO4J_URI=bolt://localhost:7687
+NEO4J_PASSWORD=your_password_here
 ```
 
 Edit `config.json` - the default config works out of the box with Google Gemini. See [config.md](config.md) for every option.
@@ -127,6 +179,76 @@ This starts:
 - WebUI dashboard on port 48920
 - Neo4j (if configured)
 - SearXNG (if configured)
+
+---
+
+## Verification
+
+After setup, verify everything is working:
+
+### Run the diagnostic tool
+```bash
+python main.py --doctor
+```
+
+This checks:
+- ✅ Python version (3.11+)
+- ✅ All required packages
+- ✅ Configuration files
+- ✅ API keys
+- ✅ Security systems
+- ✅ Tool availability
+
+Expected output (example):
+```
+========================================================
+   iTaK Doctor - Full System Diagnostic
+========================================================
+
+-- Preflight (Python, packages, config) --
+  [OK]  Python 3.11+
+  [OK]  Package: litellm
+  [OK]  Package: pydantic
+  ...
+  [OK]  config.json found
+  [OK]  .env file found
+
+-- Security Hardening --
+  [OK]  SSRF Guard functional
+  [OK]  Path Guard functional
+  ...
+
+========================================================
+  N passed, M failed (optional services)
+========================================================
+```
+
+Most failures are optional services (Neo4j, Weaviate, SearXNG) - these don't prevent basic operation.
+
+### Run the test suite
+```bash
+python -m pytest tests/ -q
+```
+
+All tests should pass (example):
+```
+N passed in X.XXs
+```
+
+### Test basic functionality
+```bash
+# Start in CLI mode
+python main.py
+
+# The agent will display a prompt:
+# [iTaK] Ready. Type your message:
+# > 
+
+# Type a simple question at the prompt and press Enter:
+# > What's 2+2?
+```
+
+The agent should respond with a calculation or explanation.
 
 ---
 

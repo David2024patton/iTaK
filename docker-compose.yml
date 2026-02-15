@@ -39,6 +39,12 @@ services:
       - neo4j-logs:/logs
     networks:
       - itak-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
 
   # ===== Weaviate (Vector Database) =====
   weaviate:
@@ -57,6 +63,12 @@ services:
       - weaviate-data:/var/lib/weaviate
     networks:
       - itak-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/v1/.well-known/ready || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   # ===== SearXNG (Web Search) =====
   searxng:
@@ -71,12 +83,34 @@ services:
       - searxng-data:/etc/searxng
     networks:
       - itak-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  # ===== MemU Server (Optional - Enrichment Pipeline) =====
+  # Uncomment to enable self-hosted MemU extraction
+  # memu-server:
+  #   image: memu/memu-server:latest
+  #   container_name: itak-memu
+  #   restart: unless-stopped
+  #   ports:
+  #     - "${MEMU_PORT:-8080}:8080"
+  #   environment:
+  #     MEMU_API_KEY: "${MEMU_API_KEY:-}"
+  #   volumes:
+  #     - memu-data:/data
+  #   networks:
+  #     - itak-network
 
 volumes:
   neo4j-data:
   neo4j-logs:
   weaviate-data:
   searxng-data:
+  # memu-data:  # Uncomment if using memu-server
 
 
 networks:
