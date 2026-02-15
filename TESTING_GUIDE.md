@@ -122,7 +122,7 @@ PYTHONPATH=$(pwd) python -m pytest tests/ --cov=. --cov-report=html
 
 ```bash
 # Run installer tests
-python test_installer.py
+python -m pytest tests/test_installer.py -v
 ```
 
 Tests:
@@ -337,8 +337,8 @@ bandit -r . -x ./tests
 # Run before committing
 PYTHONPATH=$(pwd) python -m pytest tests/ --maxfail=1
 
-# Quick syntax check
-python test_installer.py
+# Quick installer check
+python -m pytest tests/test_installer.py -v
 ```
 
 ### Automated Testing
