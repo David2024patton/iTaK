@@ -59,7 +59,7 @@ if ! command -v docker &> /dev/null; then
         echo "❌ Python 3.11+ not found either"
         echo ""
         echo "Please install prerequisites first:"
-        echo "   ./install-prerequisites.sh"
+        echo "   $SCRIPT_DIR/install-prerequisites.sh"
         echo ""
         echo "Or see manual instructions: PREREQUISITES.md"
         exit 1

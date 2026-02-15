@@ -430,7 +430,7 @@ def main():
             print_warn("\nSetup paused. Please activate venv and re-run:")
             print_info(f"  {CYAN}source venv/bin/activate{RESET}  (Mac/Linux)")
             print_info(f"  {CYAN}venv\\Scripts\\activate{RESET}     (Windows)")
-            print_info(f"  {CYAN}python setup.py{RESET}")
+            print_info(f"  {CYAN}python installers/setup.py{RESET}")
             sys.exit(0)
     
     # Install Python packages
