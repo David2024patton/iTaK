@@ -17,12 +17,12 @@ We provide automatic installers that detect your OS and install everything neede
 
 ### Linux / macOS
 ```bash
-./install-prerequisites.sh
+./installers/install-prerequisites.sh
 ```
 
 ### Windows
 ```cmd
-install-prerequisites.bat
+installers/install-prerequisites.bat
 ```
 
 These scripts will install:
@@ -114,7 +114,7 @@ docker --version
 1. **Download Docker Desktop:**
    - Visit: https://docs.docker.com/desktop/install/windows-install/
    - Download Docker Desktop for Windows
-   - Or use our script: `install-prerequisites.bat`
+   - Or use our script: `installers/install-prerequisites.bat`
 
 2. **Install:**
    - Run the installer
@@ -183,7 +183,7 @@ python3.11 --version
 1. **Download Python:**
    - Visit: https://www.python.org/downloads/
    - Download Python 3.11 or later
-   - Or use our script: `install-prerequisites.bat`
+   - Or use our script: `installers/install-prerequisites.bat`
 
 2. **Install:**
    - Run the installer
@@ -232,7 +232,7 @@ git --version
 1. **Download:**
    - Visit: https://git-scm.com/download/win
    - Download Git for Windows
-   - Or use our script: `install-prerequisites.bat`
+   - Or use our script: `installers/install-prerequisites.bat`
 
 2. **Install:**
    - Run installer
@@ -356,8 +356,8 @@ Once prerequisites are installed:
 
 ### Option 1: Quick Start (2 minutes)
 ```bash
-./quick-install.sh  # Linux/macOS
-quick-install.bat   # Windows
+./installers/quick-install.sh  # Linux/macOS
+installers/quick-install.bat   # Windows
 ```
 
 ### Option 2: Full Install (10 minutes)
@@ -396,7 +396,7 @@ python main.py --webui
 1. **Docker Desktop** is easiest for beginners (all platforms)
 2. **Python install** gives you more control but requires more setup
 3. **Full install** (docker-compose) includes all services for production
-4. **Quick install** (quick-install.sh) is perfect for testing
+4. **Quick install** (installers/quick-install.sh) is perfect for testing
 
 Choose the path that matches your experience level and needs!
 

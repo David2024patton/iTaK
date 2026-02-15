@@ -14,12 +14,12 @@ git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
 
 # 2. Run the setup script
-bash setup.sh
+bash installers/setup.sh
 ```
 
 Or directly with Python:
 ```bash
-python3 setup.py
+python3 installers/setup.py
 ```
 
 ### Windows
@@ -30,12 +30,12 @@ git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
 
 REM 2. Run the setup script
-setup.bat
+installers\setup.bat
 ```
 
 Or directly with Python:
 ```cmd
-python setup.py
+python installers/setup.py
 ```
 
 ## What the Setup Script Does

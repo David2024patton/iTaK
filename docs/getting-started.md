@@ -66,7 +66,7 @@ iTaK auto-checks prerequisites at startup. If anything is missing, it tells you 
 Run the interactive setup script to configure iTaK, including Neo4j memory:
 
 ```bash
-python setup.py
+python installers/setup.py
 ```
 
 This will guide you through:
