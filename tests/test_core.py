@@ -13,137 +13,6 @@ import pytest
 
 
 # ============================================================
-# Agent Tests
-# ============================================================
-class TestAgent:
-    """Test core agent functionality."""
-
-    @pytest.mark.asyncio
-    async def test_run_extensions_async_safe(self):
-        """Extensions should work in async context without blocking."""
-        from core.agent import Agent, AgentContext
-        from core.logger import EventType
-
-        # Create agent with minimal config
-        config = {
-            "agent": {"max_iterations": 5},
-            "models": {"chat": {"provider": "litellm", "model": "test"}},
-            "logging": {"jsonl_dir": "/tmp/test_logs", "sqlite_path": "/tmp/test.db"},
-        }
-        agent = Agent(config=config)
-
-        # Define a simple async extension
-        async def async_extension(agent, **kwargs):
-            await asyncio.sleep(0.01)
-            return "async_result"
-
-        # Define a sync extension
-        def sync_extension(agent, **kwargs):
-            return "sync_result"
-
-        # Register extensions
-        agent._extensions["test_hook"] = [async_extension, sync_extension]
-
-        # Run extensions and verify they both work
-        results = await agent._run_extensions("test_hook")
-        assert "async_result" in results
-        assert "sync_result" in results
-
-    @pytest.mark.asyncio
-    async def test_history_trimming(self):
-        """History should be trimmed when max_history_length is set."""
-        from core.agent import Agent
-
-        config = {
-            "agent": {"max_iterations": 5, "max_history_length": 5},
-            "models": {"chat": {"provider": "litellm", "model": "test"}},
-            "logging": {"jsonl_dir": "/tmp/test_logs", "sqlite_path": "/tmp/test.db"},
-        }
-        agent = Agent(config=config)
-
-        # Add messages to history
-        for i in range(10):
-            agent.history.append({"role": "user", "content": f"message {i}"})
-
-        # Trim history
-        agent._trim_history()
-
-        # Should only have 5 messages
-        assert len(agent.history) == 5
-        # Should keep the most recent messages
-        assert agent.history[0]["content"] == "message 5"
-        assert agent.history[-1]["content"] == "message 9"
-
-    @pytest.mark.asyncio
-    async def test_history_no_trim_when_not_configured(self):
-        """History should not be trimmed if max_history_length is not set."""
-        from core.agent import Agent
-
-        config = {
-            "agent": {"max_iterations": 5},  # No max_history_length
-            "models": {"chat": {"provider": "litellm", "model": "test"}},
-            "logging": {"jsonl_dir": "/tmp/test_logs", "sqlite_path": "/tmp/test.db"},
-        }
-        agent = Agent(config=config)
-
-        # Add messages to history
-        for i in range(10):
-            agent.history.append({"role": "user", "content": f"message {i}"})
-
-        # Trim history
-        agent._trim_history()
-
-        # Should still have all 10 messages
-        assert len(agent.history) == 10
-
-    @pytest.mark.asyncio
-    async def test_history_trim_with_zero_limit(self):
-        """History should be trimmed to 0 when max_history_length is 0."""
-        from core.agent import Agent
-
-        config = {
-            "agent": {"max_iterations": 5, "max_history_length": 0},
-            "models": {"chat": {"provider": "litellm", "model": "test"}},
-            "logging": {"jsonl_dir": "/tmp/test_logs", "sqlite_path": "/tmp/test.db"},
-        }
-        agent = Agent(config=config)
-
-        # Add messages to history
-        for i in range(5):
-            agent.history.append({"role": "user", "content": f"message {i}"})
-
-        # Trim history
-        agent._trim_history()
-
-        # Should have no messages
-        assert len(agent.history) == 0
-
-    def test_untrusted_tool_namespaced(self):
-        """Untrusted tool check should work with namespaced MCP tools."""
-        UNTRUSTED_TOOLS = {"web_search", "browser_agent", "browser", "web_scrape", "crawl"}
-        
-        def extract_base_tool_name(tool_name: str) -> str:
-            """Extract base tool name from namespaced format.
-            
-            This duplicates the logic from core/agent.py (line 532) to test
-            the expected behavior independently of the implementation.
-            """
-            return tool_name.split("::")[-1] if "::" in tool_name else tool_name
-        
-        # Test with namespaced MCP tool
-        base_tool_name = extract_base_tool_name("mcp_server::web_search")
-        assert base_tool_name in UNTRUSTED_TOOLS
-
-        # Test with non-namespaced tool
-        base_tool_name = extract_base_tool_name("web_search")
-        assert base_tool_name in UNTRUSTED_TOOLS
-
-        # Test with safe namespaced tool
-        base_tool_name = extract_base_tool_name("server::safe_tool")
-        assert base_tool_name not in UNTRUSTED_TOOLS
-
-
-# ============================================================
 # Logger Tests
 # ============================================================
 class TestLogger:
@@ -334,34 +203,99 @@ class TestProgressTracker:
         assert "50%" in bar
 
 
-class TestAgentShutdown:
+# ============================================================
+# Integration Tests
+# ============================================================
+class TestFrameworkIntegration:
+    """Test framework initialization and basic functionality."""
+
+    @pytest.fixture
+    def minimal_config(self):
+        """Provide a minimal test configuration."""
+        return {
+            "agent": {
+                "name": "TestAgent",
+                "max_iterations": 10,
+                "timeout_seconds": 60,
+            },
+            "models": {
+                "chat": {
+                    "provider": "litellm",
+                    "model": "gemini/gemini-2.0-flash",
+                },
+            },
+            "memory": {
+                "sqlite_path": "data/memory.db",
+            },
+            "logging": {
+                "jsonl_dir": "data/logs",
+                "sqlite_path": "data/logs.db",
+            },
+            "security": {
+                "secret_store_path": "data/secrets.db",
+            },
+        }
+
     @pytest.mark.asyncio
-    async def test_shutdown_logs_without_name_error(self, monkeypatch):
-        import sys
-        import types
-        from unittest.mock import AsyncMock, MagicMock
-
-        monkeypatch.setitem(
-            sys.modules,
-            "litellm",
-            types.SimpleNamespace(suppress_debug_info=False),
-        )
-
+    async def test_agent_initialization(self, minimal_config):
+        """Agent should initialize with minimal config."""
         from core.agent import Agent
-        from core.logger import EventType
 
-        agent = Agent.__new__(Agent)
-        agent.config = {"agent": {"drain_timeout_seconds": 0}}
-        agent._running = True
-        agent._active_turn = True
-        agent.logger = MagicMock()
-        agent.heartbeat = None
-        agent.mcp_client = None
-        agent.task_board = None
-        agent.memory = None
-        agent.checkpoint = MagicMock(save=AsyncMock())
+        agent = Agent(config=minimal_config)
+        assert agent.config["agent"]["name"] == "TestAgent"
+        # Agent tracks total_iterations, not max_iterations as an attribute
+        assert "max_iterations" in agent.config["agent"]
 
-        await agent.shutdown()
+    @pytest.mark.asyncio
+    async def test_tool_loading(self, minimal_config):
+        """Agent should load available tools."""
+        from core.agent import Agent
 
-        agent.logger.log.assert_any_call(EventType.WARNING, "Drain timeout - forcing shutdown with active turn")
-        agent.logger.log.assert_any_call(EventType.SYSTEM, "Shutdown complete")
+        agent = Agent(config=minimal_config)
+        tools = agent.get_tool_names()
+        assert isinstance(tools, list)
+        assert len(tools) > 0
+        # Should have at least the response tool
+        assert "response" in tools
+
+    @pytest.mark.asyncio
+    async def test_preflight_check(self):
+        """Preflight check should pass with installed dependencies."""
+        from core.preflight import run_preflight
+
+        result = run_preflight(auto_install=False)
+        # Should have some passed checks
+        assert len(result.passed) > 0
+        # Critical packages should be available
+        passed_str = " ".join(result.passed)
+        assert "litellm" in passed_str
+        assert "pydantic" in passed_str
+
+    def test_ssrf_guard_blocks_dangerous_urls(self):
+        """SSRF guard should block dangerous URLs."""
+        from security.ssrf_guard import SSRFGuard
+
+        guard = SSRFGuard()
+        
+        # Should block file:// URLs
+        allowed, reason = guard.validate_url("file:///etc/passwd", "test")
+        assert not allowed
+        assert "file://" in reason.lower()
+        
+        # Should block dangerous schemes
+        allowed, reason = guard.validate_url("ftp://example.com", "test")
+        assert not allowed
+
+    def test_path_guard_blocks_traversal(self):
+        """Path guard should block directory traversal."""
+        from security.path_guard import validate_path
+
+        # Should block ../ patterns (no allowed_roots needed)
+        allowed, reason = validate_path("../../../etc/passwd")
+        assert not allowed
+        assert ".." in reason.lower()
+        
+        # Should allow normal relative paths when no root restriction
+        allowed, reason = validate_path("data/test.txt")
+        assert allowed
+

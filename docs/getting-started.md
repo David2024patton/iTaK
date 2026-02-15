@@ -182,6 +182,76 @@ This starts:
 
 ---
 
+## Verification
+
+After setup, verify everything is working:
+
+### Run the diagnostic tool
+```bash
+python main.py --doctor
+```
+
+This checks:
+- ✅ Python version (3.11+)
+- ✅ All required packages
+- ✅ Configuration files
+- ✅ API keys
+- ✅ Security systems
+- ✅ Tool availability
+
+Expected output (example):
+```
+========================================================
+   iTaK Doctor - Full System Diagnostic
+========================================================
+
+-- Preflight (Python, packages, config) --
+  [OK]  Python 3.11+
+  [OK]  Package: litellm
+  [OK]  Package: pydantic
+  ...
+  [OK]  config.json found
+  [OK]  .env file found
+
+-- Security Hardening --
+  [OK]  SSRF Guard functional
+  [OK]  Path Guard functional
+  ...
+
+========================================================
+  N passed, M failed (optional services)
+========================================================
+```
+
+Most failures are optional services (Neo4j, Weaviate, SearXNG) - these don't prevent basic operation.
+
+### Run the test suite
+```bash
+python -m pytest tests/ -q
+```
+
+All tests should pass (example):
+```
+N passed in X.XXs
+```
+
+### Test basic functionality
+```bash
+# Start in CLI mode
+python main.py
+
+# The agent will display a prompt:
+# [iTaK] Ready. Type your message:
+# > 
+
+# Type a simple question at the prompt and press Enter:
+# > What's 2+2?
+```
+
+The agent should respond with a calculation or explanation.
+
+---
+
 ## Troubleshooting
 
 | Problem | Solution |
