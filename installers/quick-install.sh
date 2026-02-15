@@ -4,6 +4,9 @@
 
 set -e
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 echo "🚀 iTaK Quick Install"
 echo "─────────────────────────────────────"
 echo ""
@@ -21,7 +24,7 @@ if command -v docker &> /dev/null; then
     
     if [[ $REPLY == "2" ]]; then
         echo "🚀 Starting Full Stack Installation..."
-        ./install-full-stack.sh
+        "$SCRIPT_DIR/install-full-stack.sh"
         exit 0
     fi
     
@@ -34,7 +37,7 @@ if ! command -v docker &> /dev/null; then
     echo "❌ Docker not found"
     echo ""
     echo "📚 Installation options:"
-    echo "   1. Auto-install: ./install-prerequisites.sh"
+    echo "   1. Auto-install: $SCRIPT_DIR/install-prerequisites.sh"
     echo "   2. Manual install: See PREREQUISITES.md"
     echo "   3. Use Python instead (fallback below)"
     echo ""
@@ -42,7 +45,7 @@ if ! command -v docker &> /dev/null; then
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         echo ""
-        echo "To install Docker: ./install-prerequisites.sh"
+        echo "To install Docker: $SCRIPT_DIR/install-prerequisites.sh"
         echo "Or see: PREREQUISITES.md"
         exit 1
     fi
@@ -56,7 +59,7 @@ if ! command -v docker &> /dev/null; then
         echo "❌ Python 3.11+ not found either"
         echo ""
         echo "Please install prerequisites first:"
-        echo "   ./install-prerequisites.sh"
+        echo "   $SCRIPT_DIR/install-prerequisites.sh"
         echo ""
         echo "Or see manual instructions: PREREQUISITES.md"
         exit 1

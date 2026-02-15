@@ -314,14 +314,14 @@ cd iTaK
 
 # 2. Run the setup script
 # On Mac/Linux/WSL:
-bash setup.sh
+bash installers/setup.sh
 # or
-python3 setup.py
+python3 installers/setup.py
 
 # On Windows:
-setup.bat
+installers/setup.bat
 # or
-python setup.py
+python installers/setup.py
 ```
 
 The setup script will:
@@ -368,7 +368,7 @@ playwright install chromium
 **Interactive Setup (Recommended):**
 
 ```bash
-python setup.py
+python installers/setup.py
 ```
 
 This will guide you through configuration, including Neo4j memory setup (use your own instance or install via Docker).

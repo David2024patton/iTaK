@@ -11,7 +11,7 @@
 
 ## Setup & Installation
 
-- **Interactive setup script** - Run `python setup.py` for guided configuration of Neo4j and Weaviate
+- **Interactive setup script** - Run `python installers/setup.py` for guided configuration of Neo4j and Weaviate
 - **Neo4j is optional** - iTaK works with SQLite-only memory; Neo4j adds knowledge graph layer
 - **Docker-based installation** - Setup script can install Neo4j via Docker Compose if user doesn't have their own instance
 - **Manual configuration supported** - Users can skip setup script and manually edit .env and config.json

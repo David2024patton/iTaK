@@ -42,10 +42,10 @@ iTaK **automatically detects** your operating system and uses the right installa
 **Universal Installer:**
 ```bash
 # Linux/macOS/WSL - One command detects your OS
-./install.sh
+./installers/install.sh
 
 # Windows - Auto-detects WSL or offers to install it
-install.bat
+installers/install.bat
 ```
 
 ---
@@ -75,10 +75,10 @@ git --version      # Should be 2.0+
 **Option 1: Auto-install (Recommended)**
 ```bash
 # Linux/macOS/WSL
-./install-prerequisites.sh
+./installers/install-prerequisites.sh
 
 # Windows (auto-installs WSL if needed)
-install-prerequisites.bat
+installers/install-prerequisites.bat
 ```
 
 > **Windows Users:** iTaK works best in WSL. The installer will automatically detect if WSL is missing and offer to install it for you!
@@ -105,7 +105,7 @@ Choose the installation that fits your needs:
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
-./quick-install.sh
+./installers/quick-install.sh
 # Choose option 1 when prompted
 ```
 
@@ -124,12 +124,12 @@ cd iTaK
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
-./install-full-stack.sh
+./installers/install-full-stack.sh
 ```
 
 Or use the quick installer and choose option 2:
 ```bash
-./quick-install.sh
+./installers/quick-install.sh
 # Choose option 2 when prompted
 ```
 
@@ -384,7 +384,7 @@ This gives you:
 
 **Get started now:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/David2024patton/iTaK/main/quick-install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/David2024patton/iTaK/main/installers/quick-install.sh | bash
 ```
 
 Enjoy! 🎉

@@ -4,6 +4,9 @@
 
 set -e
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 echo "🚀 iTaK Full Stack Installer"
 echo "════════════════════════════════════════"
 echo "This will install:"
@@ -41,7 +44,7 @@ check_docker() {
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             echo ""
             echo "Running prerequisite installer..."
-            ./install-prerequisites.sh
+            "$SCRIPT_DIR/install-prerequisites.sh"
         else
             echo -e "${RED}❌ Docker is required for full stack. Exiting.${NC}"
             exit 1

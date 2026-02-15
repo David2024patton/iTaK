@@ -53,7 +53,7 @@ REM Run setup.py
 echo.
 echo Running setup script with %PYTHON_CMD%...
 echo.
-%PYTHON_CMD% setup.py %*
+%PYTHON_CMD% "%~dp0setup.py" %*
 
 if errorlevel 1 (
     echo.
