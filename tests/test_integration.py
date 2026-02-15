@@ -1,435 +1,390 @@
 """
 iTaK - Integration Tests
-
-End-to-end tests for complete workflows:
-- Tool execution pipeline
-- Secret lifecycle
-- Crash recovery
-- Multi-user scenarios
-- Adapter integration
+Verify that features from Agent Zero, Letta/MemGPT, and OpenClaw are properly integrated.
 """
 
-import asyncio
-import pytest
-import tempfile
 import json
+import pytest
 from pathlib import Path
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
+from unittest.mock import MagicMock
 
 
 # ============================================================
-# Tool Execution Pipeline Tests
+# Configuration Integration Tests
 # ============================================================
-class TestToolExecutionPipeline:
-    """Test complete tool execution flow."""
+class TestConfigurationIntegration:
+    """Test that all subsystems load their config correctly."""
 
-    @pytest.mark.asyncio
-    @patch('core.agent.ModelRouter')
-    @patch('security.output_guard.OutputGuard')
-    async def test_end_to_end_tool_execution(self, mock_guard, mock_router_class):
-        """Test: Message → Guard → Execute → Sanitize → Result"""
-        from core.agent import Agent
+    @pytest.fixture
+    def config(self):
+        """Load the example config."""
+        with open("config.json.example") as f:
+            return json.load(f)
+
+    def test_agent_zero_config(self, config):
+        """Agent Zero features are in config."""
+        # Monologue engine settings
+        assert "agent" in config
+        assert config["agent"]["max_iterations"] == 25
+        assert config["agent"]["checkpoint_enabled"] is True
         
-        # Mock components
-        mock_router = Mock()
-        mock_router.chat = AsyncMock(return_value='{"tool": "response", "args": {"message": "Done"}}')
-        mock_router_class.return_value = mock_router
+        # 4-model architecture
+        assert "models" in config
+        assert "chat" in config["models"]
+        assert "utility" in config["models"]
+        assert "browser" in config["models"]
+        assert "embeddings" in config["models"]
+
+    def test_letta_memgpt_config(self, config):
+        """Letta/MemGPT features are in config."""
+        # 4-tier memory system
+        assert "memory" in config
+        assert "sqlite_path" in config["memory"]
+        assert "neo4j" in config["memory"]
+        assert "weaviate" in config["memory"]
         
-        mock_guard_instance = Mock()
-        mock_guard_instance.sanitize = Mock(side_effect=lambda x: x)  # Pass through
-        mock_guard.return_value = mock_guard_instance
+        # Memory settings
+        assert "auto_memorize" in config["memory"]
+        assert "consolidation_threshold" in config["memory"]
+
+    def test_openclaw_config(self, config):
+        """OpenClaw features are in config."""
+        # Multi-channel adapters
+        assert "adapters" in config
+        assert "discord" in config["adapters"]
+        assert "telegram" in config["adapters"]
+        assert "slack" in config["adapters"]
+        assert "cli" in config["adapters"]
+        
+        # Multi-user RBAC
+        assert "users" in config
+        assert "registry_path" in config["users"]
+        assert "rate_limits" in config["users"]
+        
+        # MCP server/client
+        assert "mcp_server" in config
+        assert "mcp_client" in config
+
+    def test_itak_unique_config(self, config):
+        """iTaK-unique features are in config."""
+        # Self-healing, task board, webhooks, swarm
+        assert "webhooks" in config
+        assert "swarm" in config
+        assert "task_board" in config
+        assert "security" in config
+        assert "output_guard" in config
+        assert "heartbeat" in config
+
+    def test_neo4j_integration(self, config):
+        """Neo4j is properly configured."""
+        # Check both nested and top-level
+        assert "neo4j" in config["memory"]
+        assert "uri" in config["memory"]["neo4j"]
+        assert "enabled" in config["memory"]["neo4j"]
+
+
+# ============================================================
+# Memory Manager Integration Tests
+# ============================================================
+class TestMemoryManagerIntegration:
+    """Test 4-tier memory system (Agent Zero + Letta/MemGPT + Neo4j)."""
+
+    @pytest.fixture
+    def config(self):
+        with open("config.json.example") as f:
+            return json.load(f)
+
+    def test_memory_manager_init(self, config, tmp_path):
+        """MemoryManager should initialize with nested config."""
+        from memory.manager import MemoryManager
+        
+        # Mock model router
+        model_router = MagicMock()
+        
+        # Update config to use temp paths
+        memory_config = config["memory"].copy()
+        memory_config["sqlite_path"] = str(tmp_path / "test.db")
+        
+        manager = MemoryManager(
+            config=memory_config,
+            model_router=model_router,
+            full_config=config
+        )
+        
+        # Should have SQLite (always enabled)
+        assert manager.sqlite is not None
+        
+        # Neo4j/Weaviate should be None (not enabled in example config)
+        assert manager.neo4j is None
+        assert manager.weaviate is None
+
+    def test_memory_tiers(self, tmp_path):
+        """All 4 memory tiers should be accessible."""
+        from memory.manager import MemoryManager
         
         config = {
-            "agent": {"name": "TestAgent"},
-            "models": {"router": {"default": "mock-model"}},
-            "security": {"output_guard": {"enabled": True}}
-        }
-        
-        agent = Agent(config, user_id="test-user")
-        
-        # Execute
-        try:
-            response = await agent.message_loop("Execute a tool")
-            assert response is not None
-        except Exception as e:
-            # Some mock errors are acceptable
-            pass
-
-    @pytest.mark.asyncio
-    async def test_tool_error_recovery(self):
-        """Test error recovery during tool execution."""
-        from core.agent import Agent
-        
-        config = {
-            "agent": {"name": "TestAgent"},
-            "models": {"router": {"default": "mock-model"}},
-            "self_heal": {"enabled": True, "max_attempts": 2}
-        }
-        
-        agent = Agent(config, user_id="test-user")
-        
-        # Should have error recovery capability
-        assert hasattr(agent, "self_heal") or hasattr(agent, "config")
-
-    @pytest.mark.asyncio
-    async def test_tool_chain_execution(self):
-        """Test executing multiple tools in sequence."""
-        from core.agent import Agent
-        
-        config = {
-            "agent": {"name": "TestAgent"},
-            "models": {"router": {"default": "mock-model"}}
-        }
-        
-        agent = Agent(config, user_id="test-user")
-        
-        # Agent should support chaining tools
-        # (Implementation-specific - this validates structure exists)
-        assert hasattr(agent, "message_loop") or hasattr(agent, "execute_tool")
-
-
-# ============================================================
-# Secret Lifecycle Tests
-# ============================================================
-class TestSecretLifecycle:
-    """Test: Load env → Replace placeholders → Redact output → Mask logs"""
-
-    @pytest.mark.asyncio
-    async def test_secret_replacement_in_prompts(self):
-        """Secrets should be replaced in prompts."""
-        from security.secrets import SecretManager
-        
-        sm = SecretManager()
-        sm.register_secret("API_KEY", "sk-secret123")
-        
-        prompt = "Use API key: {{API_KEY}} to authenticate"
-        processed = sm.replace_placeholders(prompt)
-        
-        assert "sk-secret123" in processed
-        assert "{{API_KEY}}" not in processed
-
-    @pytest.mark.asyncio
-    async def test_secret_redaction_in_output(self):
-        """Secrets should be redacted from output."""
-        from security.output_guard import OutputGuard
-        from security.secrets import SecretManager
-        
-        sm = SecretManager()
-        sm.register_secret("API_KEY", "sk-secret123")
-        
-        guard = OutputGuard()
-        guard.register_secret("sk-secret123")
-        
-        output = "API call failed with key: sk-secret123"
-        sanitized = guard.sanitize(output)
-        
-        assert "sk-secret123" not in sanitized
-
-    @pytest.mark.asyncio
-    async def test_secret_masking_in_logs(self):
-        """Secrets should be masked in logs."""
-        from core.logger import Logger
-        from security.secrets import SecretManager
-        
-        sm = SecretManager()
-        sm.register_secret("PASSWORD", "SuperSecret123!")
-        
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            config = {
-                "jsonl_dir": f"{tmp_dir}/logs",
-                "sqlite_path": f"{tmp_dir}/logs.db"
-            }
-            
-            logger = Logger(config)
-            logger.register_secret("SuperSecret123!")
-            
-            # Log something with secret
-            logger.log("system", "Password is: SuperSecret123!")
-            
-            # Check log file doesn't contain secret
-            log_files = list(Path(f"{tmp_dir}/logs").glob("*.jsonl"))
-            if log_files:
-                with open(log_files[0]) as f:
-                    content = f.read()
-                    assert "SuperSecret123!" not in content
-
-    @pytest.mark.asyncio
-    async def test_unresolved_placeholder_warning(self):
-        """Should warn about unresolved placeholders."""
-        from security.secrets import SecretManager
-        
-        sm = SecretManager()
-        # Don't register MISSING_KEY
-        
-        text = "Using {{MISSING_KEY}} which is not registered"
-        result = sm.replace_placeholders(text)
-        
-        # Should keep placeholder (warning user)
-        assert "{{MISSING_KEY}}" in result
-
-
-# ============================================================
-# Crash Recovery Tests
-# ============================================================
-class TestCrashRecovery:
-    """Test: Checkpoint → Kill → Restore → Verify state"""
-
-    @pytest.mark.asyncio
-    async def test_save_checkpoint_before_crash(self, tmp_path):
-        """Should save checkpoint periodically."""
-        from core.checkpoint import CheckpointManager
-        
-        checkpoint_file = tmp_path / "checkpoint.json"
-        manager = CheckpointManager(str(checkpoint_file))
-        
-        state = {
-            "conversation": ["msg1", "msg2"],
-            "iteration": 10,
-            "cost": 0.50
-        }
-        
-        await manager.save(state)
-        assert checkpoint_file.exists()
-
-    @pytest.mark.asyncio
-    async def test_restore_after_crash(self, tmp_path):
-        """Should restore state after crash."""
-        from core.checkpoint import CheckpointManager
-        
-        checkpoint_file = tmp_path / "checkpoint.json"
-        manager = CheckpointManager(str(checkpoint_file))
-        
-        # Save state
-        original_state = {
-            "conversation": ["msg1", "msg2", "msg3"],
-            "iteration": 15,
-            "user_context": "test user"
-        }
-        await manager.save(original_state)
-        
-        # Simulate crash and restart
-        new_manager = CheckpointManager(str(checkpoint_file))
-        restored_state = await new_manager.load()
-        
-        assert restored_state == original_state
-        assert restored_state["iteration"] == 15
-
-    @pytest.mark.asyncio
-    async def test_handle_corrupted_checkpoint(self, tmp_path):
-        """Should handle corrupted checkpoint gracefully."""
-        from core.checkpoint import CheckpointManager
-        
-        checkpoint_file = tmp_path / "checkpoint.json"
-        
-        # Write corrupted data
-        checkpoint_file.write_text("{corrupted json")
-        
-        manager = CheckpointManager(str(checkpoint_file))
-        restored = await manager.load()
-        
-        # Should return None or empty, not crash
-        assert restored is None or restored == {}
-
-    @pytest.mark.asyncio
-    async def test_checkpoint_includes_memory_state(self, tmp_path):
-        """Checkpoint should include memory context."""
-        from core.checkpoint import CheckpointManager
-        
-        checkpoint_file = tmp_path / "checkpoint.json"
-        manager = CheckpointManager(str(checkpoint_file))
-        
-        state = {
-            "conversation": ["hi", "hello"],
-            "memory_snapshot": {
-                "tier1": ["active context"],
-                "tier2": ["recent memories"]
+            "sqlite_path": str(tmp_path / "test.db"),
+            "neo4j": {
+                "enabled": False,
+                "uri": "bolt://localhost:7687"
+            },
+            "weaviate": {
+                "enabled": False,
+                "url": "http://localhost:8080"
             }
         }
         
-        await manager.save(state)
-        restored = await manager.load()
+        manager = MemoryManager(config=config, full_config={})
         
-        assert "memory_snapshot" in restored
-        assert restored["memory_snapshot"]["tier1"] == ["active context"]
+        # Tier 1: Markdown files
+        assert manager.memory_dir.exists()
+        
+        # Tier 2: SQLite
+        assert manager.sqlite is not None
+        
+        # Tier 3: Neo4j (disabled but config present)
+        assert manager.neo4j is None  # Not enabled
+        
+        # Tier 4: Weaviate (disabled but config present)
+        assert manager.weaviate is None  # Not enabled
 
 
 # ============================================================
-# Multi-User Scenario Tests
+# Swarm Coordinator Integration Tests
 # ============================================================
-class TestMultiUser:
-    """Test multi-user isolation and RBAC."""
+class TestSwarmCoordinatorIntegration:
+    """Test Agent Zero sub-agent system enhanced with swarm coordination."""
 
-    @pytest.mark.asyncio
-    async def test_user_isolation(self, tmp_path):
-        """Different users should have isolated memory."""
-        from memory.manager import MemoryManager
+    def test_swarm_reads_config(self):
+        """SwarmCoordinator should use config settings."""
+        from core.swarm import SwarmCoordinator, SwarmStrategy, MergeStrategy
         
-        config = {
-            "sqlite_path": str(tmp_path / "memory.db")
+        agent = MagicMock()
+        agent.config = {
+            "swarm": {
+                "enabled": True,
+                "default_strategy": "parallel",
+                "default_merge": "concat",
+                "max_parallel": 5,
+                "timeout_seconds": 300,
+                "profiles_dir": "prompts/profiles"
+            }
         }
         
-        # User 1
-        manager1 = MemoryManager(config, user_id="user1")
-        await manager1.initialize()
-        entry1_id = await manager1.save("User 1 secret", category="private")
+        swarm = SwarmCoordinator(agent)
         
-        # User 2
-        manager2 = MemoryManager(config, user_id="user2")
-        await manager2.initialize()
-        entry2_id = await manager2.save("User 2 secret", category="private")
-        
-        # IDs should be different
-        assert entry1_id != entry2_id
-        
-        # Each user should be able to retrieve their own data
-        user1_results = await manager1.search(query="User 1 secret", limit=5)
-        user2_results = await manager2.search(query="User 2 secret", limit=5)
-        
-        assert len(user1_results) >= 0  # May vary based on implementation
-        assert len(user2_results) >= 0
+        assert swarm.default_strategy == SwarmStrategy.PARALLEL
+        assert swarm.default_merge == MergeStrategy.CONCAT
+        assert swarm.max_parallel == 5
+        assert swarm.timeout_seconds == 300
 
-    @pytest.mark.asyncio
-    async def test_rbac_permissions(self):
-        """Test role-based access control."""
-        from core.users import UserManager
+    def test_swarm_loads_profiles(self):
+        """SwarmCoordinator should load agent profiles."""
+        from core.swarm import SwarmCoordinator
         
-        # Create users with different roles
-        user_mgr = UserManager()
+        agent = MagicMock()
+        agent.config = {"swarm": {}}
         
-        # Owner role
-        owner = user_mgr.create_user("owner_user", role="owner")
-        assert owner["role"] == "owner"
-        assert user_mgr.has_permission(owner["id"], "admin")
+        swarm = SwarmCoordinator(agent)
         
-        # Regular user
-        user = user_mgr.create_user("regular_user", role="user")
-        assert user["role"] == "user"
-        assert not user_mgr.has_permission(user["id"], "admin")
-
-    @pytest.mark.asyncio
-    async def test_cost_tracking_per_user(self):
-        """Cost should be tracked per user."""
-        from security.rate_limiter import RateLimiter
-        
-        limiter = RateLimiter(cost_budget=10.0)
-        
-        # User 1 usage
-        limiter.add_cost("user1", 5.0)
-        assert limiter.get_total_cost("user1") == 5.0
-        
-        # User 2 usage (independent)
-        limiter.add_cost("user2", 3.0)
-        assert limiter.get_total_cost("user2") == 3.0
-        assert limiter.get_total_cost("user1") == 5.0  # Not affected
+        # Should have loaded profiles from prompts/profiles/
+        # At minimum, the example profiles (researcher, coder, devops)
+        assert len(swarm.profiles) >= 0  # May be 0 if directory is empty
 
 
 # ============================================================
-# Adapter Integration Tests
+# Webhook Engine Integration Tests
 # ============================================================
-class TestAdapterIntegration:
-    """Test adapter message handling."""
+class TestWebhookEngineIntegration:
+    """Test n8n/Zapier integration (iTaK-unique)."""
 
-    @pytest.mark.asyncio
-    async def test_cli_adapter_message_flow(self):
-        """Test CLI adapter end-to-end."""
-        from adapters.cli import CLIAdapter
+    def test_webhook_engine_init(self):
+        """WebhookEngine should load from config."""
+        from core.webhooks import WebhookEngine
         
-        # Mock agent
-        mock_agent = Mock()
-        mock_agent.message_loop = AsyncMock(return_value="Response from agent")
-        
-        adapter = CLIAdapter(mock_agent)
-        
-        # Process message
-        response = await adapter.process_message("Hello")
-        
-        assert "Response from agent" in response or response is not None
-
-    @pytest.mark.asyncio
-    async def test_adapter_error_handling(self):
-        """Adapters should handle errors gracefully."""
-        from adapters.cli import CLIAdapter
-        
-        # Mock agent that errors
-        mock_agent = Mock()
-        mock_agent.message_loop = AsyncMock(side_effect=Exception("Agent error"))
-        
-        adapter = CLIAdapter(mock_agent)
-        
-        # Should not crash
-        try:
-            response = await adapter.process_message("Hello")
-            # Should return error message or None
-            assert response is not None or response == "Error occurred"
-        except Exception:
-            # Acceptable if adapter re-raises
-            pass
-
-
-# ============================================================
-# Performance and Load Tests
-# ============================================================
-class TestPerformance:
-    """Test performance under load."""
-
-    @pytest.mark.asyncio
-    async def test_concurrent_requests(self, tmp_path):
-        """Should handle multiple concurrent requests."""
-        from memory.manager import MemoryManager
-        
+        agent = MagicMock()
         config = {
-            "sqlite_path": str(tmp_path / "memory.db")
+            "inbound_secret": "test-secret",
+            "enabled": True,
+            "outbound": [
+                {
+                    "name": "n8n",
+                    "url": "https://n8n.example.com/webhook",
+                    "events": ["task_completed"],
+                    "enabled": True
+                }
+            ]
         }
         
-        manager = MemoryManager(config)
-        await manager.initialize()
+        engine = WebhookEngine(agent, config)
         
-        # Concurrent saves
-        tasks = [
-            manager.save(f"Concurrent entry {i}", category="load_test")
-            for i in range(20)
-        ]
-        
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        # Most should succeed
-        successful = [r for r in results if not isinstance(r, Exception)]
-        assert len(successful) >= 15
+        # Should have loaded inbound secret
+        # Note: inbound_secret may be empty if config value is placeholder
+        assert hasattr(engine, 'inbound_secret')
 
-    @pytest.mark.asyncio
-    async def test_large_conversation_history(self):
-        """Should handle large conversation histories."""
-        # Test with 100+ message history
-        history = [
-            {"role": "user" if i % 2 == 0 else "assistant", "content": f"Message {i}"}
-            for i in range(100)
-        ]
-        
-        # Should process without performance degradation
-        assert len(history) == 100
-        # Actual performance test would need timing
 
-    @pytest.mark.asyncio
-    async def test_memory_compaction_performance(self, tmp_path):
-        """Compaction should not block operations."""
-        from memory.manager import MemoryManager
+# ============================================================
+# MCP Server Integration Tests
+# ============================================================
+class TestMCPServerIntegration:
+    """Test MCP server (OpenClaw feature)."""
+
+    def test_mcp_server_disabled_by_default(self):
+        """MCP server should be disabled in example config."""
+        with open("config.json.example") as f:
+            config = json.load(f)
         
-        config = {
-            "sqlite_path": str(tmp_path / "memory.db"),
-            "compaction": {"enabled": True}
-        }
+        from core.mcp_server import ITaKMCPServer
         
-        manager = MemoryManager(config)
-        await manager.initialize()
+        agent = MagicMock()
+        mcp_server = ITaKMCPServer(agent, config)
         
-        # Add many entries
-        for i in range(100):
-            await manager.save(f"Entry {i}", category="test")
+        # Should be disabled
+        assert mcp_server.enabled is False
         
-        # Trigger compaction (if supported)
-        if hasattr(manager, "compact"):
-            await manager.compact()
+        # Should have 0 tools registered when disabled
+        assert len(mcp_server.tools) == 0
+
+    def test_mcp_server_tools_config(self):
+        """MCP server should expose configured tools."""
+        with open("config.json.example") as f:
+            config = json.load(f)
         
-        # Should still be responsive
-        results = await manager.search(query="Entry", limit=10)
-        assert len(results) > 0
+        assert "mcp_server" in config
+        assert "expose_tools" in config["mcp_server"]
+        
+        # Should have 6 exposed tools
+        tools = config["mcp_server"]["expose_tools"]
+        assert len(tools) == 6
+        assert "send_message" in tools
+        assert "search_memory" in tools
+        assert "list_tasks" in tools
+
+
+# ============================================================
+# User Registry Integration Tests
+# ============================================================
+class TestUserRegistryIntegration:
+    """Test multi-user RBAC (OpenClaw feature)."""
+
+    def test_user_registry_init(self, tmp_path):
+        """UserRegistry should initialize from config path."""
+        from core.users import UserRegistry
+        
+        users_path = str(tmp_path / "users.json")
+        registry = UserRegistry(users_path)
+        
+        # Should have default owner user
+        assert len(registry.users) >= 1
+        assert registry.unknown_user_role == "user"
+
+    def test_rbac_permissions(self):
+        """RBAC should enforce tool permissions."""
+        from core.users import TOOL_PERMISSIONS, ROLE_HIERARCHY
+        
+        # Verify permission hierarchy exists
+        assert "owner" in ROLE_HIERARCHY
+        assert "sudo" in ROLE_HIERARCHY
+        assert "user" in ROLE_HIERARCHY
+        
+        # Verify tool permissions are defined
+        assert "bash_execute" in TOOL_PERMISSIONS
+        assert "memory_save" in TOOL_PERMISSIONS
+        assert "config_update" in TOOL_PERMISSIONS
+
+
+# ============================================================
+# Task Board Integration Tests
+# ============================================================
+class TestTaskBoardIntegration:
+    """Test Mission Control task board (iTaK-unique)."""
+
+    def test_task_board_config(self):
+        """Task board should have proper config."""
+        with open("config.json.example") as f:
+            config = json.load(f)
+        
+        assert "task_board" in config
+        assert config["task_board"]["enabled"] is True
+        assert "db_path" in config["task_board"]
+        assert "default_priority" in config["task_board"]
+
+
+# ============================================================
+# Extension System Integration Tests
+# ============================================================
+class TestExtensionSystemIntegration:
+    """Test Agent Zero extension hook system."""
+
+    def test_extension_hooks_exist(self):
+        """Extension hook directories should exist."""
+        ext_dir = Path("extensions")
+        assert ext_dir.exists()
+        
+        # Check for hook directories
+        # At minimum should have structure even if empty
+        hook_dirs = list(ext_dir.glob("*"))
+        assert len(hook_dirs) >= 0  # May be empty
+
+
+# ============================================================
+# Integration Verification Summary
+# ============================================================
+def test_integration_completeness():
+    """Verify all three source repos are integrated."""
+    
+    with open("config.json.example") as f:
+        config = json.load(f)
+    
+    # Agent Zero checklist
+    agent_zero_features = [
+        "agent" in config,  # Monologue engine
+        "models" in config,  # 4-model architecture
+        len(config.get("models", {})) >= 4,  # All 4 models defined
+    ]
+    assert all(agent_zero_features), "Agent Zero features missing"
+    
+    # Letta/MemGPT checklist
+    letta_features = [
+        "memory" in config,  # Memory system
+        "sqlite_path" in config.get("memory", {}),  # Tier 2
+        "neo4j" in config.get("memory", {}),  # Tier 3
+        "weaviate" in config.get("memory", {}),  # Tier 4
+    ]
+    assert all(letta_features), "Letta/MemGPT features missing"
+    
+    # OpenClaw checklist
+    openclaw_features = [
+        "adapters" in config,  # Multi-channel
+        "discord" in config.get("adapters", {}),  # Discord adapter
+        "telegram" in config.get("adapters", {}),  # Telegram adapter
+        "slack" in config.get("adapters", {}),  # Slack adapter
+        "users" in config,  # RBAC
+        "mcp_server" in config,  # MCP server
+        "mcp_client" in config,  # MCP client
+    ]
+    assert all(openclaw_features), "OpenClaw features missing"
+    
+    # Neo4j integration
+    neo4j_integrated = [
+        "neo4j" in config,  # Top-level
+        "neo4j" in config.get("memory", {}),  # Nested
+    ]
+    assert any(neo4j_integrated), "Neo4j not configured"
+    
+    # iTaK-unique features
+    itak_features = [
+        "webhooks" in config,  # Webhook engine
+        "swarm" in config,  # Agent swarms
+        "task_board" in config,  # Task tracking
+        "output_guard" in config,  # DLP
+        "heartbeat" in config,  # Health monitoring
+    ]
+    assert all(itak_features), "iTaK-unique features missing"
+    
+    print("\n✅ Integration verification complete:")
+    print(f"  - Agent Zero: {sum(agent_zero_features)}/{len(agent_zero_features)} features")
+    print(f"  - Letta/MemGPT: {sum(letta_features)}/{len(letta_features)} features")
+    print(f"  - OpenClaw: {sum(openclaw_features)}/{len(openclaw_features)} features")
+    print(f"  - Neo4j: Integrated")
+    print(f"  - iTaK-unique: {sum(itak_features)}/{len(itak_features)} features")

@@ -85,13 +85,21 @@ class SwarmCoordinator:
 
     def __init__(self, agent):
         self.agent = agent
+        self.config = agent.config.get("swarm", {}) if hasattr(agent, 'config') else {}
         self.profiles: dict[str, AgentProfile] = {}
         self.history: list[SwarmTask] = []
+        
+        # Configuration settings
+        self.default_strategy = SwarmStrategy(self.config.get("default_strategy", "parallel"))
+        self.default_merge = MergeStrategy(self.config.get("default_merge", "concat"))
+        self.max_parallel = self.config.get("max_parallel", 5)
+        self.timeout_seconds = self.config.get("timeout_seconds", 300)
+        
         self._load_profiles()
 
     def _load_profiles(self):
         """Load agent profiles from prompts/profiles/ directory."""
-        profiles_dir = Path("prompts/profiles")
+        profiles_dir = Path(self.config.get("profiles_dir", "prompts/profiles"))
         if not profiles_dir.exists():
             profiles_dir.mkdir(parents=True, exist_ok=True)
             logger.info("Created prompts/profiles/ directory")

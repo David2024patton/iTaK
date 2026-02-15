@@ -118,6 +118,7 @@ class Agent:
             self.memory = MemoryManager(
                 config=self.config.get("memory", {}),
                 model_router=self.model_router,
+                full_config=self.config,
             )
             self._subsystem_status["memory"] = "initialized"
         except ImportError as e:
