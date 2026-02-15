@@ -201,19 +201,54 @@ iTaK/
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Automated Setup (Recommended)
+
+The easiest way to get started is using our automated setup script that works on **Mac, Linux, Windows, and WSL**:
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/David2024patton/iTaK.git
+cd iTaK
+
+# 2. Run the setup script
+# On Mac/Linux/WSL:
+bash setup.sh
+# or
+python3 setup.py
+
+# On Windows:
+setup.bat
+# or
+python setup.py
+```
+
+The setup script will:
+- ✅ Check for Python 3.11+ and pip
+- ✅ Install all Python dependencies
+- ✅ Install Playwright browsers for automation
+- ✅ Create configuration files from examples
+- ✅ Set up required directories
+- ✅ Run diagnostic checks
+
+After setup completes, edit `.env` with your API keys and you're ready to go!
+
+### Manual Setup
+
+If you prefer manual installation:
+
+#### Prerequisites
 
 - **Python 3.11+**
 - **At least one LLM API key** (OpenAI, Anthropic, Gemini, or local Ollama)
 
-### 1. Clone
+#### 1. Clone
 
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
 ```
 
-### 2. Install Dependencies
+#### 2. Install Dependencies
 
 ```bash
 python -m venv venv
@@ -223,9 +258,10 @@ venv\Scripts\activate
 source venv/bin/activate
 
 pip install -r requirements.txt
+playwright install chromium
 ```
 
-### 3. Configure
+#### 3. Configure
 
 ```bash
 cp .env.example .env
@@ -243,7 +279,7 @@ GEMINI_API_KEY=AIza...
 
 Edit `config.json` to set your preferred models, adapters, and features.
 
-### 4. Run
+#### 4. Run
 
 ```bash
 # CLI mode (terminal chat)
