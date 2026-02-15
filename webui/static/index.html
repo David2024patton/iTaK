@@ -14,8 +14,22 @@
 </head>
 
 <body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-box">
+            <h1>🧠 iTaK</h1>
+            <p style="color:var(--text-muted);margin-bottom:20px;">Enter your API token to connect</p>
+            <form onsubmit="handleLogin(event)">
+                <input type="password" class="form-input" id="tokenInput" placeholder="Bearer token..."
+                    autocomplete="off" required>
+                <button type="submit" class="chat-btn" style="width:100%;margin-top:12px;">Connect</button>
+            </form>
+            <div id="loginError" style="color:var(--accent-red);margin-top:12px;font-size:13px;display:none;"></div>
+        </div>
+    </div>
+
     <!-- Top Bar -->
-    <header class="topbar">
+    <header class="topbar" id="topbar" style="display:none;">
         <div class="topbar-brand">
             <h1>🧠 iTaK</h1>
             <span style="font-size:12px; color:var(--text-muted)">Intelligent Task Automation Kernel</span>
@@ -23,11 +37,12 @@
         <div class="topbar-status">
             <div class="status-dot" id="statusDot"></div>
             <span id="statusText">Connecting...</span>
+            <button class="logout-btn" onclick="handleLogout()" title="Logout">⏻</button>
         </div>
     </header>
 
     <!-- Tab Navigation -->
-    <nav class="tab-bar">
+    <nav class="tab-bar" id="tabBar" style="display:none;">
         <button class="tab-btn active" data-tab="monitor" onclick="switchTab('monitor')">📊 Monitor</button>
         <button class="tab-btn" data-tab="mission" onclick="switchTab('mission')">📋 Mission Control</button>
         <button class="tab-btn" data-tab="tools" onclick="switchTab('tools')">🔧 Tools</button>

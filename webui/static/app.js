@@ -1,6 +1,63 @@
 // ===== iTaK Dashboard — app.js =====
 const API = window.location.origin;
 let ws = null;
+let authToken = sessionStorage.getItem('itak_token') || '';
+
+// ==================== AUTH HELPERS ====================
+function apiFetch(url, options = {}) {
+    options.headers = Object.assign({}, options.headers || {}, {
+        'Authorization': `Bearer ${authToken}`,
+    });
+    return fetch(url, options);
+}
+
+function showDashboard() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('topbar').style.display = '';
+    document.getElementById('tabBar').style.display = '';
+    connectWS();
+    fetchStats();
+    setInterval(fetchStats, 10000);
+    // Fetch initial logs
+    apiFetch(`${API}/api/logs?limit=20`).then(r => r.json()).then(data => {
+        if (data.logs) {
+            data.logs.reverse().forEach(log => {
+                addLog(log.event_type || 'system', typeof log.data === 'string' ? log.data : JSON.stringify(log.data).slice(0, 200));
+            });
+        }
+    }).catch(() => { });
+}
+
+async function handleLogin(e) {
+    e.preventDefault();
+    const token = document.getElementById('tokenInput').value.trim();
+    if (!token) return;
+    const errEl = document.getElementById('loginError');
+    errEl.style.display = 'none';
+    try {
+        const res = await fetch(`${API}/api/stats`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (res.ok) {
+            authToken = token;
+            sessionStorage.setItem('itak_token', token);
+            showDashboard();
+        } else {
+            errEl.textContent = res.status === 401 ? 'Invalid token' : `Error: ${res.status}`;
+            errEl.style.display = 'block';
+        }
+    } catch (err) {
+        errEl.textContent = 'Cannot reach server';
+        errEl.style.display = 'block';
+    }
+}
+
+function handleLogout() {
+    authToken = '';
+    sessionStorage.removeItem('itak_token');
+    if (ws) { ws.close(); ws = null; }
+    location.reload();
+}
 
 // ==================== TAB SWITCHING ====================
 function switchTab(tab) {
@@ -22,7 +79,7 @@ function switchTab(tab) {
 
 // ==================== WEBSOCKET ====================
 function connectWS() {
-    const wsUrl = `${API.replace('http', 'ws')}/ws`;
+    const wsUrl = `${API.replace('http', 'ws')}/ws?token=${encodeURIComponent(authToken)}`;
     ws = new WebSocket(wsUrl);
     ws.onopen = () => {
         document.getElementById('statusDot').style.background = 'var(--accent-green)';
@@ -50,7 +107,7 @@ function connectWS() {
 // ==================== STATS POLLING ====================
 async function fetchStats() {
     try {
-        const res = await fetch(`${API}/api/stats`);
+        const res = await apiFetch(`${API}/api/stats`);
         const data = await res.json();
         const uptime = Math.floor(data.uptime_seconds || 0);
         document.getElementById('statUptime').textContent = `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m`;
@@ -106,7 +163,7 @@ async function sendChat() {
         if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: 'chat', message: msg }));
         } else {
-            const res = await fetch(`${API}/api/chat`, {
+            const res = await apiFetch(`${API}/api/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: msg }),
@@ -126,7 +183,7 @@ async function searchMemory() {
     const container = document.getElementById('memoryResults');
     container.innerHTML = '<div style="color:var(--text-muted);padding:12px;">Searching...</div>';
     try {
-        const res = await fetch(`${API}/api/memory/search?query=${encodeURIComponent(query)}&limit=10`);
+        const res = await apiFetch(`${API}/api/memory/search?query=${encodeURIComponent(query)}&limit=10`);
         const data = await res.json();
         if (!data.results || data.results.length === 0) {
             container.innerHTML = '<div style="color:var(--text-muted);padding:12px;">No results found.</div>';
@@ -190,7 +247,7 @@ function renderTaskCard(task) {
 
 async function loadTasks() {
     try {
-        const res = await fetch(`${API}/api/tasks?limit=100`);
+        const res = await apiFetch(`${API}/api/tasks?limit=100`);
         const data = await res.json();
         const tasks = data.tasks || [];
 
@@ -246,7 +303,7 @@ async function dropTask(e, newStatus) {
     const taskId = e.dataTransfer.getData('text/plain');
     if (!taskId) return;
     try {
-        await fetch(`${API}/api/tasks/${taskId}`, {
+        await apiFetch(`${API}/api/tasks/${taskId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: newStatus }),
@@ -273,7 +330,7 @@ async function createTask(e) {
     const priority = document.getElementById('newTaskPriority').value;
     if (!title) return;
     try {
-        await fetch(`${API}/api/tasks`, {
+        await apiFetch(`${API}/api/tasks`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ title, description, priority }),
@@ -289,7 +346,7 @@ async function createTask(e) {
 async function deleteTask(taskId) {
     if (!confirm('Delete this task?')) return;
     try {
-        await fetch(`${API}/api/tasks/${taskId}`, { method: 'DELETE' });
+        await apiFetch(`${API}/api/tasks/${taskId}`, { method: 'DELETE' });
         loadTasks();
     } catch (e) { console.error('Failed to delete task:', e); }
 }
@@ -678,15 +735,7 @@ document.addEventListener('keydown', (e) => {
 document.getElementById('chatInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChat(); });
 document.getElementById('memoryInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') searchMemory(); });
 
-connectWS();
-fetchStats();
-setInterval(fetchStats, 10000);
-
-// Fetch initial logs
-fetch(`${API}/api/logs?limit=20`).then(r => r.json()).then(data => {
-    if (data.logs) {
-        data.logs.reverse().forEach(log => {
-            addLog(log.event_type || 'system', typeof log.data === 'string' ? log.data : JSON.stringify(log.data).slice(0, 200));
-        });
-    }
-}).catch(() => { });
+// Auto-connect if token is stored from previous session
+if (authToken) {
+    showDashboard();
+}
