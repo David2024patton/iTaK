@@ -344,6 +344,16 @@ docker-compose up -d
 
 The dashboard provides real-time monitoring at `http://localhost:48920`:
 
+### Monitor Tab
+![iTaK Dashboard - Monitor Tab](screenshots/dashboard-monitor.png)
+*Real-time agent stats, memory layers, live logs, chat interface, and memory search*
+
+### Mission Control Tab
+![iTaK Dashboard - Mission Control](screenshots/dashboard-mission-control.png)
+*Kanban-style task board with inbox, in progress, review, and done columns*
+
+### Features
+
 - **Chat** - Talk to the agent from your browser
 - **Mission Control** - Kanban task board
 - **Memory** - Search and browse all 4 memory tiers
