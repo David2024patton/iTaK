@@ -150,5 +150,36 @@
     },
     "searxng": {
         "url": "${SEARXNG_URL}"
+    },
+    "email": {
+        "smtp": {
+            "server": "smtp.gmail.com",
+            "port": 587,
+            "username": "${EMAIL_USERNAME}",
+            "password": "${EMAIL_PASSWORD}"
+        },
+        "imap": {
+            "server": "imap.gmail.com",
+            "port": 993,
+            "username": "${EMAIL_USERNAME}",
+            "password": "${EMAIL_PASSWORD}"
+        }
+    },
+    "social_media": {
+        "twitter": {
+            "api_key": "${TWITTER_API_KEY}",
+            "api_secret": "${TWITTER_API_SECRET}",
+            "access_token": "${TWITTER_ACCESS_TOKEN}",
+            "access_token_secret": "${TWITTER_ACCESS_TOKEN_SECRET}"
+        },
+        "facebook": {
+            "access_token": "${FACEBOOK_ACCESS_TOKEN}"
+        },
+        "linkedin": {
+            "access_token": "${LINKEDIN_ACCESS_TOKEN}"
+        },
+        "instagram": {
+            "access_token": "${INSTAGRAM_ACCESS_TOKEN}"
+        }
     }
 }
