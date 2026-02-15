@@ -244,18 +244,18 @@ def create_virtual_environment() -> bool:
 
 
 def install_python_packages() -> bool:
-    """Install Python packages from requirements.txt."""
-    req_file = Path("requirements.txt")
+    """Install Python packages from install/requirements/requirements.txt."""
+    req_file = Path("install/requirements/requirements.txt")
     
     if not req_file.exists():
-        print_error("requirements.txt not found!")
+        print_error("install/requirements/requirements.txt not found!")
         return False
     
-    print_info("Installing Python packages from requirements.txt...")
+    print_info("Installing Python packages from install/requirements/requirements.txt...")
     print_info("This may take a few minutes...")
     
     success, output = run_command(
-        [sys.executable, "-m", "pip", "install", "-r", "requirements.txt", "--upgrade"],
+        [sys.executable, "-m", "pip", "install", "-r", "install/requirements/requirements.txt", "--upgrade"],
         check=False
     )
     
@@ -278,7 +278,7 @@ def install_playwright() -> bool:
         import playwright
         print_ok("Playwright package is installed")
     except ImportError:
-        print_error("Playwright package not found - should have been installed with requirements.txt")
+        print_error("Playwright package not found - should have been installed with install/requirements/requirements.txt")
         return False
     
     # Install chromium browser
@@ -301,8 +301,8 @@ def setup_config_files() -> bool:
     print_info("Setting up configuration files...")
     
     configs = [
-        (".env.example", ".env"),
-        ("config.json.example", "config.json"),
+        ("install/config/.env.example", ".env"),
+        ("install/config/config.json.example", "config.json"),
     ]
     
     all_ok = True
@@ -381,12 +381,12 @@ def print_next_steps():
     print(f"   {CYAN}   - Adapter settings{RESET}\n")
     
     print(f"3. {BOLD}Run Diagnostic{RESET}")
-    print(f"   {CYAN}python main.py --doctor{RESET}\n")
+    print(f"   {CYAN}python -m app.main --doctor{RESET}\n")
     
     print(f"4. {BOLD}Start iTaK{RESET}")
-    print(f"   {CYAN}python main.py                 # CLI mode{RESET}")
-    print(f"   {CYAN}python main.py --webui         # With dashboard{RESET}")
-    print(f"   {CYAN}python main.py --adapter discord --webui  # Discord bot{RESET}\n")
+    print(f"   {CYAN}python -m app.main                 # CLI mode{RESET}")
+    print(f"   {CYAN}python -m app.main --webui         # With dashboard{RESET}")
+    print(f"   {CYAN}python -m app.main --adapter discord --webui  # Discord bot{RESET}\n")
     
     print(f"{BOLD}Documentation:{RESET}")
     print(f"   {CYAN}README.md               # Project overview{RESET}")

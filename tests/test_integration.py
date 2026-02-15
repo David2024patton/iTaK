@@ -9,6 +9,9 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 
+EXAMPLE_CONFIG_PATH = Path("install/config/config.json.example")
+
+
 # ============================================================
 # Configuration Integration Tests
 # ============================================================
@@ -18,7 +21,7 @@ class TestConfigurationIntegration:
     @pytest.fixture
     def config(self):
         """Load the example config."""
-        with open("config.json.example") as f:
+        with open(EXAMPLE_CONFIG_PATH) as f:
             return json.load(f)
 
     def test_agent_zero_config(self, config):
@@ -91,7 +94,7 @@ class TestMemoryManagerIntegration:
 
     @pytest.fixture
     def config(self):
-        with open("config.json.example") as f:
+        with open(EXAMPLE_CONFIG_PATH) as f:
             return json.load(f)
 
     def test_memory_manager_init(self, config, tmp_path):
@@ -231,7 +234,7 @@ class TestMCPServerIntegration:
 
     def test_mcp_server_disabled_by_default(self):
         """MCP server should be disabled in example config."""
-        with open("config.json.example") as f:
+        with open(EXAMPLE_CONFIG_PATH) as f:
             config = json.load(f)
         
         from core.mcp_server import ITaKMCPServer
@@ -247,7 +250,7 @@ class TestMCPServerIntegration:
 
     def test_mcp_server_tools_config(self):
         """MCP server should expose configured tools."""
-        with open("config.json.example") as f:
+        with open(EXAMPLE_CONFIG_PATH) as f:
             config = json.load(f)
         
         assert "mcp_server" in config
@@ -301,7 +304,7 @@ class TestTaskBoardIntegration:
 
     def test_task_board_config(self):
         """Task board should have proper config."""
-        with open("config.json.example") as f:
+        with open(EXAMPLE_CONFIG_PATH) as f:
             config = json.load(f)
         
         assert "task_board" in config
@@ -333,7 +336,7 @@ class TestExtensionSystemIntegration:
 def test_integration_completeness():
     """Verify all three source repos are integrated."""
     
-    with open("config.json.example") as f:
+    with open(EXAMPLE_CONFIG_PATH) as f:
         config = json.load(f)
     
     # Agent Zero checklist

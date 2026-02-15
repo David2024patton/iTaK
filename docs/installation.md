@@ -204,7 +204,7 @@ venv\Scripts\activate
 ### 3. Install Python Dependencies
 
 ```bash
-pip install -r requirements.txt
+pip install -r install/requirements/requirements.txt
 ```
 
 ### 4. Install Playwright Browsers
@@ -217,14 +217,14 @@ playwright install chromium
 
 **macOS / Linux / WSL:**
 ```bash
-cp .env.example .env
-cp config.json.example config.json
+cp install/config/.env.example .env
+cp install/config/config.json.example config.json
 ```
 
 **Windows:**
 ```cmd
-copy .env.example .env
-copy config.json.example config.json
+copy install\config\.env.example .env
+copy install\config\config.json.example config.json
 ```
 
 ### 6. Create Data Directories
@@ -268,7 +268,7 @@ See `docs/config.md` for detailed config options.
 Verify everything is set up correctly:
 
 ```bash
-python main.py --doctor
+python -m app.main --doctor
 ```
 
 This will check:
@@ -285,33 +285,33 @@ Once setup is complete, you can run iTaK in various modes:
 
 ### CLI Mode (Terminal Chat)
 ```bash
-python main.py
+python -m app.main
 ```
 
 ### With WebUI Dashboard
 ```bash
-python main.py --webui
+python -m app.main --webui
 ```
 Then open http://localhost:48920 in your browser.
 
 ### Discord Bot
 ```bash
-python main.py --adapter discord --webui
+python -m app.main --adapter discord --webui
 ```
 
 ### Telegram Bot
 ```bash
-python main.py --adapter telegram --webui
+python -m app.main --adapter telegram --webui
 ```
 
 ### Slack Bot
 ```bash
-python main.py --adapter slack --webui
+python -m app.main --adapter slack --webui
 ```
 
 ### WebUI Only (No Chat Adapter)
 ```bash
-python main.py --webui-only
+python -m app.main --webui-only
 ```
 
 ## Docker Installation
@@ -321,7 +321,7 @@ For containerized deployment:
 ### Using Docker Compose
 
 ```bash
-docker-compose up -d
+docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 ```
 
 ### Using Dockerfile
@@ -387,7 +387,7 @@ bash setup.sh
 
 **Solution**:
 1. Make sure virtual environment is activated
-2. Reinstall dependencies: `pip install -r requirements.txt`
+2. Reinstall dependencies: `pip install -r install/requirements/requirements.txt`
 3. Check Python version: `python --version`
 
 ### API Key Issues

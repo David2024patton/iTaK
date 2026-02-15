@@ -178,8 +178,8 @@ if %HAS_DOCKER% EQU 1 (
     echo Next steps (Python installation):
     echo   1. Run: git clone https://github.com/David2024patton/iTaK.git
     echo   2. Run: cd iTaK
-    echo   3. Run: pip install -r requirements.txt
-    echo   4. Run: python main.py --webui
+    echo   3. Run: pip install -r install/requirements/requirements.txt
+    echo   4. Run: python -m app.main --webui
     echo   5. Visit: http://localhost:8000
 ) else (
     echo Please install missing prerequisites and run this script again.

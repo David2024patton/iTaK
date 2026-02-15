@@ -257,14 +257,14 @@ iTaK ensures all three source repos are properly integrated:
 ### Example 1: Agent Zero Style (Basic Chat)
 ```bash
 # Just like Agent Zero - monologue engine
-python main.py
+python -m app.main
 > What's the current date?
 ```
 
 ### Example 2: MemGPT Style (Memory Management)
 ```bash
 # Self-editing memory like MemGPT
-python main.py
+python -m app.main
 > Remember that I prefer Python over JavaScript
 > [Agent saves to MEMORY.md automatically]
 > What language do I prefer?
@@ -274,7 +274,7 @@ python main.py
 ### Example 3: OpenClaw Style (Multi-Channel)
 ```bash
 # Run on Discord + WebUI simultaneously
-python main.py --adapter discord --webui
+python -m app.main --adapter discord --webui
 # Users can interact via Discord DMs or http://localhost:48920
 ```
 
@@ -296,7 +296,7 @@ python main.py --adapter discord --webui
 ### Example 5: Full Stack (All Features)
 ```bash
 # Run with everything enabled
-docker-compose up -d  # Starts Neo4j, Weaviate, iTaK, WebUI
+docker compose --project-directory . -f install/docker/docker-compose.yml up -d  # Starts Neo4j, Weaviate, iTaK, WebUI
 # Access dashboard: http://localhost:48920
 # All 3 repos + Neo4j working together
 ```

@@ -3,13 +3,13 @@ iTaK - Main Entry Point (v2)
 Launch the agent with the specified adapter + optional WebUI.
 
 Usage:
-    python main.py                      # CLI adapter (default)
-    python main.py --adapter cli        # CLI adapter
-    python main.py --adapter discord    # Discord bot
-    python main.py --adapter telegram   # Telegram bot
-    python main.py --adapter slack      # Slack bot
-    python main.py --webui              # Also start the WebUI dashboard
-    python main.py --webui-only         # Only start WebUI (no adapter)
+    python -m app.main                      # CLI adapter (default)
+    python -m app.main --adapter cli        # CLI adapter
+    python -m app.main --adapter discord    # Discord bot
+    python -m app.main --adapter telegram   # Telegram bot
+    python -m app.main --adapter slack      # Slack bot
+    python -m app.main --webui              # Also start the WebUI dashboard
+    python -m app.main --webui-only         # Only start WebUI (no adapter)
 """
 
 import argparse
@@ -21,14 +21,14 @@ import sys
 from pathlib import Path
 
 # Ensure project root is in path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 def load_config() -> dict:
     """Load configuration from config.json."""
     config_path = Path("config.json")
     if not config_path.exists():
-        print("❌ config.json not found. Copy config.json.example and configure.")
+        print("❌ config.json not found. Copy install/config/config.json.example and configure.")
         sys.exit(1)
 
     with open(config_path, "r", encoding="utf-8") as f:

@@ -57,7 +57,7 @@ python install.py --help       # Show all options
 | **Full Stack** | ✅ | ✅ | ✅ | ✅ | 5 min |
 
 📚 **[QUICK START GUIDE](QUICK_START.md)** — Complete installation walkthrough  
-🆚 **Coming from Agent-Zero?** [iTAK vs Agent-Zero](iTAK_VS_AGENT_ZERO.md)
+🆚 **Coming from Agent-Zero?** [iTAK vs Agent-Zero](docs/root/iTAK_VS_AGENT_ZERO.md)
 
 ---
 
@@ -77,12 +77,12 @@ python install.py --help       # Show all options
 
 ```bash
 # 🐍 Python Only (No Docker)
-pip install -r requirements.txt
-cp .env.example .env  # Add your API keys
-python main.py --webui
+pip install -r install/requirements/requirements.txt
+cp install/config/.env.example .env  # Add your API keys
+python -m app.main --webui
 ```
 
-📚 **Detailed Guide:** [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md)
+📚 **Detailed Guide:** [INSTALLATION_GUIDE.md](docs/root/INSTALLATION_GUIDE.md)
 
 ---
 
@@ -206,7 +206,7 @@ python main.py --webui
 
 **New to iTaK?** Start here:
 
-👉 **[INSTALLATION GUIDE](INSTALLATION_GUIDE.md)** - Complete step-by-step walkthrough for new users:
+👉 **[INSTALLATION GUIDE](docs/root/INSTALLATION_GUIDE.md)** - Complete step-by-step walkthrough for new users:
 - 5-step installation (5-10 minutes)
 - What iTaK does once installed
 - Common use cases with examples
@@ -222,7 +222,7 @@ Detailed guides for every module, config option, and API endpoint:
 
 | Guide | What It Covers |
 |-------|---------------|
-| **[Installation Guide](INSTALLATION_GUIDE.md)** | **Complete new user walkthrough - install and get started** |
+| **[Installation Guide](docs/root/INSTALLATION_GUIDE.md)** | **Complete new user walkthrough - install and get started** |
 | [Getting Started](docs/getting-started.md) | Install, configure, and run in 5 minutes |
 | [Integration Design](docs/integration-design.md) | How iTaK combines Agent Zero, Letta, OpenClaw + Neo4j |
 | [Architecture](docs/architecture.md) | System overview, monologue loop, data flow, subsystem map |
@@ -238,8 +238,8 @@ Detailed guides for every module, config option, and API endpoint:
 | [Prompts & Skills](docs/prompts.md) | Prompt assembly pipeline and skill system |
 | [WebUI & API](docs/webui.md) | Dashboard features and complete REST API reference |
 | [Configuration](docs/config.md) | Complete config.json reference with every option |
-| **[Testing Guide](TESTING.md)** | **Comprehensive testing guide - writing tests, running tests, coverage** |
-| **[Ready to Test](READY_TO_TEST.md)** | **Quick readiness checklist - validate your setup in 5 minutes** |
+| **[Testing Guide](docs/root/TESTING.md)** | **Comprehensive testing guide - writing tests, running tests, coverage** |
+| **[Ready to Test](docs/root/READY_TO_TEST.md)** | **Quick readiness checklist - validate your setup in 5 minutes** |
 
 ---
 
@@ -247,11 +247,11 @@ Detailed guides for every module, config option, and API endpoint:
 
 ```
 iTaK/
-├── main.py                    # Entry point - launch with any adapter
-├── config.json.example        # Configuration template
-├── requirements.txt           # Python dependencies
-├── Dockerfile                 # Container deployment
-├── docker-compose.yml         # Full stack deployment
+├── app/main.py                # Entry point - launch with any adapter
+├── install/config/config.json.example  # Configuration template
+├── install/requirements/requirements.txt # Python dependencies
+├── install/docker/Dockerfile  # Container deployment
+├── install/docker/docker-compose.yml # Full stack deployment
 │
 ├── core/                      # 🧠 Engine
 │   ├── agent.py               # Monologue engine (v4)
@@ -359,7 +359,7 @@ venv\Scripts\activate
 # Linux/Mac
 source venv/bin/activate
 
-pip install -r requirements.txt
+pip install -r install/requirements/requirements.txt
 playwright install chromium
 ```
 
@@ -376,8 +376,8 @@ This will guide you through configuration, including Neo4j memory setup (use you
 **Manual Setup:**
 
 ```bash
-cp .env.example .env
-cp config.json.example config.json
+cp install/config/.env.example .env
+cp install/config/config.json.example config.json
 ```
 
 Edit `.env` with your API keys:
@@ -399,36 +399,36 @@ Edit `config.json` to set your preferred models, adapters, and features.
 
 ```bash
 # CLI mode (terminal chat)
-python main.py
+python -m app.main
 
 # With WebUI dashboard
-python main.py --webui
+python -m app.main --webui
 
 # Discord bot
-python main.py --adapter discord --webui
+python -m app.main --adapter discord --webui
 
 # WebUI only (no chat adapter)
-python main.py --webui-only
+python -m app.main --webui-only
 ```
 
 ### 🐳 Docker
 
 ```bash
-docker-compose up -d
+docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 ```
 
 ### ✅ Verify Installation
 
 ```bash
 # Run comprehensive diagnostics
-python main.py --doctor
+python -m app.main --doctor
 
 # Run tests
 pytest -v
 ```
 
-📖 **See [READY_TO_TEST.md](READY_TO_TEST.md)** for complete testing readiness checklist  
-📖 **See [TESTING.md](TESTING.md)** for comprehensive testing guide
+📖 **See [READY_TO_TEST.md](docs/root/READY_TO_TEST.md)** for complete testing readiness checklist  
+📖 **See [TESTING.md](docs/root/TESTING.md)** for comprehensive testing guide
 
 ---
 

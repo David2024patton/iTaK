@@ -328,7 +328,7 @@ python3 -m venv venv
 source venv/bin/activate  # Linux/macOS
 venv\Scripts\activate     # Windows
 
-pip install -r requirements.txt
+pip install -r install/requirements/requirements.txt
 ```
 
 ### "Out of disk space"
@@ -364,19 +364,19 @@ installers/quick-install.bat   # Windows
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
-cp .env.example .env
+cp install/config/.env.example .env
 # Edit .env with your API keys
-docker-compose up -d
+docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 ```
 
 ### Option 3: Python Install
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
-pip install -r requirements.txt
-cp .env.example .env
+pip install -r install/requirements/requirements.txt
+cp install/config/.env.example .env
 # Edit .env with your API keys
-python main.py --webui
+python -m app.main --webui
 ```
 
 ---
@@ -395,7 +395,7 @@ python main.py --webui
 
 1. **Docker Desktop** is easiest for beginners (all platforms)
 2. **Python install** gives you more control but requires more setup
-3. **Full install** (docker-compose) includes all services for production
+3. **Full install** (`docker compose`) includes all services for production
 4. **Quick install** (installers/quick-install.sh) is perfect for testing
 
 Choose the path that matches your experience level and needs!

@@ -266,21 +266,21 @@ For these use cases, consider **Phase 4** (80% coverage) with additional MCP tes
 # 1. Clone and setup
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
-pip install -r requirements.txt
+pip install -r install/requirements/requirements.txt
 
 # 2. Configure
-cp config.json.example config.json
-cp .env.example .env
+cp install/config/config.json.example config.json
+cp install/config/.env.example .env
 # Edit .env with your API key
 
 # 3. Run diagnostics
-python main.py --doctor
+python -m app.main --doctor
 
 # 4. Run tests
 PYTHONPATH=$(pwd) python3 -m pytest tests/ -v
 
 # 5. Start agent
-python main.py --webui
+python -m app.main --webui
 ```
 
 ### Test Execution

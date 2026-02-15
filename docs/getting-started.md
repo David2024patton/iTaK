@@ -42,7 +42,7 @@ python install.py --skip-deps  # Only setup config files (skip dependency instal
 python install.py --help       # Show all options
 ```
 
-After installation, edit `.env` with your API keys and run `python main.py`.
+After installation, edit `.env` with your API keys and run `python -m app.main`.
 
 ### Option B: Manual Setup
 
@@ -54,7 +54,7 @@ cd iTaK
 
 ### 2. Install dependencies
 ```bash
-pip install -r requirements.txt
+pip install -r install/requirements/requirements.txt
 ```
 
 iTaK auto-checks prerequisites at startup. If anything is missing, it tells you what to install.
@@ -79,8 +79,8 @@ This will guide you through:
 Copy the example config and add your API keys:
 
 ```bash
-cp config.json.example config.json
-cp .env.example .env
+cp install/config/config.json.example config.json
+cp install/config/.env.example .env
 ```
 
 Edit `.env` with your keys:
@@ -105,16 +105,16 @@ Edit `config.json` - the default config works out of the box with Google Gemini.
 
 ```bash
 # CLI mode (default - talk to the agent in your terminal)
-python main.py
+python -m app.main
 
 # With the web dashboard
-python main.py --webui
+python -m app.main --webui
 
 # Discord bot mode
-python main.py --adapter discord --webui
+python -m app.main --adapter discord --webui
 
 # All options
-python main.py --help
+python -m app.main --help
 ```
 
 ### 5. First conversation
@@ -188,7 +188,7 @@ After setup, verify everything is working:
 
 ### Run the diagnostic tool
 ```bash
-python main.py --doctor
+python -m app.main --doctor
 ```
 
 This checks:
@@ -238,7 +238,7 @@ N passed in X.XXs
 ### Test basic functionality
 ```bash
 # Start in CLI mode
-python main.py
+python -m app.main
 
 # The agent will display a prompt:
 # [iTaK] Ready. Type your message:
@@ -256,8 +256,8 @@ The agent should respond with a calculation or explanation.
 
 | Problem | Solution |
 |---------|----------|
-| `config.json not found` | Copy `config.json.example` to `config.json` |
-| `ModuleNotFoundError` | Run `pip install -r requirements.txt` |
+| `config.json not found` | Copy `install/config/config.json.example` to `config.json` |
+| `ModuleNotFoundError` | Run `pip install -r install/requirements/requirements.txt` |
 | `GOOGLE_API_KEY not set` | Add it to `.env` or set as environment variable |
 | `Playwright not installed` | Run `playwright install chromium` |
 | `Neo4j connection refused` | Check NEO4J_URI in `.env`, ensure Neo4j is running |

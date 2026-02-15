@@ -449,15 +449,15 @@ class TestMemUExtension:
 
 
 # ============================================================
-# Integration Test Markers (for CI with docker-compose)
+# Integration Test Markers (for CI with docker compose)
 # ============================================================
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_memu_full_integration():
-    """Full integration test with real memu-server (requires docker-compose).
+    """Full integration test with real memu-server (requires docker compose).
     
     Run with: pytest -m integration
-    Requires: docker-compose up memu-server
+    Requires: docker compose --project-directory . -f install/docker/docker-compose.yml up -d memu-server
     """
     from memory.memu_store import MemUStore
     from core.memu_enricher import MemUEnricher
@@ -479,7 +479,7 @@ async def test_memu_full_integration():
         }
         
         # This test is skipped if memu-server not running
-        # It's meant for CI with docker-compose
+        # It's meant for CI with docker compose
         store = MemUStore(config)
         
         messages = [

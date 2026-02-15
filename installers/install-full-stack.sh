@@ -6,6 +6,7 @@ set -e
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMPOSE_FILE="install/docker/docker-compose.yml"
 
 echo "🚀 iTaK Full Stack Installer"
 echo "════════════════════════════════════════"
@@ -68,7 +69,7 @@ setup_env() {
     if [ ! -f .env ]; then
         echo ""
         echo "📝 Creating .env configuration..."
-        cp .env.example .env
+        cp install/config/.env.example .env
         echo -e "${GREEN}✅ .env file created${NC}"
         echo ""
         echo -e "${YELLOW}⚠️  Important: Add your API key to .env file${NC}"
@@ -99,11 +100,11 @@ start_services() {
     
     # Pull images first to show progress
     echo "📦 Pulling Docker images..."
-    $COMPOSE_CMD pull
+    $COMPOSE_CMD --project-directory . -f "$COMPOSE_FILE" pull
     
     echo ""
     echo "🎬 Starting services..."
-    $COMPOSE_CMD up -d
+    $COMPOSE_CMD --project-directory . -f "$COMPOSE_FILE" up -d
     
     echo ""
     echo -e "${GREEN}✅ Services started!${NC}"
@@ -180,29 +181,29 @@ show_info() {
     echo "     nano .env"
     echo ""
     echo "  2. Start iTaK agent:"
-    echo "     python main.py --webui"
+    echo "     python -m app.main --webui"
     echo ""
     echo "  3. Visit iTaK Web UI:"
     echo "     http://localhost:8000"
     echo ""
     echo "  4. Verify all databases:"
-    echo "     ./check-databases.sh"
+    echo "     ./install/check-databases.sh"
     echo ""
     echo "  5. Check service status:"
-    echo "     docker compose ps"
+    echo "     docker compose --project-directory . -f $COMPOSE_FILE ps"
     echo ""
     echo "  6. View logs:"
-    echo "     docker compose logs -f"
+    echo "     docker compose --project-directory . -f $COMPOSE_FILE logs -f"
     echo ""
     echo "  7. Stop services:"
-    echo "     docker compose down"
+    echo "     docker compose --project-directory . -f $COMPOSE_FILE down"
     echo ""
     echo "════════════════════════════════════════"
     echo ""
     echo "📚 Documentation:"
-    echo "  - Database Guide: DATABASES.md"
-    echo "  - Quick Start:    QUICK_START.md"
-    echo "  - Full Guide:     INSTALLATION_GUIDE.md"
+    echo "  - Database Guide: docs/root/DATABASES.md"
+    echo "  - Quick Start:    docs/root/QUICK_START.md"
+    echo "  - Full Guide:     docs/root/INSTALLATION_GUIDE.md"
     echo ""
     echo "════════════════════════════════════════"
 }

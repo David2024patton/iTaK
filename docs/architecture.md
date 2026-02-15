@@ -174,14 +174,14 @@ User (Discord/Telegram/Slack/CLI)
 
 ```
 iTaK/
-├── main.py                    # Entry point - boots the agent
+├── app/main.py                # Entry point - boots the agent
 ├── config.json                # Configuration (never committed)
-├── config.json.example        # Template configuration
+├── install/config/config.json.example  # Template configuration
 ├── .env                       # Secrets (never committed)
-├── .env.example               # Template secrets
-├── Dockerfile                 # Container build
-├── docker-compose.yml         # Full stack deployment
-├── requirements.txt           # Python dependencies
+├── install/config/.env.example # Template secrets
+├── install/docker/Dockerfile  # Container build
+├── install/docker/docker-compose.yml  # Full stack deployment
+├── install/requirements/requirements.txt  # Python dependencies
 │
 ├── core/                      # The brain
 │   ├── agent.py               # Monologue engine (763 lines)

@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Copy requirements first for better caching
-COPY requirements.txt .
+COPY install/requirements/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install Playwright browsers (for browser-use)
@@ -35,5 +35,5 @@ RUN useradd -m -s /bin/bash itak && chown -R itak:itak /app
 USER itak
 
 # Default entry point
-ENTRYPOINT ["python", "main.py"]
+ENTRYPOINT ["python", "-m", "app.main"]
 CMD ["--adapter", "cli"]

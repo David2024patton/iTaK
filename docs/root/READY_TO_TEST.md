@@ -19,17 +19,17 @@ docker --version
 ### 2️⃣ Dependencies Installed
 ```bash
 # Install all dependencies
-pip install -r requirements.txt
+pip install -r install/requirements/requirements.txt
 
 # For CI/testing only (lightweight)
-pip install -r requirements-ci.txt
+pip install -r install/requirements/requirements-ci.txt
 ```
 
 ### 3️⃣ Configuration Files
 ```bash
 # Create config files from examples
-cp config.json.example config.json
-cp .env.example .env
+cp install/config/config.json.example config.json
+cp install/config/.env.example .env
 
 # Edit .env and add at least ONE API key:
 # GOOGLE_API_KEY=your_key_here
@@ -40,7 +40,7 @@ cp .env.example .env
 ### 4️⃣ Run System Diagnostics
 ```bash
 # Comprehensive system check
-python main.py --doctor
+python -m app.main --doctor
 
 # Look for all green checkmarks ✓
 # Red X's indicate missing optional features (usually OK)
@@ -68,13 +68,13 @@ PYTHONPATH=$(pwd) pytest --cov=. --cov-report=term-missing
 
 | Component | Status | Test Method |
 |-----------|--------|-------------|
-| **CLI Mode** | ✅ Ready | `python main.py` |
+| **CLI Mode** | ✅ Ready | `python -m app.main` |
 | **Core Agent Loop** | ✅ Ready | Unit tests + manual |
 | **Logger & Progress** | ✅ Ready | `pytest tests/test_core.py` |
 | **Memory (SQLite)** | ✅ Ready | `pytest tests/test_core.py` |
 | **Tool Execution** | ✅ Ready | Manual testing |
-| **WebUI Dashboard** | ✅ Ready | `python main.py --webui` |
-| **Doctor Diagnostics** | ✅ Ready | `python main.py --doctor` |
+| **WebUI Dashboard** | ✅ Ready | `python -m app.main --webui` |
+| **Doctor Diagnostics** | ✅ Ready | `python -m app.main --doctor` |
 | **Preflight Checks** | ✅ Ready | Auto-runs on startup |
 | **Security Guards** | ✅ Ready | Doctor checks |
 
@@ -107,35 +107,35 @@ PYTHONPATH=$(pwd) pytest --cov=. --cov-report=term-missing
 ### Option 1: Quick Validation (5 minutes)
 ```bash
 # 1. Run doctor diagnostic
-python main.py --doctor
+python -m app.main --doctor
 
 # 2. Run existing unit tests
 PYTHONPATH=$(pwd) pytest -v
 
 # 3. Start CLI mode and have a conversation
-python main.py
+python -m app.main
 ```
 
 ### Option 2: Full Functional Test (30 minutes)
 ```bash
 # 1. System diagnostic
-python main.py --doctor
+python -m app.main --doctor
 
 # 2. Run unit tests
 PYTHONPATH=$(pwd) pytest -v
 
 # 3. Test CLI mode
-python main.py
+python -m app.main
 > List files in the current directory
 > Create a file called test.txt with "Hello World"
 
 # 4. Test WebUI
-python main.py --webui
+python -m app.main --webui
 # Open browser to http://localhost:8080
 # Try chat, monitor, mission control tabs
 
 # 5. Test specific adapter (if configured)
-python main.py --adapter discord --webui
+python -m app.main --adapter discord --webui
 ```
 
 ### Option 3: Developer Testing
@@ -145,7 +145,7 @@ PYTHONPATH=$(pwd) pytest --cov=. --cov-report=html
 open htmlcov/index.html
 
 # 2. Run security checks
-python main.py --doctor
+python -m app.main --doctor
 
 # 3. Test specific components
 python -c "from core.logger import configure_logger; print('Logger OK')"
@@ -166,12 +166,12 @@ python -c "from tools import *; print('Tools OK')"
 ```bash
 pip install <package-name>
 # Or reinstall all
-pip install -r requirements.txt
+pip install -r install/requirements/requirements.txt
 ```
 
 **"config.json not found"**
 ```bash
-cp config.json.example config.json
+cp install/config/config.json.example config.json
 ```
 
 **"No LLM API key configured"**
@@ -209,13 +209,13 @@ export PYTHONPATH=$(pwd)
 PYTHONPATH=$(pwd) pytest -v
 
 # Reinstall dependencies if needed
-pip install -r requirements.txt
+pip install -r install/requirements/requirements.txt
 ```
 
 **"Async tests hanging"**
 ```bash
 # Check pytest.ini has asyncio_mode=auto
-cat pytest.ini
+cat tests/pytest.ini
 ```
 
 ---
@@ -253,9 +253,9 @@ Current test coverage (as of v4.0 - Phase 4 Complete):
 ## 🎓 Next Steps
 
 ### For Users / Testers
-1. Run `python main.py --doctor` to validate your setup
+1. Run `python -m app.main --doctor` to validate your setup
 2. Run `pytest` to execute existing tests
-3. Start `python main.py` and interact with the agent
+3. Start `python -m app.main` and interact with the agent
 4. Report any issues on GitHub
 
 ### For Developers
@@ -283,7 +283,7 @@ Current test coverage (as of v4.0 - Phase 4 Complete):
 A: **Yes, absolutely!** With 258 tests and ~85% coverage, iTaK is mission-critical ready for regulated industries, ultra-high scale (10,000+ users), and zero-downtime requirements. Ready for HIPAA, PCI DSS, SOC2, and GDPR compliance.
 
 **Q: What's the minimum to start testing?**  
-A: Python 3.11+, `pip install -r requirements.txt`, config files, and one LLM API key.
+A: Python 3.11+, `pip install -r install/requirements/requirements.txt`, config files, and one LLM API key.
 
 **Q: Do I need all the optional services (Neo4j, Weaviate, etc.)?**  
 A: No. iTaK works with just SQLite memory and basic configuration. Optional services add advanced features.
@@ -292,7 +292,7 @@ A: No. iTaK works with just SQLite memory and basic configuration. Optional serv
 A: No. You need at least one LLM provider API key (Google Gemini or OpenAI recommended).
 
 **Q: How do I know if my environment is correct?**  
-A: Run `python main.py --doctor` - it checks everything and reports issues.
+A: Run `python -m app.main --doctor` - it checks everything and reports issues.
 
 **Q: Tests are failing - is that normal?**  
 A: 40+ core tests should pass with minimal dependencies. Many tests require specific APIs or services. Focus on running `pytest tests/test_core.py` and `pytest tests/test_security.py` first.

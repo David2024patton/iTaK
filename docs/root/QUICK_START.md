@@ -328,7 +328,7 @@ Build locally:
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
-docker build -f Dockerfile.standalone -t itak .
+docker build -f install/docker/Dockerfile.standalone -t itak .
 docker run -p 8000:8000 itak
 ```
 
@@ -359,9 +359,9 @@ When you're ready for production features:
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
-cp .env.example .env
+cp install/config/.env.example .env
 # Edit .env with your API keys
-docker-compose up -d
+docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 ```
 
 This gives you:

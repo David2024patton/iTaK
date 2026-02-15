@@ -59,7 +59,7 @@ def _sanitize_output(self, text: str) -> str:
 
 ### Usage
 ```bash
-python main.py --adapter cli
+python -m app.main --adapter cli
 ```
 
 ```

@@ -698,7 +698,7 @@ You access from anywhere:
 
 ```
 $ ssh user@192.168.0.217
-$ cd iTaK && python main.py
+$ cd iTaK && python -m app.main
 
 ╔══════════════════════════════════════════════════════════════╗
 ║  iTaK - First Launch Setup                                ║

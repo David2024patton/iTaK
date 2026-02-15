@@ -74,7 +74,7 @@ installers\install-prerequisites.bat
 For complete installation instructions, see:
 - **[QUICK_START.md](../QUICK_START.md)** - Quick start guide
 - **[INSTALL.md](../INSTALL.md)** - Installation overview
-- **[INSTALLATION_GUIDE.md](../INSTALLATION_GUIDE.md)** - Detailed installation guide
+- **[INSTALLATION_GUIDE.md](../docs/root/INSTALLATION_GUIDE.md)** - Detailed installation guide
 - **[PREREQUISITES.md](../PREREQUISITES.md)** - Prerequisites installation guide
 
 ## 🔄 Migration from Old Structure

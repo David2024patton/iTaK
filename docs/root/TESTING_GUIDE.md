@@ -43,7 +43,7 @@ iTaK has comprehensive testing at multiple levels:
 
 ```bash
 # Install required Python packages
-pip install -r requirements.txt
+pip install -r install/requirements/requirements.txt
 
 # Or use the universal installer
 python install.py
@@ -53,7 +53,7 @@ python install.py
 
 ```bash
 # Copy the example file
-cp .env.example .env
+cp install/config/.env.example .env
 
 # Edit .env and add your API key
 # NEVER commit this file to git!
@@ -78,7 +78,7 @@ GEMINI_API_KEY=your_private_key_here
 
 ```bash
 # Check system health (no API calls)
-python main.py --doctor
+python -m app.main --doctor
 ```
 
 This will check:
@@ -138,21 +138,21 @@ Tests:
 
 ```bash
 # Terminal mode
-python main.py
+python -m app.main
 
 # Web UI mode
-python main.py --webui
+python -m app.main --webui
 # Visit http://localhost:8000
 
 # CLI mode with specific prompt
-python main.py --cli "Hello, test message"
+python -m app.main --adapter cli
 ```
 
 ### Step 7: Check Database Status (if using full stack)
 
 ```bash
 # Verify all databases are running
-./check-databases.sh
+./install/check-databases.sh
 
 # Or check manually
 docker compose ps
@@ -204,7 +204,7 @@ docker compose up -d
 
 ```bash
 # Check all services are healthy
-./check-databases.sh
+./install/check-databases.sh
 
 # Should show:
 # ✅ Neo4j running
@@ -220,20 +220,20 @@ docker compose up -d
 PYTHONPATH=$(pwd) python -m pytest tests/test_integration.py -v
 
 # Test end-to-end workflow
-python main.py --webui
+python -m app.main --webui
 ```
 
 ### 4. Test Multi-Channel Adapters
 
 ```bash
 # Discord (requires DISCORD_TOKEN in .env)
-python main.py --adapter discord
+python -m app.main --adapter discord
 
 # Telegram (requires TELEGRAM_TOKEN in .env)
-python main.py --adapter telegram
+python -m app.main --adapter telegram
 
 # Slack (requires SLACK_TOKEN in .env)
-python main.py --adapter slack
+python -m app.main --adapter slack
 ```
 
 ---
@@ -269,7 +269,7 @@ python -m memory_profiler main.py
 
 **Issue: "Module not found"**
 - Solution: Install dependencies
-- Run: `pip install -r requirements.txt`
+- Run: `pip install -r install/requirements/requirements.txt`
 
 **Issue: "Docker not found"**
 - Solution: Install Docker or use minimal install
@@ -287,14 +287,14 @@ python -m memory_profiler main.py
 
 ### Getting Help
 
-1. Check the diagnostics: `python main.py --doctor`
+1. Check the diagnostics: `python -m app.main --doctor`
 2. Check test output: `PYTHONPATH=$(pwd) python -m pytest tests/ -v`
 3. Check logs: `tail -f logs/*.log`
 4. Read documentation:
    - README.md
-   - INSTALLATION_GUIDE.md
+   - docs/root/INSTALLATION_GUIDE.md
    - QUICK_START.md
-   - DATABASES.md
+   - docs/root/DATABASES.md
 
 ---
 
@@ -320,7 +320,7 @@ Tests include:
 ```bash
 # Check for known vulnerabilities
 pip install safety
-safety check -r requirements.txt
+safety check -r install/requirements/requirements.txt
 
 # Check code quality
 pip install bandit

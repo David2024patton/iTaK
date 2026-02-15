@@ -172,10 +172,10 @@ def run_preflight(config: dict | None = None, auto_install: bool = True) -> Pref
     if config_path.exists():
         result.passed.append("config.json found")
     else:
-        example = Path("config.json.example")
+        example = Path("install/config/config.json.example")
         if example.exists():
             result.errors.append(
-                "config.json missing - copy config.json.example to config.json"
+                "config.json missing - copy install/config/config.json.example to config.json"
             )
         else:
             result.errors.append("config.json missing - create from docs/config.md")

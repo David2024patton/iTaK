@@ -19,13 +19,13 @@ Quick reference checklist for deploying iTaK to different environments.
 1. **Install Dependencies**
    ```bash
    cd iTaK
-   pip install -r requirements.txt
+   pip install -r install/requirements/requirements.txt
    ```
 
 2. **Configure**
    ```bash
-   cp config.json.example config.json
-   cp .env.example .env
+   cp install/config/config.json.example config.json
+   cp install/config/.env.example .env
    ```
 
 3. **Add API Key** (pick one)
@@ -38,7 +38,7 @@ Quick reference checklist for deploying iTaK to different environments.
 
 4. **Verify Setup**
    ```bash
-   python main.py --doctor
+   python -m app.main --doctor
    ```
    - [ ] All critical checks pass (some warnings are OK)
    - [ ] At least one LLM provider configured
@@ -46,10 +46,10 @@ Quick reference checklist for deploying iTaK to different environments.
 5. **Test Run**
    ```bash
    # CLI only
-   python main.py
+   python -m app.main
    
    # With WebUI
-   python main.py --webui
+   python -m app.main --webui
    ```
    - [ ] Application starts without errors
    - [ ] Can send messages and get responses
@@ -64,7 +64,7 @@ Quick reference checklist for deploying iTaK to different environments.
 
 ### Additional Prerequisites
 - [ ] Docker installed (`docker --version`)
-- [ ] docker-compose installed (`docker-compose --version`)
+- [ ] docker compose installed (`docker compose version`)
 
 ### Setup Steps
 
@@ -103,7 +103,7 @@ Quick reference checklist for deploying iTaK to different environments.
 4. **Set Up Optional Services** (as needed)
    ```bash
    # Start full stack with Docker
-   docker-compose up -d
+   docker compose --project-directory . -f install/docker/docker-compose.yml up -d
    ```
    - [ ] Neo4j running (if needed)
    - [ ] Weaviate running (if needed)
@@ -202,7 +202,7 @@ iTaK executes arbitrary code by design. Only deploy to production if:
 5. **Database & Persistence**
    ```bash
    # Set up production databases
-   docker-compose -f docker-compose.prod.yml up -d
+   docker compose -f docker-compose.prod.yml up -d
    ```
    - [ ] Neo4j configured with persistent volume
    - [ ] Weaviate configured with persistent volume
@@ -225,7 +225,7 @@ iTaK executes arbitrary code by design. Only deploy to production if:
 
 8. **Testing**
    - [ ] Full test suite passes: `pytest tests/ -v`
-   - [ ] Security scan clean: `python main.py --doctor`
+   - [ ] Security scan clean: `python -m app.main --doctor`
    - [ ] Load testing completed
    - [ ] Failover testing completed
    - [ ] Backup restore tested
@@ -251,25 +251,25 @@ iTaK executes arbitrary code by design. Only deploy to production if:
 ### Quick Start
 ```bash
 # Development
-docker-compose up -d
+docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 
 # Production
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d
 ```
 
 ### Verification
 ```bash
 # Check container status
-docker-compose ps
+docker compose --project-directory . -f install/docker/docker-compose.yml ps
 
 # View logs
-docker-compose logs -f itak
+docker compose --project-directory . -f install/docker/docker-compose.yml logs -f itak
 
 # Run diagnostics inside container
-docker-compose exec itak python main.py --doctor
+docker compose --project-directory . -f install/docker/docker-compose.yml exec itak python -m app.main --doctor
 
 # Restart services
-docker-compose restart
+docker compose --project-directory . -f install/docker/docker-compose.yml restart
 ```
 
 ---
@@ -281,7 +281,7 @@ Run these regularly to ensure system health:
 ### Daily
 ```bash
 # Check service status
-python main.py --doctor
+python -m app.main --doctor
 
 # Review error logs
 tail -n 100 logs/errors.log
@@ -305,7 +305,8 @@ sqlite3 data/db/logs.db "PRAGMA integrity_check;"
 ### Monthly
 ```bash
 # Rotate API keys
-# Update dependencies: pip install -r requirements.txt --upgrade
+# Update dependencies: pip install -r install/requirements/requirements.txt --upgrade
+# Update dependencies: pip install -r install/requirements/requirements.txt --upgrade
 # Review and archive old logs
 # Test backup restore procedure
 ```
@@ -315,7 +316,7 @@ sqlite3 data/db/logs.db "PRAGMA integrity_check;"
 ## 🆘 Troubleshooting
 
 ### Application won't start
-1. Run `python main.py --doctor`
+1. Run `python -m app.main --doctor`
 2. Check for missing dependencies
 3. Verify API keys in `.env`
 4. Check config.json syntax
@@ -350,7 +351,7 @@ sqlite3 data/db/logs.db "PRAGMA integrity_check;"
 
 - **Documentation:** `docs/` directory
 - **Issues:** https://github.com/David2024patton/iTaK/issues
-- **Diagnostics:** `python main.py --doctor`
+- **Diagnostics:** `python -m app.main --doctor`
 - **Tests:** `pytest tests/ -v --tb=short`
 
 ---

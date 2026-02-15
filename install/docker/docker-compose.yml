@@ -4,7 +4,9 @@
 services:
   # ===== iTaK Agent =====
   itak:
-    build: .
+    build:
+      context: .
+      dockerfile: install/docker/Dockerfile
     container_name: itak-agent
     restart: unless-stopped
     env_file: .env

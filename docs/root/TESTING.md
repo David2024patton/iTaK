@@ -21,7 +21,7 @@
 
 ```bash
 # Install test dependencies
-pip install -r requirements.txt
+pip install -r install/requirements/requirements.txt
 
 # Set PYTHONPATH to project root (required for imports)
 export PYTHONPATH=/path/to/iTaK
@@ -76,9 +76,9 @@ iTaK/
 │   ├── test_webui.py           # TODO: WebUI tests
 │   ├── test_mcp.py             # TODO: MCP tests
 │   └── fixtures/               # TODO: Test fixtures
-├── pytest.ini
-├── requirements.txt
-└── requirements-ci.txt         # Minimal deps for CI
+├── tests/pytest.ini
+├── install/requirements/requirements.txt
+└── install/requirements/requirements-ci.txt  # Minimal deps for CI
 ```
 
 ### Test Dependencies
@@ -563,7 +563,7 @@ class TestChatWorkflow:
 
 ```bash
 # Start CLI adapter
-python main.py
+python -m app.main
 
 # Test commands:
 > Hello, what can you do?
@@ -579,7 +579,7 @@ python main.py
 
 ```bash
 # Start WebUI
-python main.py --webui
+python -m app.main --webui
 
 # Open browser to http://localhost:8080
 
@@ -596,13 +596,13 @@ python main.py --webui
 
 ```bash
 # Discord
-python main.py --adapter discord --webui
+python -m app.main --adapter discord --webui
 
 # Telegram
-python main.py --adapter telegram --webui
+python -m app.main --adapter telegram --webui
 
 # Slack
-python main.py --adapter slack --webui
+python -m app.main --adapter slack --webui
 
 # Test in each platform:
 1. Send message to bot
@@ -639,7 +639,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       
       - name: Install dependencies
-        run: pip install -r requirements-ci.txt
+        run: pip install -r install/requirements/requirements-ci.txt
       
       - name: Run linter
         run: ruff check .
@@ -648,12 +648,12 @@ jobs:
         run: PYTHONPATH=$(pwd) pytest -v
       
       - name: Run doctor checks
-        run: python main.py --doctor
+        run: python -m app.main --doctor
 ```
 
 ### CI Requirements
 
-**`requirements-ci.txt`** (minimal deps for fast CI):
+**`install/requirements/requirements-ci.txt`** (minimal deps for fast CI):
 ```
 litellm>=1.50.0,<2.0.0
 pydantic>=2.0.0,<3.0.0
@@ -699,7 +699,7 @@ PYTHONPATH=$(pwd) pytest
 **"Async tests hanging"**
 ```bash
 # Verify pytest.ini has asyncio_mode=auto
-cat pytest.ini
+cat tests/pytest.ini
 
 # Install pytest-asyncio
 pip install pytest-asyncio
@@ -717,7 +717,7 @@ pytest --cov=. --cov-report=term
 **"Test failures due to missing config"**
 ```bash
 # Create minimal test config
-cp config.json.example config.json
+cp install/config/config.json.example config.json
 
 # Or use fixture to mock config
 @pytest.fixture

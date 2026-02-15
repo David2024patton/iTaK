@@ -138,11 +138,11 @@ git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
 
 # Step 2: Configure .env file with API keys
-cp .env.example .env
+cp install/config/.env.example .env
 nano .env  # Add GEMINI_API_KEY=your_key
 
 # Step 3: Start with docker-compose
-docker-compose up -d
+docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 ```
 
 **User Experience:**
@@ -167,15 +167,15 @@ git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
 
 # Step 2: Install dependencies
-pip install -r requirements.txt
+pip install -r install/requirements/requirements.txt
 
 # Step 3: Configure files
-cp .env.example .env
-cp config.json.example config.json
+cp install/config/.env.example .env
+cp install/config/config.json.example config.json
 nano .env  # Add API keys
 
 # Step 4: Run
-python main.py --webui
+python -m app.main --webui
 
 # Step 5: Visit dashboard
 http://localhost:8000
@@ -297,15 +297,15 @@ docker run -p 50001:80 agent0ai/agent-zero
 **iTaK:**
 ```bash
 # Docker Option
-docker-compose up -d
+docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 # Visit http://localhost:8000
 
 # OR Python Option (more control)
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
-pip install -r requirements.txt
-cp .env.example .env  # Add API keys
-python main.py
+pip install -r install/requirements/requirements.txt
+cp install/config/.env.example .env  # Add API keys
+python -m app.main
 ```
 
 **Winner:** Agent-Zero (slightly easier first-time setup)
@@ -317,19 +317,19 @@ python main.py
 **iTaK:**
 ```bash
 # Run on Discord
-python main.py --adapter discord
+python -m app.main --adapter discord
 
 # Run on Telegram
-python main.py --adapter telegram
+python -m app.main --adapter telegram
 
 # Run on Slack
-python main.py --adapter slack
+python -m app.main --adapter slack
 
 # Run Web UI
-python main.py --webui
+python -m app.main --webui
 
 # Run Terminal
-python main.py --adapter cli
+python -m app.main --adapter cli
 ```
 
 **Agent-Zero:**
@@ -379,8 +379,8 @@ iTaK equivalent:
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
-docker-compose up -d
-# OR: pip install -r requirements.txt && python main.py --webui
+docker compose --project-directory . -f install/docker/docker-compose.yml up -d
+# OR: pip install -r install/requirements/requirements.txt && python -m app.main --webui
 ```
 
 ### 2. **Configuration**
@@ -537,9 +537,9 @@ Want to combine strengths? Here's how:
 
 ## 📚 Further Reading
 
-- **iTaK Installation Guide:** [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md)
-- **iTaK Testing:** [TESTING.md](TESTING.md) (258 tests, 85% coverage)
-- **iTaK Production:** [PRODUCTION_TESTING_SUMMARY.md](PRODUCTION_TESTING_SUMMARY.md)
+- **iTaK Installation Guide:** [INSTALLATION_GUIDE.md](docs/root/INSTALLATION_GUIDE.md)
+- **iTaK Testing:** [TESTING.md](docs/root/TESTING.md) (258 tests, 85% coverage)
+- **iTaK Production:** [PRODUCTION_TESTING_SUMMARY.md](docs/root/PRODUCTION_TESTING_SUMMARY.md)
 - **Agent-Zero Docs:** [agent0ai/agent-zero/docs](https://github.com/agent0ai/agent-zero/tree/main/docs)
 
 **Questions?** Both projects welcome contributors and users! 🎉

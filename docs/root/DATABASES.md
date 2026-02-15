@@ -13,7 +13,7 @@ iTaK uses a **4-tier memory architecture** powered by multiple specialized datab
 | **Weaviate** | Vector embeddings | ✅ Yes (Docker) | Vector |
 | **SearXNG** | Private web search | ✅ Yes (Docker) | Search Engine |
 
-All databases **auto-install** via `./install-full-stack.sh` in one command!
+All databases **auto-install** via `./installers/install-full-stack.sh` in one command!
 
 ## 1. SQLite (Layer 1 & 2)
 
@@ -82,7 +82,7 @@ MATCH (n) RETURN n LIMIT 25;
 
 **Auto-Installation:**
 ```bash
-./install-full-stack.sh
+./installers/install-full-stack.sh
 # Neo4j auto-installs via Docker
 ```
 
@@ -123,7 +123,7 @@ curl http://localhost:48080/v1/schema
 
 **Auto-Installation:**
 ```bash
-./install-full-stack.sh
+./installers/install-full-stack.sh
 # Weaviate auto-installs via Docker
 ```
 
@@ -163,7 +163,7 @@ curl "http://localhost:48888/search?q=artificial+intelligence&format=json"
 
 **Auto-Installation:**
 ```bash
-./install-full-stack.sh
+./installers/install-full-stack.sh
 # SearXNG auto-installs via Docker
 ```
 
@@ -179,7 +179,7 @@ curl http://localhost:48888
 
 **One Command - Installs Everything:**
 ```bash
-./install-full-stack.sh
+./installers/install-full-stack.sh
 ```
 
 This automatically:
@@ -198,16 +198,16 @@ If you prefer manual setup:
 
 ```bash
 # 1. Create .env
-cp .env.example .env
+cp install/config/.env.example .env
 
 # 2. Edit .env with passwords
 nano .env
 
 # 3. Start services
-docker-compose up -d
+docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 
 # 4. Wait for services to be ready
-./check-databases.sh
+./install/check-databases.sh
 ```
 
 ## Verification
@@ -215,7 +215,7 @@ docker-compose up -d
 ### Check All Databases
 
 ```bash
-./check-databases.sh
+./install/check-databases.sh
 ```
 
 **Output:**
@@ -248,7 +248,7 @@ itak-searxng    (healthy)
 ### Check Health Status
 
 ```bash
-docker-compose ps
+docker compose --project-directory . -f install/docker/docker-compose.yml ps
 ```
 
 **Healthy services show:**
@@ -277,7 +277,7 @@ itak_searxng-data
 - ✅ iTaK updates
 
 **Data is lost when:**
-- ❌ `docker-compose down -v` (volumes deleted)
+- ❌ `docker compose --project-directory . -f install/docker/docker-compose.yml down -v` (volumes deleted)
 - ❌ Manual volume deletion
 
 ## Backup & Restore
@@ -286,7 +286,7 @@ itak_searxng-data
 
 ```bash
 # Stop services first
-docker-compose down
+docker compose --project-directory . -f install/docker/docker-compose.yml down
 
 # Backup volumes
 docker run --rm \
@@ -303,14 +303,14 @@ docker run --rm \
 cp data/db/memory.db backups/memory-backup.db
 
 # Restart services
-docker-compose up -d
+docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 ```
 
 ### Restore from Backup
 
 ```bash
 # Stop services
-docker-compose down
+docker compose --project-directory . -f install/docker/docker-compose.yml down
 
 # Restore Neo4j
 docker run --rm \
@@ -328,7 +328,7 @@ docker run --rm \
 cp backups/memory-backup.db data/db/memory.db
 
 # Restart services
-docker-compose up -d
+docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 ```
 
 ## Troubleshooting
@@ -337,9 +337,9 @@ docker-compose up -d
 
 **Check logs:**
 ```bash
-docker-compose logs neo4j
-docker-compose logs weaviate
-docker-compose logs searxng
+docker compose --project-directory . -f install/docker/docker-compose.yml logs neo4j
+docker compose --project-directory . -f install/docker/docker-compose.yml logs weaviate
+docker compose --project-directory . -f install/docker/docker-compose.yml logs searxng
 ```
 
 **Common issues:**
@@ -351,14 +351,14 @@ docker-compose logs searxng
 
 **Restart specific service:**
 ```bash
-docker-compose restart neo4j
-docker-compose restart weaviate
-docker-compose restart searxng
+docker compose --project-directory . -f install/docker/docker-compose.yml restart neo4j
+docker compose --project-directory . -f install/docker/docker-compose.yml restart weaviate
+docker compose --project-directory . -f install/docker/docker-compose.yml restart searxng
 ```
 
 **Restart all:**
 ```bash
-docker-compose restart
+docker compose --project-directory . -f install/docker/docker-compose.yml restart
 ```
 
 ### Reset Database
@@ -367,7 +367,7 @@ docker-compose restart
 
 ```bash
 # Stop services
-docker-compose down
+docker compose --project-directory . -f install/docker/docker-compose.yml down
 
 # Delete volumes
 docker volume rm itak_neo4j-data itak_neo4j-logs
@@ -376,7 +376,7 @@ docker volume rm itak_searxng-data
 rm -f data/db/memory.db
 
 # Restart (creates fresh databases)
-docker-compose up -d
+docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 ```
 
 ### Port Conflicts
@@ -393,8 +393,8 @@ SEARXNG_PORT=48888     # Change to 8888, 18888, etc.
 
 Then restart:
 ```bash
-docker-compose down
-docker-compose up -d
+docker compose --project-directory . -f install/docker/docker-compose.yml down
+docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 ```
 
 ## Performance Tuning
@@ -403,7 +403,7 @@ docker-compose up -d
 
 **Increase memory:**
 ```yaml
-# docker-compose.yml
+# install/docker/docker-compose.yml
 environment:
   NEO4J_server_memory_heap_initial__size: "512m"  # Default: 256m
   NEO4J_server_memory_heap_max__size: "1g"        # Default: 512m
@@ -413,7 +413,7 @@ environment:
 
 **Adjust for large datasets:**
 ```yaml
-# docker-compose.yml
+# install/docker/docker-compose.yml
 environment:
   QUERY_DEFAULTS_LIMIT: 100  # Default: 25
 ```
@@ -460,7 +460,7 @@ By default, databases are only accessible from localhost:
 
 To allow external access (not recommended):
 ```yaml
-# docker-compose.yml
+# install/docker/docker-compose.yml
 ports:
   - "0.0.0.0:47474:7474"  # Allow all IPs
 ```
@@ -484,12 +484,12 @@ sudo ufw allow 8000
 
 **All databases auto-install with one command:**
 ```bash
-./install-full-stack.sh
+./installers/install-full-stack.sh
 ```
 
 **Verify everything is running:**
 ```bash
-./check-databases.sh
+./install/check-databases.sh
 ```
 
 **That's it!** 🎉

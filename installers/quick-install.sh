@@ -70,11 +70,11 @@ if ! command -v docker &> /dev/null; then
     echo "📦 Installing iTaK via Python..."
     
     # Install dependencies
-    pip install -r requirements.txt
+    pip install -r install/requirements/requirements.txt
     
     # Create .env if not exists
     if [ ! -f .env ]; then
-        cp .env.example .env
+        cp install/config/.env.example .env
         echo ""
         echo "⚠️  Please configure your API keys in .env file"
         echo "   At minimum, add ONE of:"
@@ -86,7 +86,7 @@ if ! command -v docker &> /dev/null; then
     
     # Run iTaK
     echo "🚀 Starting iTaK..."
-    python3 main.py --webui
+    python3 -m app.main --webui
     exit 0
 fi
 
@@ -100,12 +100,12 @@ else
     echo "ℹ️  Pre-built image not found, building locally..."
     
     # Build the standalone image
-    if [ -f "Dockerfile.standalone" ]; then
-        docker build -f Dockerfile.standalone -t itak:latest .
+    if [ -f "install/docker/Dockerfile.standalone" ]; then
+        docker build -f install/docker/Dockerfile.standalone -t itak:latest .
         IMAGE="itak:latest"
         echo "✅ Built local image"
     else
-        echo "❌ Dockerfile.standalone not found"
+        echo "❌ install/docker/Dockerfile.standalone not found"
         echo "   Please run this script from the iTaK directory"
         exit 1
     fi

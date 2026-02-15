@@ -370,7 +370,7 @@ iTaK has been upgraded from development-ready to production-ready through the ad
 ### Quick Validation (5 minutes)
 ```bash
 # Install dependencies
-pip install -r requirements.txt
+pip install -r install/requirements/requirements.txt
 
 # Run core tests only
 PYTHONPATH=$(pwd) python3 -m pytest tests/test_core.py -v
@@ -410,7 +410,7 @@ The test suite integrates with GitHub Actions CI/CD:
   run: PYTHONPATH=$(pwd) pytest tests/ -v
 
 - name: Run security checks
-  run: python main.py --doctor
+   run: python -m app.main --doctor
 
 - name: Generate coverage report
   run: pytest --cov=. --cov-report=xml
@@ -483,7 +483,7 @@ The test suite provides strong confidence for:
 **For Questions or Issues:**
 - See [TESTING.md](TESTING.md) for comprehensive testing guide
 - See [READY_TO_TEST.md](READY_TO_TEST.md) for quick readiness checklist
-- Run `python main.py --doctor` for system diagnostics
+- Run `python -m app.main --doctor` for system diagnostics
 - Run `PYTHONPATH=$(pwd) pytest tests/ -v` to execute tests
 
 ---

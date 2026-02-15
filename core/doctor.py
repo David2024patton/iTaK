@@ -9,7 +9,7 @@ Inspired by `openclaw doctor`. Runs a full system diagnostic that:
 5. Repair suggestions       (actionable fix commands)
 
 Usage:
-    python main.py --doctor          # Full diagnostic
+    python -m app.main --doctor      # Full diagnostic
     python -m core.doctor            # Standalone
 """
 
@@ -85,7 +85,7 @@ def check_config() -> tuple[list[str], int, int]:
     config_path = Path("config.json")
     if not config_path.exists():
         lines.append(_fail("config.json not found"))
-        lines.append(f"        --> cp config.json.example config.json")
+        lines.append(f"        --> cp install/config/config.json.example config.json")
         return lines, 0, 1
 
     try:
@@ -510,7 +510,7 @@ async def run_doctor() -> bool:
         print(f"  {GREEN}Your iTaK agent is ready to run!{RESET}")
     else:
         print(f"  {RED}{BOLD}{total_failed} ISSUE(S) FOUND{RESET} ({total_passed} passed, {total_failed} failed)")
-        print(f"  {YELLOW}Fix the issues above and run again: python main.py --doctor{RESET}")
+        print(f"  {YELLOW}Fix the issues above and run again: python -m app.main --doctor{RESET}")
     print(f"{BOLD}{'=' * 56}{RESET}\n")
 
     return total_failed == 0

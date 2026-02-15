@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Copy requirements first for better caching
-COPY requirements.txt .
+COPY install/requirements/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
@@ -25,8 +25,8 @@ COPY . .
 RUN mkdir -p data/db data/logs memory
 
 # Copy example configs if they don't exist
-RUN cp -n .env.example .env || true && \
-    cp -n config.json.example config.json || true
+RUN cp -n install/config/.env.example .env || true && \
+    cp -n install/config/config.json.example config.json || true
 
 # Set environment variables for standalone mode
 ENV PYTHONUNBUFFERED=1 \
@@ -41,5 +41,5 @@ RUN useradd -m -s /bin/bash itak && chown -R itak:itak /app
 USER itak
 
 # Start with WebUI by default
-ENTRYPOINT ["python", "main.py"]
+ENTRYPOINT ["python", "-m", "app.main"]
 CMD ["--webui", "--adapter", "cli"]

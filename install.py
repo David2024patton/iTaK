@@ -184,7 +184,7 @@ def install_dependencies(minimal: bool = False) -> bool:
     """Install Python dependencies"""
     print_header("Installing Dependencies")
     
-    requirements_file = Path("requirements.txt")
+    requirements_file = Path("install/requirements/requirements.txt")
     if not requirements_file.exists():
         print_error(f"{requirements_file} not found")
         return False
@@ -244,8 +244,8 @@ def setup_configuration() -> bool:
     
     success = True
     
-    # Copy .env.example to .env if it doesn't exist
-    env_example = Path(".env.example")
+    # Copy install/config/.env.example to .env if it doesn't exist
+    env_example = Path("install/config/.env.example")
     env_file = Path(".env")
     
     if env_example.exists():
@@ -262,8 +262,8 @@ def setup_configuration() -> bool:
     else:
         print_warning(f"{env_example} not found")
     
-    # Copy config.json.example to config.json if it doesn't exist
-    config_example = Path("config.json.example")
+    # Copy install/config/config.json.example to config.json if it doesn't exist
+    config_example = Path("install/config/config.json.example")
     config_file = Path("config.json")
     
     if config_example.exists():
@@ -319,9 +319,9 @@ def display_next_steps(minimal: bool = False) -> None:
     print(f"   {Colors.CYAN}OPENAI_API_KEY=your_key_here{Colors.RESET}\n")
     
     print(f"{Colors.YELLOW}2.{Colors.RESET} Run iTaK:")
-    print(f"   {Colors.GREEN}python main.py{Colors.RESET}  # CLI mode")
-    print(f"   {Colors.GREEN}python main.py --webui{Colors.RESET}  # With web dashboard")
-    print(f"   {Colors.GREEN}python main.py --adapter discord --webui{Colors.RESET}  # Discord bot\n")
+    print(f"   {Colors.GREEN}python -m app.main{Colors.RESET}  # CLI mode")
+    print(f"   {Colors.GREEN}python -m app.main --webui{Colors.RESET}  # With web dashboard")
+    print(f"   {Colors.GREEN}python -m app.main --adapter discord --webui{Colors.RESET}  # Discord bot\n")
     
     if not minimal:
         print(f"{Colors.YELLOW}3.{Colors.RESET} Optional - Full Stack (Docker required):")

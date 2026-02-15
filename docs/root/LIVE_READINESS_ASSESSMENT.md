@@ -30,7 +30,7 @@ pip install httpx>=0.27.0
 
 Or install everything at once:
 ```bash
-pip install -r requirements.txt
+pip install -r install/requirements/requirements.txt
 ```
 
 **Impact:** The application will not start without these packages.
@@ -137,7 +137,7 @@ These enhance functionality but aren't required:
    - Multi-user RBAC system
 
 3. **✅ Diagnostic System**
-   - `python main.py --doctor` provides excellent visibility
+   - `python -m app.main --doctor` provides excellent visibility
    - Checks dependencies, config, security, services
    - Provides actionable fix commands
 
@@ -156,8 +156,8 @@ These enhance functionality but aren't required:
 
 6. **✅ Deployment Ready**
    - Dockerfile provided
-   - docker-compose.yml for full stack
-   - Example configs (.env.example, config.json.example)
+   - install/docker/docker-compose.yml for full stack
+   - Example configs (install/config/.env.example, install/config/config.json.example)
    - Non-root user in Docker for security
 
 7. **✅ Feature-Rich**
@@ -175,11 +175,11 @@ These enhance functionality but aren't required:
 
 ### Phase 1: Environment Setup (15 min)
 
-- [ ] Install Python dependencies: `pip install -r requirements.txt`
-- [ ] Copy config files: `cp config.json.example config.json && cp .env.example .env`
+- [ ] Install Python dependencies: `pip install -r install/requirements/requirements.txt`
+- [ ] Copy config files: `cp install/config/config.json.example config.json && cp install/config/.env.example .env`
 - [ ] Add at least one LLM API key to `.env`
 - [ ] Generate and set WebUI auth token in `config.json`
-- [ ] Run `python main.py --doctor` and verify all critical checks pass
+- [ ] Run `python -m app.main --doctor` and verify all critical checks pass
 
 ### Phase 2: Security Hardening (30 min)
 
@@ -193,8 +193,8 @@ These enhance functionality but aren't required:
 ### Phase 3: Testing (30 min)
 
 - [ ] Run unit tests: `pytest tests/ -v`
-- [ ] Test CLI mode: `python main.py`
-- [ ] Test WebUI: `python main.py --webui` (access http://localhost:48920)
+- [ ] Test CLI mode: `python -m app.main`
+- [ ] Test WebUI: `python -m app.main --webui` (access http://localhost:48920)
 - [ ] Test basic agent interactions
 - [ ] Verify memory persistence
 - [ ] Test error recovery
@@ -251,18 +251,18 @@ If deploying to production:
 
 ```bash
 # 1. Install dependencies
-pip install -r requirements.txt
+pip install -r install/requirements/requirements.txt
 
 # 2. Configure
-cp config.json.example config.json
-cp .env.example .env
+cp install/config/config.json.example config.json
+cp install/config/.env.example .env
 echo "GOOGLE_API_KEY=your_actual_key_here" >> .env
 
 # 3. Test
-python main.py --doctor
+python -m app.main --doctor
 
 # 4. Run
-python main.py --webui
+python -m app.main --webui
 ```
 
 Access WebUI at: http://localhost:48920
@@ -304,16 +304,16 @@ Access WebUI at: http://localhost:48920
 ## Next Steps
 
 1. **Fix Critical Issues** (1-2 hours)
-   - Run: `pip install -r requirements.txt`
+   - Run: `pip install -r install/requirements/requirements.txt`
    - Add LLM API key to `.env`
-   - Run: `python main.py --doctor`
+   - Run: `python -m app.main --doctor`
 
 2. **Run Tests** (15 min)
    - Run: `pytest tests/ -v`
    - Verify all tests pass
 
 3. **Test Drive** (30 min)
-   - Start: `python main.py --webui`
+   - Start: `python -m app.main --webui`
    - Try basic conversations
    - Test core tools
    - Verify memory works
@@ -358,7 +358,7 @@ Access WebUI at: http://localhost:48920
 - **Getting Started:** `docs/getting-started.md`
 - **Security Guide:** `docs/security.md`
 - **Configuration:** `docs/config.md`
-- **Diagnostics:** `python main.py --doctor`
+- **Diagnostics:** `python -m app.main --doctor`
 - **Tests:** `pytest tests/ -v`
 
 ---

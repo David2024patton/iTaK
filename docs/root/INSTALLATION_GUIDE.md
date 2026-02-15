@@ -65,14 +65,14 @@ git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
 
 # 2. Start with Docker Compose (includes Neo4j, Weaviate, SearXNG)
-cp .env.example .env
+cp install/config/.env.example .env
 # Edit .env and add your API keys (see below)
-docker-compose up -d
+docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 ```
 
 ### What This Starts
 
-The `docker-compose.yml` starts a full stack:
+The `install/docker/docker-compose.yml` starts a full stack:
 - **iTaK Agent** - Main AI agent (port 8000 for WebUI)
 - **Neo4j** - Knowledge graph database (port 47474)
 - **Weaviate** - Vector database (port 48080)
@@ -85,10 +85,10 @@ The `docker-compose.yml` starts a full stack:
 http://localhost:8000
 
 # Check logs
-docker-compose logs -f itak
+docker compose --project-directory . -f install/docker/docker-compose.yml logs -f itak
 
 # Stop all services
-docker-compose down
+docker compose --project-directory . -f install/docker/docker-compose.yml down
 ```
 
 ### Docker-Only Mode (Minimal)
@@ -97,7 +97,7 @@ Don't need the full stack? Run just iTaK:
 
 ```bash
 # Build and run iTaK only
-docker build -t itak .
+docker build -f install/docker/Dockerfile -t itak .
 docker run -p 8000:8000 --env-file .env itak --webui
 ```
 
@@ -141,7 +141,7 @@ cd iTaK
 
 ```bash
 # Install all required packages
-pip install -r requirements.txt
+pip install -r install/requirements/requirements.txt
 
 # This takes 2-3 minutes and installs:
 # - LiteLLM (AI model router)
@@ -156,7 +156,7 @@ pip install -r requirements.txt
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r install/requirements/requirements.txt
 ```
 
 ---
@@ -197,7 +197,7 @@ cd iTaK
 
 ```bash
 # Install all required packages
-pip install -r requirements.txt
+pip install -r install/requirements/requirements.txt
 
 # This takes 2-3 minutes and installs:
 # - LiteLLM (AI model router)
@@ -212,7 +212,7 @@ pip install -r requirements.txt
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r install/requirements/requirements.txt
 ```
 
 ---
@@ -221,8 +221,8 @@ pip install -r requirements.txt
 
 ```bash
 # Copy example configuration files
-cp config.json.example config.json
-cp .env.example .env
+cp install/config/config.json.example config.json
+cp install/config/.env.example .env
 
 # Edit .env and add AT LEAST ONE API key
 nano .env  # or use your favorite editor
@@ -329,7 +329,7 @@ OLLAMA_BASE_URL=http://localhost:11434
 
 | Step | Agent-Zero | iTaK |
 |------|------------|------|
-| **1. Install** | `docker pull` + `docker run` | `git clone` + `pip install` OR `docker-compose up` |
+| **1. Install** | `docker pull` + `docker run` | `git clone` + `pip install` OR `docker compose --project-directory . -f install/docker/docker-compose.yml up -d` |
 | **2. First Run** | ✅ Runs immediately (no API key needed) | ⚠️ Requires API key in `.env` first |
 | **3. Configure API** | Via Web UI Settings panel AFTER running | Via `.env` file BEFORE running |
 | **4. Restart** | Yes (to apply settings) | No (already configured) |
@@ -343,9 +343,9 @@ docker run -p 50080:80 agent0ai/agent-zero
 
 **iTaK's Approach (configure before):**
 ```bash
-cp .env.example .env
+cp install/config/.env.example .env
 nano .env  # Add API keys
-python main.py --webui  # Runs with keys already configured
+python -m app.main --webui  # Runs with keys already configured
 ```
 
 **Which is better?**
@@ -375,13 +375,13 @@ For the smoothest experience, we recommend configuring API keys before first run
 
 ```bash
 # Option 1: Terminal Chat (simplest)
-python main.py
+python -m app.main
 
 # Option 2: With Web Dashboard
-python main.py --webui
+python -m app.main --webui
 
 # Option 3: Run System Diagnostics (recommended first time)
-python main.py --doctor
+python -m app.main --doctor
 ```
 
 **First Run - What to Expect:**
@@ -505,7 +505,7 @@ iTaK: [Creates task: "Build REST API" → inbox]
      [Moves "Build REST API" → in_progress]
 ```
 
-View tasks in the web dashboard (`python main.py --webui`)
+View tasks in the web dashboard (`python -m app.main --webui`)
 
 ### 7. 🐝 **Multi-Agent Swarms**
 Delegate to specialist sub-agents:
@@ -527,30 +527,30 @@ Run iTaK on multiple channels simultaneously:
 
 **Terminal:**
 ```bash
-python main.py
+python -m app.main
 ```
 
 **Web Dashboard:**
 ```bash
-python main.py --webui
+python -m app.main --webui
 # Open http://localhost:8080
 ```
 
 **Discord Bot:**
 ```bash
 # Add DISCORD_TOKEN to .env
-python main.py --adapter discord
+python -m app.main --adapter discord
 ```
 
 **Telegram Bot:**
 ```bash
 # Add TELEGRAM_TOKEN to .env
-python main.py --adapter telegram
+python -m app.main --adapter telegram
 ```
 
 **All at once:**
 ```bash
-python main.py --adapter discord --webui
+python -m app.main --adapter discord --webui
 # Discord bot + web dashboard running together
 ```
 
@@ -590,7 +590,7 @@ iTaK: I'll build that for you:
      3. Writing models.py, routes.py, main.py...
      4. Creating database schema...
      5. Writing tests...
-     Done! Run with: python main.py
+     Done! Run with: python -m app.main
      
 You: The POST endpoint isn't working
 iTaK: [Debugs code]
@@ -673,7 +673,7 @@ iTaK: [Creates scheduled task]
 ### Problem: "config.json not found"
 ```bash
 # Solution:
-cp config.json.example config.json
+cp install/config/config.json.example config.json
 ```
 
 ### Problem: "No LLM API key configured"
@@ -687,7 +687,7 @@ OPENAI_API_KEY=your_key_here
 ### Problem: "ModuleNotFoundError: No module named 'X'"
 ```bash
 # Solution: Reinstall dependencies
-pip install -r requirements.txt
+pip install -r install/requirements/requirements.txt
 ```
 
 ### Problem: "Permission denied" when running code
@@ -750,7 +750,7 @@ rm -rf data/db/*.db
 
 ### 1. **Explore the Web Dashboard**
 ```bash
-python main.py --webui
+python -m app.main --webui
 # Open http://localhost:8080
 ```
 
@@ -763,7 +763,7 @@ python main.py --webui
 
 ### 2. **Run System Diagnostics**
 ```bash
-python main.py --doctor
+python -m app.main --doctor
 ```
 This checks:
 - Python version
@@ -795,7 +795,7 @@ NEO4J_PASSWORD=your_password
 DISCORD_TOKEN=your_token_here
 
 # 4. Run:
-python main.py --adapter discord
+python -m app.main --adapter discord
 ```
 
 **MCP Integration:**
@@ -810,7 +810,7 @@ python main.py --adapter discord
 - **[TESTING.md](TESTING.md)** - How to run the 258 tests (85% coverage)
 - **[READY_TO_TEST.md](READY_TO_TEST.md)** - Quick reference for testing
 - **[PHASE_4_COMPLETE.md](PHASE_4_COMPLETE.md)** - Production readiness details
-- **[README.md](README.md)** - Full feature list and architecture
+- **[README.md](../../README.md)** - Full feature list and architecture
 
 ### 5. **Join the Community**
 
@@ -856,10 +856,10 @@ You now have iTaK installed and understand what it does. Start experimenting:
 
 ```bash
 # Start chatting
-python main.py
+python -m app.main
 
 # Or with web dashboard
-python main.py --webui
+python -m app.main --webui
 ```
 
 **First Commands to Try:**
@@ -877,7 +877,7 @@ python main.py --webui
 
 - **Issues**: [GitHub Issues](https://github.com/David2024patton/iTaK/issues)
 - **Documentation**: See docs/ folder
-- **Diagnostics**: Run `python main.py --doctor` for health check
+- **Diagnostics**: Run `python -m app.main --doctor` for health check
 
 ---
 
