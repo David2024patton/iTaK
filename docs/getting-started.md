@@ -28,6 +28,21 @@ iTaK auto-checks prerequisites at startup. If anything is missing, it tells you 
 
 ### 3. Configure
 
+**Option A: Interactive Setup (Recommended)**
+
+Run the interactive setup script to configure iTaK, including Neo4j memory:
+
+```bash
+python setup.py
+```
+
+This will guide you through:
+- Creating config.json and .env files
+- Configuring Neo4j (use your own or install via Docker)
+- Configuring Weaviate (optional)
+
+**Option B: Manual Setup**
+
 Copy the example config and add your API keys:
 
 ```bash
@@ -45,6 +60,10 @@ OPENAI_API_KEY=your_key_here
 # Optional: platform adapters
 DISCORD_TOKEN=your_token_here
 TELEGRAM_TOKEN=your_token_here
+
+# Optional: Neo4j knowledge graph
+NEO4J_URI=bolt://localhost:7687
+NEO4J_PASSWORD=your_password_here
 ```
 
 Edit `config.json` - the default config works out of the box with Google Gemini. See [config.md](config.md) for every option.

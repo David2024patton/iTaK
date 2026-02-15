@@ -9,6 +9,13 @@
 - **SQLite for fast retrieval** - Neo4j and Weaviate are upgrades on top, not replacements
 - **Markdown files as source of truth** - human-readable, version-controllable, any agent can understand
 
+## Setup & Installation
+
+- **Interactive setup script** - Run `python setup.py` for guided configuration of Neo4j and Weaviate
+- **Neo4j is optional** - iTaK works with SQLite-only memory; Neo4j adds knowledge graph layer
+- **Docker-based installation** - Setup script can install Neo4j via Docker Compose if user doesn't have their own instance
+- **Manual configuration supported** - Users can skip setup script and manually edit .env and config.json
+
 ## Lessons Learned
 
 <!-- Agent will append lessons here as it learns -->

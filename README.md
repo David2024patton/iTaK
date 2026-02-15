@@ -268,6 +268,16 @@ playwright install chromium
 
 #### 3. Configure
 
+**Interactive Setup (Recommended):**
+
+```bash
+python setup.py
+```
+
+This will guide you through configuration, including Neo4j memory setup (use your own instance or install via Docker).
+
+**Manual Setup:**
+
 ```bash
 cp .env.example .env
 cp config.json.example config.json
@@ -280,6 +290,10 @@ OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
 GEMINI_API_KEY=AIza...
 # Or use local Ollama (no key needed)
+
+# Optional: Neo4j knowledge graph
+NEO4J_URI=bolt://localhost:7687
+NEO4J_PASSWORD=your_password
 ```
 
 Edit `config.json` to set your preferred models, adapters, and features.
