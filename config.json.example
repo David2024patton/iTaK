@@ -7,8 +7,7 @@
         "drain_timeout_seconds": 30,
         "repeat_detection": true,
         "checkpoint_enabled": true,
-        "checkpoint_interval_steps": 3,
-        "history_cap": 1000
+        "checkpoint_interval_steps": 3
     },
     "models": {
         "chat": {
@@ -45,16 +44,19 @@
         "max_results": 10,
         "auto_memorize": true,
         "consolidation_threshold": 0.85,
-        "neo4j": {
+        "memu": {
             "enabled": false,
-            "uri": "${NEO4J_URI}",
-            "user": "neo4j",
-            "password": "${NEO4J_PASSWORD}"
-        },
-        "weaviate": {
-            "enabled": false,
-            "url": "${WEAVIATE_URL}",
-            "api_key": "${WEAVIATE_API_KEY}"
+            "mode": "self-hosted",
+            "base_url": "http://localhost:8080",
+            "api_key": "${MEMU_API_KEY}",
+            "timeout": 30,
+            "memorize_endpoint": "/memory/memorize",
+            "min_conversation_length": 100,
+            "dedup_window_minutes": 15,
+            "cost_cap_per_hour": 1.0,
+            "max_turns": 5,
+            "memu_weight": 0.8,
+            "append_to_memory_md": true
         }
     },
     "security": {
@@ -62,14 +64,6 @@
         "sandbox_enabled": true,
         "rate_limit_tokens_per_minute": 100000,
         "block_private_ips": true,
-        "untrusted_tools": [
-            "web_search",
-            "browser_agent",
-            "browser",
-            "web_scrape",
-            "crawl"
-        ],
-        "mcp_whitelist": [],
         "url_allowlist": [
             "github.com",
             "stackoverflow.com",
@@ -156,114 +150,5 @@
     },
     "searxng": {
         "url": "${SEARXNG_URL}"
-    },
-    "mcp_server": {
-        "enabled": false,
-        "token": "${MCP_SERVER_TOKEN}",
-        "host": "0.0.0.0",
-        "port": 48921,
-        "expose_tools": [
-            "send_message",
-            "search_memory",
-            "list_tasks",
-            "get_task",
-            "create_task",
-            "get_status"
-        ]
-    },
-    "mcp_client": {
-        "enabled": false,
-        "servers": [
-            {
-                "name": "filesystem",
-                "command": "npx",
-                "args": [
-                    "-y",
-                    "@modelcontextprotocol/server-filesystem",
-                    "/path/to/allowed/directory"
-                ],
-                "env": {},
-                "init_timeout": 10.0,
-                "tool_timeout": 120.0
-            },
-            {
-                "name": "github",
-                "command": "npx",
-                "args": [
-                    "-y",
-                    "@modelcontextprotocol/server-github"
-                ],
-                "env": {
-                    "GITHUB_TOKEN": "${GITHUB_TOKEN}"
-                },
-                "init_timeout": 10.0,
-                "tool_timeout": 120.0
-            }
-        ]
-    },
-    "webhooks": {
-        "inbound_secret": "${WEBHOOK_SECRET}",
-        "enabled": true,
-        "outbound": [
-            {
-                "name": "n8n",
-                "url": "${N8N_WEBHOOK_URL}",
-                "events": [
-                    "task_completed",
-                    "task_failed",
-                    "error_critical"
-                ],
-                "headers": {},
-                "enabled": false
-            },
-            {
-                "name": "zapier",
-                "url": "${ZAPIER_WEBHOOK_URL}",
-                "events": [
-                    "task_completed",
-                    "daily_report"
-                ],
-                "headers": {},
-                "enabled": false
-            }
-        ]
-    },
-    "swarm": {
-        "enabled": true,
-        "default_strategy": "parallel",
-        "default_merge": "concat",
-        "max_parallel": 5,
-        "timeout_seconds": 300,
-        "profiles_dir": "prompts/profiles"
-    },
-    "task_board": {
-        "enabled": true,
-        "db_path": "data/db/tasks.db",
-        "auto_create": true,
-        "default_priority": "medium",
-        "max_active_tasks": 50
-    },
-    "users": {
-        "enabled": true,
-        "registry_path": "data/users.json",
-        "default_role": "user",
-        "owner_platforms": {
-            "cli": "local"
-        },
-        "require_registration": false,
-        "rate_limits": {
-            "user": {
-                "messages_per_hour": 100,
-                "tokens_per_hour": 50000
-            },
-            "sudo": {
-                "messages_per_hour": 500,
-                "tokens_per_hour": 200000
-            },
-            "owner": {
-                "messages_per_hour": -1,
-                "tokens_per_hour": -1
-            }
-        }
     }
 }

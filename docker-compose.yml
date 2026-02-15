@@ -90,11 +90,27 @@ services:
       retries: 5
       start_period: 20s
 
+  # ===== MemU Server (Optional - Enrichment Pipeline) =====
+  # Uncomment to enable self-hosted MemU extraction
+  # memu-server:
+  #   image: memu/memu-server:latest
+  #   container_name: itak-memu
+  #   restart: unless-stopped
+  #   ports:
+  #     - "${MEMU_PORT:-8080}:8080"
+  #   environment:
+  #     MEMU_API_KEY: "${MEMU_API_KEY:-}"
+  #   volumes:
+  #     - memu-data:/data
+  #   networks:
+  #     - itak-network
+
 volumes:
   neo4j-data:
   neo4j-logs:
   weaviate-data:
   searxng-data:
+  # memu-data:  # Uncomment if using memu-server
 
 
 networks:

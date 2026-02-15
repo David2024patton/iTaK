@@ -215,3 +215,157 @@ class MemoryManager:
 ```
 
 If Neo4j or Weaviate are not configured, those layers are silently skipped. The agent always has at least Layer 1 (Markdown) and Layer 2 (SQLite).
+
+---
+
+## MemU Enrichment Pipeline (Optional)
+
+**File:** `memory/memu_store.py` | **Extension:** `extensions/message_loop_end/memu_extraction.py`
+
+MemU is an **extraction-only enrichment pipeline** that runs in the background to extract structured facts from conversations. It is **NOT** a search layer - extracted facts are routed back into the existing 4-layer system.
+
+### Key Design Principles
+
+1. **Disabled by default** - Sovereignty-first: requires explicit opt-in
+2. **Self-hosted by default** - Runs as a Docker sidecar, cloud API is opt-in
+3. **Extraction-only** - MemU extracts facts, but searches stay in the 4-layer system
+4. **Fire-and-forget** - Non-blocking async enrichment after each response
+5. **Smart throttling** - Multiple safeguards to control costs and privacy
+
+### How it Works
+
+```
+1. User sends message → Agent responds
+2. Extension fires AFTER response (non-blocking)
+3. Last N conversation turns sent to MemU
+4. MemU extracts structured facts
+5. Facts stored in SQLite/Neo4j/MEMORY.md with source="memu"
+6. Future searches find memu-extracted facts (ranked with memu_weight)
+```
+
+### Throttling Controls
+
+MemU includes multiple throttles to prevent excessive processing:
+
+| Throttle | Default | Purpose |
+|----------|---------|---------|
+| **Minimum length** | 100 chars | Skip very short conversations |
+| **Dedup window** | 15 minutes | Skip similar conversations recently processed |
+| **Cost cap** | $1.00/hour | Prevent runaway LLM costs |
+| **Opt-out flag** | `#no-memory` | Per-conversation privacy bypass |
+| **Max turns** | 5 | Limit context sent to MemU |
+
+### Configuration
+
+```json
+{
+    "memory": {
+        "memu": {
+            "enabled": false,                    // Disabled by default
+            "mode": "self-hosted",               // "self-hosted" or "cloud"
+            "base_url": "http://localhost:8080", // MemU server endpoint
+            "api_key": "${MEMU_API_KEY}",        // Only for cloud mode
+            "timeout": 30,
+            "memorize_endpoint": "/memory/memorize",
+            "min_conversation_length": 100,      // Min chars to process
+            "dedup_window_minutes": 15,          // Skip duplicates within N min
+            "cost_cap_per_hour": 1.0,            // Max USD/hour
+            "max_turns": 5,                      // Last N turns to send
+            "memu_weight": 0.8,                  // Weight for ranking
+            "append_to_memory_md": true          // Audit trail in MEMORY.md
+        }
+    }
+}
+```
+
+### Self-Hosted Setup (Docker Compose)
+
+Uncomment the `memu-server` service in `docker-compose.yml`:
+
+```yaml
+memu-server:
+  image: memu/memu-server:latest
+  container_name: itak-memu
+  ports:
+    - "8080:8080"
+  volumes:
+    - memu-data:/data
+  networks:
+    - itak-network
+```
+
+Then:
+```bash
+docker-compose up -d memu-server
+```
+
+### Cloud Mode (Optional)
+
+For cloud-hosted MemU:
+
+```json
+{
+    "memory": {
+        "memu": {
+            "enabled": true,
+            "mode": "cloud",
+            "base_url": "https://api.memu.ai",
+            "api_key": "${MEMU_API_KEY}"
+        }
+    }
+}
+```
+
+### Privacy & Opt-Out
+
+Users can opt out of MemU enrichment per-conversation by including `#no-memory` in their message:
+
+```
+User: "This is private information #no-memory"
+```
+
+The extension detects this flag and skips enrichment for that conversation.
+
+### Storage Integration
+
+Extracted facts are tagged and routed to existing stores:
+
+```python
+# Example: MemU extracts "Paris is the capital of France"
+# Stored as:
+{
+    "content": "Paris is the capital of France",
+    "source": "memu",                  // Tagged as memu-extracted
+    "metadata": {
+        "memu_weight": 0.8,             // Configurable ranking weight
+        "extraction_source": "memu"
+    },
+    "entities": ["Paris", "France"]     // Entities for Neo4j
+}
+```
+
+During search, memu-extracted items:
+- Are found via normal SQLite/Neo4j/Weaviate searches
+- Have `memu_weight` applied during ranking
+- Display `source="memu"` in results for transparency
+
+### Testing
+
+Run unit tests (mocked):
+```bash
+pytest tests/test_memu.py
+```
+
+Run integration tests (requires memu-server):
+```bash
+docker-compose up -d memu-server
+pytest tests/test_memu.py -m integration
+```
+
+### Security Notes
+
+- MemU is disabled by default - requires explicit configuration
+- Self-hosted mode keeps all data local (no cloud API calls)
+- Throttling prevents runaway costs
+- Per-conversation opt-out for sensitive discussions
+- All extracted facts include source tags for auditability
