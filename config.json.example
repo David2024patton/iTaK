@@ -7,7 +7,8 @@
         "drain_timeout_seconds": 30,
         "repeat_detection": true,
         "checkpoint_enabled": true,
-        "checkpoint_interval_steps": 3
+        "checkpoint_interval_steps": 3,
+        "history_cap": 1000
     },
     "models": {
         "chat": {
@@ -50,6 +51,14 @@
         "sandbox_enabled": true,
         "rate_limit_tokens_per_minute": 100000,
         "block_private_ips": true,
+        "untrusted_tools": [
+            "web_search",
+            "browser_agent",
+            "browser",
+            "web_scrape",
+            "crawl"
+        ],
+        "mcp_whitelist": [],
         "url_allowlist": [
             "github.com",
             "stackoverflow.com",

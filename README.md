@@ -119,20 +119,26 @@ python main.py --webui
 ### 🧠 Core Engine
 - **Double-loop monologue engine** - Agent Zero-style `while True` loop that thinks, acts, and only stops when it explicitly decides to respond
 - **LiteLLM model router** - Use any LLM (OpenAI, Anthropic, Gemini, local Ollama) with automatic fallback chains
-- **Extension hooks** - 8 hook points for plugins (`agent_init`, `message_loop_start`, `tool_execute_before/after`, etc.)
+- **Extension hooks** - 24 hook points for plugins with async/sync support (`agent_init`, `message_loop_start`, `tool_execute_before/after`, etc.)
 - **Streaming responses** - Real-time token streaming with WebSocket broadcasting
+- **Async-safe extension runner** - Handles both sync and async extensions with automatic coroutine detection
+- **Runtime invariant checks** - Validates subsystem health on every iteration
 
 ### 🧬 Memory (MemGPT-Inspired)
 - **Tier 1 - Core Context**: Always-loaded identity, personality, active instructions
-- **Tier 2 - Recall Memory**: Recent conversation history (auto-managed FIFO)
+- **Tier 2 - Recall Memory**: Recent conversation history with configurable cap and automatic overflow handling
 - **Tier 3 - Archival Memory**: Searchable long-term storage (SQLite + vector embeddings)
 - **Tier 4 - Knowledge Graph**: Neo4j-backed entity relationships with GraphRAG
+- **History management** - Automatic trimming with configurable `history_cap` setting
 
-### 🛡️ Security
+### 🛡️ Security & Reliability
 - **Secret management** - Auto-detect and mask API keys in logs and outputs
 - **Security scanner** - Static analysis on generated code for vulnerabilities
 - **Rate limiting** - Per-user, per-tool, and global rate limits
 - **Multi-user RBAC** - 3-tier permission system (owner → sudo → user) with per-tool enforcement
+- **Startup diagnostics** - Comprehensive subsystem health checks with detailed logging
+- **Invariant validation** - Runtime checks for logger, extension runner, memory bounds
+- **Error isolation** - Component failures don't crash the agent
 
 ### 🔧 Tool System
 - **Dynamic tool loading** - Drop a `.py` file in `tools/`, it's instantly available
@@ -225,7 +231,8 @@ Detailed guides for every module, config option, and API endpoint:
 | [Security](docs/security.md) | Output Guard, scanner, secrets, rate limiter |
 | [Tools](docs/tools.md) | Every tool with arguments, types, and examples |
 | [Skills](docs/skills.md) | All built-in skills, skill-tool parity, creating new skills |
-| [Extensions](docs/extensions.md) | All 24 hook points with plugin examples |
+| [Extensions](docs/extensions.md) | All 24 hook points with async/sync plugin examples |
+| [Safety & Reliability](docs/safety.md) | Runtime safety, invariant checks, history management |
 | [Adapters](docs/adapters.md) | Discord, Telegram, Slack, CLI setup guides |
 | [Prompts & Skills](docs/prompts.md) | Prompt assembly pipeline and skill system |
 | [WebUI & API](docs/webui.md) | Dashboard features and complete REST API reference |

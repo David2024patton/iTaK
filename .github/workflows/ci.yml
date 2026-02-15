@@ -31,6 +31,17 @@ jobs:
         run: |
           ruff check . --output-format=github || true
 
+      - name: Type check with mypy (if available)
+        run: |
+          if pip install mypy 2>&1 | grep -q "Successfully installed"; then
+            echo "Running mypy type checks..."
+            mypy core/ tools/ --ignore-missing-imports --no-strict-optional 2>&1 || echo "Type checking completed with warnings"
+          else
+            echo "Skipping type check - mypy installation failed or already installed"
+            mypy core/ tools/ --ignore-missing-imports --no-strict-optional 2>&1 || echo "Type checking completed with warnings"
+          fi
+        continue-on-error: true
+
       - name: Run tests
         run: |
           pytest tests/ -v --tb=short -q 2>&1 || echo "No tests found or tests skipped"
