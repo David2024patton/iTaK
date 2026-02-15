@@ -41,15 +41,44 @@ def run_command(command: list[str], *, check: bool = True) -> bool:
 
 
 def install_prerequisite(prerequisite: str, os_name: str) -> bool:
+    linux_installers: dict[str, dict[str, list[str]]] = {
+        "apt-get": {
+            "git": ["sudo", "apt-get", "install", "-y", "git"],
+            "docker": ["sudo", "apt-get", "install", "-y", "docker.io"],
+        },
+        "dnf": {
+            "git": ["sudo", "dnf", "install", "-y", "git"],
+            "docker": ["sudo", "dnf", "install", "-y", "docker"],
+        },
+        "yum": {
+            "git": ["sudo", "yum", "install", "-y", "git"],
+            "docker": ["sudo", "yum", "install", "-y", "docker"],
+        },
+        "pacman": {
+            "git": ["sudo", "pacman", "-S", "--noconfirm", "git"],
+            "docker": ["sudo", "pacman", "-S", "--noconfirm", "docker"],
+        },
+        "zypper": {
+            "git": ["sudo", "zypper", "install", "-y", "git"],
+            "docker": ["sudo", "zypper", "install", "-y", "docker"],
+        },
+    }
     installers: dict[tuple[str, str], list[str]] = {
-        ("linux", "git"): ["sudo", "apt-get", "install", "-y", "git"],
-        ("linux", "docker"): ["sudo", "apt-get", "install", "-y", "docker.io"],
         ("macos", "git"): ["brew", "install", "git"],
         ("macos", "docker"): ["brew", "install", "--cask", "docker"],
         ("windows", "git"): ["winget", "install", "--id", "Git.Git", "-e"],
         ("windows", "docker"): ["winget", "install", "--id", "Docker.DockerDesktop", "-e"],
     }
-    command = installers.get((os_name, prerequisite))
+
+    command: list[str] | None = None
+    if os_name == "linux":
+        for package_manager, manager_installers in linux_installers.items():
+            if has_command(package_manager):
+                command = manager_installers.get(prerequisite)
+                break
+    else:
+        command = installers.get((os_name, prerequisite))
+
     if not command:
         print(f"⚠ No automated installer configured for {prerequisite} on {os_name}.")
         return False

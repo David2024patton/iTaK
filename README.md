@@ -219,7 +219,7 @@ cd iTaK
 python install.py
 ```
 
-The installer detects your OS, checks/install prerequisites, asks whether you already have databases/SearXNG, and auto-starts missing services in Docker.
+The installer detects your OS, checks/installs prerequisites, asks whether you already have databases/SearXNG, and auto-starts missing services in Docker.
 
 Or install manually:
 
