@@ -17,6 +17,8 @@ import platform
 import shutil
 import subprocess
 import sys
+import json
+import secrets
 from pathlib import Path
 
 
@@ -323,8 +325,39 @@ def setup_config_files() -> bool:
         else:
             print_error(f"{example} not found - cannot create {target}")
             all_ok = False
+
+    config_path = Path("config.json")
+    if config_path.exists():
+        if ensure_webui_auth_token(config_path):
+            print_ok("Ensured unique WebUI auth token in config.json")
+        else:
+            print_warn("Could not ensure WebUI auth token in config.json")
     
     return all_ok
+
+
+def ensure_webui_auth_token(config_path: Path) -> bool:
+    """Generate and persist a unique WebUI auth token when missing/blank."""
+    try:
+        data = json.loads(config_path.read_text(encoding="utf-8"))
+    except Exception:
+        return False
+
+    webui = data.get("webui")
+    if not isinstance(webui, dict):
+        webui = {}
+        data["webui"] = webui
+
+    current = str(webui.get("auth_token", "")).strip()
+    if current:
+        return True
+
+    webui["auth_token"] = secrets.token_hex(24)
+    try:
+        config_path.write_text(json.dumps(data, indent=4) + "\n", encoding="utf-8")
+        return True
+    except Exception:
+        return False
 
 
 def create_directories() -> bool:

@@ -40,6 +40,17 @@
     },
     "memory": {
         "sqlite_path": "data/db/memory.db",
+        "neo4j": {
+            "enabled": false,
+            "uri": "${NEO4J_URI}",
+            "user": "neo4j",
+            "password": "${NEO4J_PASSWORD}"
+        },
+        "weaviate": {
+            "enabled": false,
+            "url": "${WEAVIATE_URL}",
+            "api_key": "${WEAVIATE_API_KEY}"
+        },
         "similarity_threshold": 0.7,
         "max_results": 10,
         "auto_memorize": true,
@@ -122,6 +133,42 @@
         "integrations": [
             "discord"
         ]
+    },
+    "users": {
+        "registry_path": "data/users.json",
+        "rate_limits": {
+            "default_rpm": 30
+        }
+    },
+    "mcp_server": {
+        "enabled": false,
+        "token": "",
+        "expose_tools": [
+            "send_message",
+            "run_tool",
+            "search_memory",
+            "create_task",
+            "update_task",
+            "list_tasks"
+        ]
+    },
+    "mcp_client": {
+        "enabled": true,
+        "init_timeout": 10,
+        "tool_timeout": 120
+    },
+    "webhooks": {
+        "enabled": true
+    },
+    "swarm": {
+        "enabled": true,
+        "default_strategy": "parallel",
+        "default_merge": "concat"
+    },
+    "task_board": {
+        "enabled": true,
+        "db_path": "data/db/tasks.db",
+        "default_priority": "medium"
     },
     "compaction": {
         "threshold_tokens": 80000,

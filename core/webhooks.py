@@ -338,3 +338,35 @@ class WebhookEngine:
     def get_target_count(self) -> int:
         """Get number of active webhook targets."""
         return sum(1 for t in self.targets.values() if t.enabled)
+
+
+class WebhookManager:
+    """Backward-compatible webhook facade used by legacy tests/integrations."""
+
+    def __init__(self, config: dict | None = None):
+        cfg = config or {}
+
+        class _CompatAgent:
+            task_board = None
+
+            @staticmethod
+            async def monologue(message: str) -> str:
+                return message
+
+        normalized = {
+            "integrations": {
+                "inbound_webhook_secret": cfg.get("inbound_webhook_secret", "") or cfg.get("inbound_secret", ""),
+                "outbound": cfg.get("outbound", {}),
+            }
+        }
+        self.engine = WebhookEngine(_CompatAgent(), normalized)
+
+    async def process_inbound(self, payload: dict, signature: str = "") -> dict:
+        if not self.engine.verify_secret(signature or self.engine.inbound_secret):
+            return {"status": "error", "error": "invalid_signature"}
+        parsed = self.engine.parse_inbound(payload)
+        return await self.engine.process_inbound(parsed)
+
+    async def send_outbound(self, event_data: dict):
+        event = event_data.get("event", "task_completed")
+        await self.engine.fire(event, event_data)

@@ -71,7 +71,7 @@ class PresenceManager:
             result = await some_tool()
     """
 
-    def __init__(self, agent):
+    def __init__(self, agent=None, timeout: int | None = None):
         self.agent = agent
         self.current_state: AgentState = AgentState.IDLE
         self.current_detail: str = ""
@@ -79,8 +79,9 @@ class PresenceManager:
         self.room_states: dict[str, PresenceUpdate] = {}
         self._timeout_task: asyncio.Task | None = None
         self._typing_tasks: dict[str, asyncio.Task] = {}
-        self.auto_timeout_seconds: int = 60
+        self.auto_timeout_seconds: int = timeout or 60
         self.history: list[PresenceUpdate] = []
+        self._legacy_presence: dict[str, str] = {}
 
     async def set_state(self, state: AgentState | str, detail: str = "",
                         room_id: str | None = None):
@@ -149,6 +150,17 @@ class PresenceManager:
                 })
         except Exception:
             pass  # WebUI might not be running
+
+    async def set_presence(self, agent_id: str, state: str):
+        """Backward-compatible API for setting a named agent's presence."""
+        self._legacy_presence[agent_id] = state
+        await self.set_state(state)
+
+    async def get_presence(self, agent_id: str) -> str:
+        """Backward-compatible API for retrieving presence by agent id."""
+        if agent_id in self._legacy_presence:
+            return self._legacy_presence[agent_id]
+        return self.current_state.value
 
     def _reset_timeout(self):
         """Reset the auto-timeout timer."""

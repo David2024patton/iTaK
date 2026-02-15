@@ -117,7 +117,7 @@ class MediaPipeline:
         # item.extracted_content has the text
     """
 
-    def __init__(self, agent, config: dict | None = None):
+    def __init__(self, agent=None, config: dict | None = None):
         self.agent = agent
         self.config = config or {}
         self.base_dir = Path(self.config.get("media_dir", "data/rooms"))
@@ -132,6 +132,17 @@ class MediaPipeline:
         }
 
         logger.info("Media Pipeline initialized")
+
+    # ── Backward-compatible helper API ───────────────────────
+
+    async def process_image(self, path: str) -> str:
+        return await self._extract_image(Path(path))
+
+    async def process_audio(self, path: str) -> str:
+        return await self._extract_audio(Path(path))
+
+    async def classify_file(self, path: str) -> str:
+        return self.classify(path).value
 
     # ── Classification ─────────────────────────────────────────
 

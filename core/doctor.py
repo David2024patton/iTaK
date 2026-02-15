@@ -153,19 +153,27 @@ def check_api_keys() -> tuple[list[str], int, int]:
         lines.append(_warn(".env file not found - checking env vars only"))
 
     key_map = {
-        "GOOGLE_API_KEY": "Google Gemini",
-        "OPENAI_API_KEY": "OpenAI",
-        "ANTHROPIC_API_KEY": "Anthropic Claude",
-        "OPENROUTER_API_KEY": "OpenRouter",
-        "GROQ_API_KEY": "Groq",
+        "Google Gemini": ["GOOGLE_API_KEY", "GEMINI_API_KEY"],
+        "OpenAI": ["OPENAI_API_KEY"],
+        "Anthropic Claude": ["ANTHROPIC_API_KEY"],
+        "OpenRouter": ["OPENROUTER_API_KEY"],
+        "Groq": ["GROQ_API_KEY"],
     }
 
     found_any = False
-    for env_var, provider in key_map.items():
-        val = os.environ.get(env_var, "")
+    for provider, env_vars in key_map.items():
+        val = ""
+        used_env_var = ""
+        for env_var in env_vars:
+            candidate = os.environ.get(env_var, "")
+            if candidate:
+                val = candidate
+                used_env_var = env_var
+                break
         if val:
             masked = val[:8] + "..." + val[-4:] if len(val) > 16 else "****"
-            lines.append(_ok(f"{provider}: {masked}"))
+            suffix = f" ({used_env_var})" if used_env_var else ""
+            lines.append(_ok(f"{provider}{suffix}: {masked}"))
             passed += 1
             found_any = True
         else:

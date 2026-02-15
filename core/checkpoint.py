@@ -28,7 +28,10 @@ class CheckpointManager:
         self.max_backups = max(0, int(max_backups))
 
         if isinstance(agent_or_path, (str, Path)):
-            self.checkpoint_file = Path(agent_or_path)
+            target = Path(agent_or_path)
+            if target.exists() and target.is_dir():
+                target = target / "checkpoint.json"
+            self.checkpoint_file = target
             self.checkpoint_file.parent.mkdir(parents=True, exist_ok=True)
         else:
             self.agent = agent_or_path
@@ -71,18 +74,20 @@ class CheckpointManager:
             with open(temp_path, "w", encoding="utf-8") as f:
                 json.dump(state, f, indent=2, default=str)
             temp_path.replace(self.checkpoint_file)
+            return str(self.checkpoint_file)
         except Exception:
             if temp_path.exists():
                 temp_path.unlink()
             raise
 
-    async def load(self) -> dict | None:
+    async def load(self, checkpoint_id: str | None = None) -> dict | None:
         """Load checkpoint if one exists."""
-        if not self.checkpoint_file.exists():
+        path = Path(checkpoint_id) if checkpoint_id else self.checkpoint_file
+        if not path.exists() or path.is_dir():
             return None
 
         try:
-            with open(self.checkpoint_file, "r", encoding="utf-8") as f:
+            with open(path, "r", encoding="utf-8") as f:
                 return json.load(f)
         except (json.JSONDecodeError, IOError):
             return None

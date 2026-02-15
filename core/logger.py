@@ -41,7 +41,12 @@ class Logger:
     - JSONL for human-readable append-only logs
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict | str):
+        if isinstance(config, str):
+            config = {
+                "jsonl_dir": str(Path(config).parent),
+                "sqlite_path": str(Path(config).with_suffix(".db")),
+            }
         self.config = config
         self.level = config.get("level", "INFO")
         self.mask_secrets = config.get("mask_secrets", True)

@@ -393,3 +393,69 @@ class TaskBoard:
     def close(self):
         """Close the database connection."""
         self._conn.close()
+
+    # ----- Backward-compatible async API ------------------------------------
+
+    @staticmethod
+    def _normalize_status(status: str) -> str:
+        return {
+            "todo": "inbox",
+            "inbox": "inbox",
+            "in_progress": "in_progress",
+            "review": "review",
+            "done": "done",
+            "failed": "failed",
+        }.get(status, status)
+
+    @staticmethod
+    def _export_status(status: str) -> str:
+        return "todo" if status == "inbox" else status
+
+    def _task_to_legacy_dict(self, task: Task | None) -> dict | None:
+        if not task:
+            return None
+        data = task.to_dict()
+        data["status"] = self._export_status(data.get("status", "inbox"))
+        return data
+
+    async def create_task(self, title: str, description: str = "", status: str = "todo", priority: str = "medium") -> dict:
+        task = self.create(title=title, description=description, priority=priority)
+        normalized = self._normalize_status(status)
+        if normalized != "inbox":
+            task.status = normalized
+            if normalized == "in_progress" and not task.started_at:
+                task.started_at = time.time()
+            if normalized == "done" and not task.completed_at:
+                task.completed_at = time.time()
+            self.update(task)
+        return self._task_to_legacy_dict(task)
+
+    async def update_task(self, task_id: str, **updates) -> dict | None:
+        task = self.get(task_id)
+        if not task:
+            return None
+
+        if "title" in updates:
+            task.title = updates["title"]
+        if "description" in updates:
+            task.description = updates["description"]
+        if "priority" in updates:
+            task.priority = updates["priority"]
+        if "status" in updates:
+            new_status = self._normalize_status(updates["status"])
+            task.status = new_status
+            if new_status == "in_progress" and not task.started_at:
+                task.started_at = time.time()
+            if new_status in ("done", "failed") and not task.completed_at:
+                task.completed_at = time.time()
+
+        self.update(task)
+        return self._task_to_legacy_dict(task)
+
+    async def get_task(self, task_id: str) -> dict | None:
+        return self._task_to_legacy_dict(self.get(task_id))
+
+    async def get_tasks(self, status: str | None = None) -> list[dict]:
+        normalized = self._normalize_status(status) if status else None
+        tasks = self.list_all(status=normalized)
+        return [self._task_to_legacy_dict(task) for task in tasks]

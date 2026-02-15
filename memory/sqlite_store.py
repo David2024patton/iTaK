@@ -74,6 +74,10 @@ class SQLiteStore:
             pass  # FTS5 not available
         conn.commit()
 
+    async def initialize(self):
+        """Backward-compatible initializer for async setup flows."""
+        return self
+
     async def save(
         self,
         content: str,
