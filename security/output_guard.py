@@ -63,7 +63,15 @@ class GuardResult:
 
     @property
     def categories_found(self) -> list[str]:
-        return list(set(r.category.value for r in self.redactions))
+        # Deduplicate categories while preserving order
+        seen = set()
+        result = []
+        for r in self.redactions:
+            cat = r.category.value
+            if cat not in seen:
+                seen.add(cat)
+                result.append(cat)
+        return result
 
 
 class OutputGuard:
@@ -314,15 +322,16 @@ class OutputGuard:
 
         # Log redactions if enabled
         if was_modified and self.log_redactions:
-            categories = list(set(r.category.value for r in redactions))
+            # Use set directly instead of list + set conversion
+            categories = {r.category.value for r in redactions}
             log_entry = {
                 "scan_number": self.total_scans,
                 "redaction_count": len(redactions),
-                "categories": categories,
+                "categories": list(categories),
             }
             self.redaction_log.append(log_entry)
             logger.warning(
-                f"Output Guard redacted {len(redactions)} items: {categories}"
+                f"Output Guard redacted {len(redactions)} items: {list(categories)}"
             )
 
         return GuardResult(

@@ -8,6 +8,7 @@ import sqlite3
 import time
 from pathlib import Path
 from typing import Any, Optional
+import threading
 
 import numpy as np
 
@@ -25,11 +26,22 @@ class SQLiteStore:
     def __init__(self, db_path: str = "data/db/memory.db"):
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Thread-local storage for connections (one connection per thread)
+        self._local = threading.local()
+        
         self._init_db()
+
+    def _get_connection(self) -> sqlite3.Connection:
+        """Get thread-local database connection. Creates one if doesn't exist."""
+        if not hasattr(self._local, 'conn') or self._local.conn is None:
+            self._local.conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
+            self._local.conn.row_factory = sqlite3.Row
+        return self._local.conn
 
     def _init_db(self):
         """Create tables if they don't exist."""
-        conn = sqlite3.connect(str(self.db_path))
+        conn = self._get_connection()
         conn.execute("""
             CREATE TABLE IF NOT EXISTS memories (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,7 +73,6 @@ class SQLiteStore:
         except sqlite3.OperationalError:
             pass  # FTS5 not available
         conn.commit()
-        conn.close()
 
     async def save(
         self,
@@ -75,7 +86,7 @@ class SQLiteStore:
         now = time.time()
         emb_blob = self._embedding_to_blob(embedding) if embedding else None
 
-        conn = sqlite3.connect(str(self.db_path))
+        conn = self._get_connection()
         cursor = conn.execute(
             """INSERT INTO memories
                (content, metadata, category, source, embedding, created_at, updated_at)
@@ -102,7 +113,6 @@ class SQLiteStore:
             pass
 
         conn.commit()
-        conn.close()
         return memory_id
 
     async def search(
@@ -116,8 +126,7 @@ class SQLiteStore:
         """Search memories by text and/or vector similarity."""
         results = []
 
-        conn = sqlite3.connect(str(self.db_path))
-        conn.row_factory = sqlite3.Row
+        conn = self._get_connection()
 
         # Vector similarity search
         if query_embedding:
@@ -171,7 +180,6 @@ class SQLiteStore:
                 (time.time(), r["id"]),
             )
         conn.commit()
-        conn.close()
 
         # Clean up blobs from results
         for r in results:
@@ -186,14 +194,13 @@ class SQLiteStore:
 
     async def delete(self, memory_id: int) -> bool:
         """Delete a memory by ID."""
-        conn = sqlite3.connect(str(self.db_path))
+        conn = self._get_connection()
         conn.execute("DELETE FROM memories WHERE id = ?", (memory_id,))
         try:
             conn.execute("DELETE FROM memories_fts WHERE rowid = ?", (memory_id,))
         except sqlite3.OperationalError:
             pass
         conn.commit()
-        conn.close()
         return True
 
     async def delete_by_query(self, query: str) -> int:
@@ -207,12 +214,11 @@ class SQLiteStore:
 
     async def get_stats(self) -> dict:
         """Get memory store statistics."""
-        conn = sqlite3.connect(str(self.db_path))
+        conn = self._get_connection()
         total = conn.execute("SELECT COUNT(*) FROM memories").fetchone()[0]
         categories = conn.execute(
             "SELECT category, COUNT(*) FROM memories GROUP BY category"
         ).fetchall()
-        conn.close()
         return {
             "total_memories": total,
             "categories": {cat: cnt for cat, cnt in categories},

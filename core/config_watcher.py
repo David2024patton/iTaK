@@ -78,12 +78,14 @@ class ConfigWatcher:
         self._thread: Optional[threading.Thread] = None
         self._last_hash: str = ""
         self._last_mtime: float = 0
+        self._cached_config: Optional[dict] = None
 
-        # Initialize with current config hash
+        # Initialize with current config hash and cache
         if self._path.exists():
             try:
                 with open(self._path, "r", encoding="utf-8") as f:
                     config = json.load(f)
+                self._cached_config = config
                 self._last_hash = _config_hash(config)
                 self._last_mtime = self._path.stat().st_mtime
             except Exception:
@@ -123,7 +125,7 @@ class ConfigWatcher:
 
                 self._last_mtime = mtime
 
-                # Read and hash the config
+                # Read and hash the config (only once per change)
                 with open(self._path, "r", encoding="utf-8") as f:
                     config = json.load(f)
 
@@ -132,7 +134,8 @@ class ConfigWatcher:
                     logger.debug("Config file changed but content is equivalent (meta-only)")
                     continue
 
-                # Meaningful change detected
+                # Meaningful change detected - update cache
+                self._cached_config = config
                 logger.info(f"Config change detected (hash: {self._last_hash[:8]}→{new_hash[:8]})")
                 self._last_hash = new_hash
 
@@ -153,11 +156,18 @@ class ConfigWatcher:
             return False
 
         try:
+            # Check mtime first to avoid unnecessary file read
+            mtime = self._path.stat().st_mtime
+            if mtime == self._last_mtime and self._cached_config is not None:
+                return False
+            
             with open(self._path, "r", encoding="utf-8") as f:
                 config = json.load(f)
             new_hash = _config_hash(config)
             if new_hash != self._last_hash:
+                self._cached_config = config
                 self._last_hash = new_hash
+                self._last_mtime = mtime
                 if self._on_change:
                     self._on_change(config)
                 return True

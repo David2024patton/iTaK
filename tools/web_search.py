@@ -5,6 +5,13 @@ iTaK Web Search Tool - Search via SearXNG.
 import httpx
 from tools.base import BaseTool, ToolResult
 
+# Import DuckDuckGo at module level to avoid repeated imports
+try:
+    from duckduckgo_search import DDGS
+    DDGS_AVAILABLE = True
+except ImportError:
+    DDGS_AVAILABLE = False
+
 
 class WebSearchTool(BaseTool):
     """Search the web using SearXNG (self-hosted on VPS).
@@ -79,9 +86,13 @@ class WebSearchTool(BaseTool):
 
     async def _search_duckduckgo(self, query: str, num_results: int) -> ToolResult:
         """Fallback: search using DuckDuckGo."""
+        if not DDGS_AVAILABLE:
+            return ToolResult(
+                output="No search backend available. Configure SearXNG or install duckduckgo-search.",
+                error=True,
+            )
+        
         try:
-            from duckduckgo_search import DDGS
-
             with DDGS() as ddgs:
                 results = list(ddgs.text(query, max_results=num_results))
 
@@ -97,10 +108,5 @@ class WebSearchTool(BaseTool):
 
             return ToolResult(output="\n".join(output_parts))
 
-        except ImportError:
-            return ToolResult(
-                output="No search backend available. Configure SearXNG or install duckduckgo-search.",
-                error=True,
-            )
         except Exception as e:
             return ToolResult(output=f"DuckDuckGo error: {e}", error=True)
