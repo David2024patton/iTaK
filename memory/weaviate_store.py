@@ -8,6 +8,11 @@ import logging
 import time
 from typing import Any, Optional
 
+try:
+    import weaviate
+except Exception:
+    weaviate = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,8 +41,8 @@ class WeaviateStore:
     async def connect(self):
         """Connect to Weaviate."""
         try:
-            import weaviate
-
+            if weaviate is None:
+                raise ImportError("weaviate-client not installed")
             self.client = weaviate.Client(self.url)
 
             # Verify connection
@@ -86,7 +91,8 @@ class WeaviateStore:
     async def save(
         self,
         content: str,
-        embedding: list[float],
+        embedding: list[float] | None = None,
+        vector: list[float] | None = None,
         category: str = "general",
         source: str = "agent",
         metadata: dict | None = None,
@@ -106,10 +112,14 @@ class WeaviateStore:
                 "room_id": room_id,
             }
 
+            final_vector = embedding if embedding is not None else vector
+            if final_vector is None:
+                final_vector = []
+
             result = self.client.data_object.create(
                 data_object=data_object,
                 class_name=self.COLLECTION_NAME,
-                vector=embedding,
+                vector=final_vector,
             )
             return result  # UUID string
 
@@ -119,7 +129,8 @@ class WeaviateStore:
 
     async def search(
         self,
-        query_embedding: list[float],
+        query_embedding: list[float] | None = None,
+        query: str | None = None,
         limit: int = 10,
         category: str | None = None,
         min_certainty: float = 0.7,
@@ -129,6 +140,9 @@ class WeaviateStore:
             return []
 
         try:
+            if query_embedding is None:
+                query_embedding = []
+
             query = (
                 self.client.query
                 .get(self.COLLECTION_NAME, ["content", "category", "source", "metadata_json", "created_at", "room_id"])

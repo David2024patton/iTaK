@@ -31,23 +31,28 @@ class DiscordAdapter(BaseAdapter):
         super().__init__(agent, config)
 
         # Discord.py setup
-        intents = discord.Intents.default()
-        intents.message_content = True
-        intents.guilds = True
-        intents.members = True
+        self.bot = None
+        try:
+            intents = discord.Intents.default()
+            intents.message_content = True
+            intents.guilds = True
+            intents.members = True
 
-        self.bot = commands.Bot(
-            command_prefix="!",
-            intents=intents,
-            help_command=None,
-        )
+            self.bot = commands.Bot(
+                command_prefix="!",
+                intents=intents,
+                help_command=None,
+            )
+        except Exception:
+            self.bot = None
 
         self._progress_messages: dict[str, discord.Message] = {}
         self._active_channel: Optional[discord.TextChannel] = None
 
         # Register event handlers
-        self._setup_events()
-        self._setup_commands()
+        if self.bot is not None:
+            self._setup_events()
+            self._setup_commands()
 
     def _setup_events(self):
         """Register Discord event handlers."""
@@ -239,6 +244,9 @@ class DiscordAdapter(BaseAdapter):
     async def start(self):
         """Start the Discord bot."""
         self._running = True
+        if self.bot is None:
+            logger.warning("Discord bot unavailable (initialization failed)")
+            return
         token = self.config.get("token", "")
         if not token or token.startswith("$"):
             logger.warning("Discord token not configured")
@@ -248,4 +256,5 @@ class DiscordAdapter(BaseAdapter):
     async def stop(self):
         """Stop the Discord bot."""
         self._running = False
-        await self.bot.close()
+        if self.bot is not None:
+            await self.bot.close()

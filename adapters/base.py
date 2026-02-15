@@ -4,6 +4,7 @@ Discord, Telegram, Slack, CLI all inherit from this.
 """
 
 import asyncio
+import inspect
 from typing import TYPE_CHECKING, Any, Callable, Optional
 
 if TYPE_CHECKING:
@@ -31,7 +32,8 @@ class BaseAdapter:
         self._running = False
 
         # Register for progress updates
-        self.agent.progress.register_callback(self._on_progress)
+        if hasattr(self.agent, "progress") and hasattr(self.agent.progress, "register_callback"):
+            self.agent.progress.register_callback(self._on_progress)
 
     async def start(self):
         """Start the adapter. Override in subclasses."""
@@ -85,15 +87,47 @@ class BaseAdapter:
             text = self._sanitize_output(f"**Error:** {message}")
             await self.send_message(text)
 
-    async def handle_message(self, user_id: str, content: str, **kwargs):
+    async def handle_message(self, user_id: str | None = None, content: str | None = None, **kwargs):
         """Process an incoming user message through the agent."""
-        # Set context
-        self.agent.context.adapter_name = self.name
-        self.agent.context.user_id = user_id
+        if content is None and isinstance(user_id, dict):
+            update = user_id
+            content = str(update.get("text", ""))
+            user_id = str(update.get("user", "unknown"))
+        elif content is None and user_id is not None and not isinstance(user_id, str):
+            update = user_id
+            message_obj = getattr(update, "message", None)
+            content = getattr(message_obj, "text", "") if message_obj else ""
+            effective_user = getattr(update, "effective_user", None)
+            user_id = str(getattr(effective_user, "id", "unknown"))
 
-        # Run the agent
-        response = await self.agent.monologue(content)
+        if user_id is None:
+            user_id = "unknown"
+        if content is None:
+            content = ""
+
+        # Set context
+        if hasattr(self.agent, "context"):
+            self.agent.context.adapter_name = self.name
+            self.agent.context.user_id = user_id
+
+        # Run the agent (legacy compatibility: message_loop > monologue > process_message)
+        try:
+            if hasattr(self.agent, "message_loop"):
+                result = self.agent.message_loop(content)
+            elif hasattr(self.agent, "monologue"):
+                result = self.agent.monologue(content)
+            else:
+                result = self.agent.process_message(content)
+
+            response = await result if inspect.isawaitable(result) else result
+        except Exception as exc:
+            response = f"Error: {exc}"
 
         # Send the final response (sanitized)
         if response:
             await self.send_message(self._sanitize_output(response), **kwargs)
+        return response
+
+    async def process_message(self, content: str, user_id: str = "owner", **kwargs):
+        """Backward-compatible alias used by older tests/integrations."""
+        return await self.handle_message(user_id=user_id, content=content, **kwargs)

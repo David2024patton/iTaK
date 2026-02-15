@@ -28,10 +28,31 @@ class ModelRouter:
 
     def __init__(self, config: dict):
         self.config = config
-        self._chat_config = config.get("chat", {})
-        self._utility_config = config.get("utility", {})
-        self._browser_config = config.get("browser", {})
-        self._embeddings_config = config.get("embeddings", {})
+        self._chat_fallback_models: list[str] = []
+
+        if "chat" in config or "utility" in config or "browser" in config:
+            self._chat_config = config.get("chat", {})
+            self._utility_config = config.get("utility", {})
+            self._browser_config = config.get("browser", {})
+            self._embeddings_config = config.get("embeddings", {})
+            self.default_model = self._chat_config.get("model", "gemini/gemini-2.0-flash")
+        else:
+            router_cfg = config.get("router", {})
+            model_map = config.get("models", {})
+            default_model_name = router_cfg.get("default", "gemini/gemini-2.0-flash")
+            self.default_model = default_model_name
+            default_entry = model_map.get(default_model_name, {})
+            self._chat_config = {
+                **default_entry,
+                "model": default_entry.get("model", default_model_name),
+            }
+            self._utility_config = self._chat_config.copy()
+            self._browser_config = self._chat_config.copy()
+            self._embeddings_config = config.get("embeddings", {})
+            self._chat_fallback_models = [
+                model_map.get(name, {}).get("model", name)
+                for name in router_cfg.get("fallback", [])
+            ]
 
         # Fallback models (tried if primary fails)
         self._fallbacks = config.get("fallbacks", {})
@@ -115,6 +136,8 @@ class ModelRouter:
 
         # Build the list of models to try (primary + fallbacks)
         models_to_try = [model]
+        if model == self._chat_config.get("model") and self._chat_fallback_models:
+            models_to_try.extend(self._chat_fallback_models)
         fallback_key = model_config.get("fallback_key", "")
         if fallback_key and fallback_key in self._fallbacks:
             models_to_try.extend(self._fallbacks[fallback_key])
@@ -185,6 +208,17 @@ class ModelRouter:
             "browser": self._browser_config.get("model", "N/A"),
             "embeddings": self._embeddings_config.get("model", "N/A"),
         }
+
+    def calculate_cost(self, model: str, input_tokens: int, output_tokens: int) -> float:
+        """Backward-compatible cost calculator used by legacy tests/integrations."""
+        model_cfg = self.config.get("models", {}).get(model, {})
+        if not model_cfg and model == self.default_model:
+            model_cfg = self._chat_config
+
+        in_rate = float(model_cfg.get("cost_per_1k_input", 0.0) or 0.0)
+        out_rate = float(model_cfg.get("cost_per_1k_output", 0.0) or 0.0)
+        cost = (max(0, input_tokens) / 1000.0) * in_rate + (max(0, output_tokens) / 1000.0) * out_rate
+        return float(cost)
 
     def _inject_api_keys(self):
         """Inject API keys from environment into litellm."""

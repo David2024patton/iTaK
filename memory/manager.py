@@ -47,6 +47,7 @@ class MemoryManager:
         except ImportError:
             pass
         self.sqlite = SQLiteStore(db_path=sqlite_path)
+        self.sqlite_store = self.sqlite
 
         # Layer 3: Neo4j
         self.neo4j = None
@@ -89,6 +90,11 @@ class MemoryManager:
             await self.neo4j.connect()
         if self.weaviate:
             await self.weaviate.connect()
+
+    async def initialize(self):
+        """Backward-compatible initializer used by older tests/integrations."""
+        await self.connect_stores()
+        return self
 
     async def save(
         self,
@@ -219,8 +225,11 @@ class MemoryManager:
 
         return unique_results[:limit]
 
-    async def delete(self, query: str) -> int:
-        """Delete memories matching a query from all layers."""
+    async def delete(self, query: str | int) -> int:
+        """Delete memories by query string or by exact memory id."""
+        if isinstance(query, int):
+            ok = await self.sqlite.delete(query)
+            return 1 if ok else 0
         count = await self.sqlite.delete_by_query(query)
         return count
 

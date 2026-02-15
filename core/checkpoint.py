@@ -23,32 +23,54 @@ class CheckpointManager:
     On restart, iTaK checks for a checkpoint and offers to resume.
     """
 
-    def __init__(self, agent: "Agent"):
-        self.agent = agent
-        CHECKPOINT_DIR.mkdir(parents=True, exist_ok=True)
+    def __init__(self, agent_or_path: "Agent | str | Path", max_backups: int = 0):
+        self.agent = None
+        self.max_backups = max(0, int(max_backups))
 
-    async def save(self):
+        if isinstance(agent_or_path, (str, Path)):
+            self.checkpoint_file = Path(agent_or_path)
+            self.checkpoint_file.parent.mkdir(parents=True, exist_ok=True)
+        else:
+            self.agent = agent_or_path
+            CHECKPOINT_DIR.mkdir(parents=True, exist_ok=True)
+            self.checkpoint_file = CHECKPOINT_FILE
+
+    async def save(self, state: dict | None = None):
         """Save current agent state to checkpoint file."""
-        state = {
-            "timestamp": time.time(),
-            "iteration": self.agent.iteration_count,
-            "room_id": self.agent.context.room_id,
-            "adapter": self.agent.context.adapter_name,
-            "history": self.agent.history[-50:],  # Last 50 messages
-            "last_response": self.agent.last_response,
-            "progress": {
-                "current_step": self.agent.progress.current_step,
-                "plan": self.agent.progress.plan_text,
-                "steps": self.agent.progress.steps,
-            },
-        }
+        if state is None:
+            if not self.agent:
+                raise ValueError("state is required when CheckpointManager is initialized without an agent")
+            state = {
+                "timestamp": time.time(),
+                "iteration": self.agent.iteration_count,
+                "room_id": self.agent.context.room_id,
+                "adapter": self.agent.context.adapter_name,
+                "history": self.agent.history[-50:],  # Last 50 messages
+                "last_response": self.agent.last_response,
+                "progress": {
+                    "current_step": self.agent.progress.current_step,
+                    "plan": self.agent.progress.plan_text,
+                    "steps": self.agent.progress.steps,
+                },
+            }
+
+        if self.max_backups > 0 and self.checkpoint_file.exists():
+            for idx in range(self.max_backups, 0, -1):
+                src = self.checkpoint_file.with_suffix(self.checkpoint_file.suffix + f".{idx}")
+                dst = self.checkpoint_file.with_suffix(self.checkpoint_file.suffix + f".{idx + 1}")
+                if idx == self.max_backups and src.exists():
+                    src.unlink()
+                elif src.exists():
+                    src.replace(dst)
+            backup1 = self.checkpoint_file.with_suffix(self.checkpoint_file.suffix + ".1")
+            self.checkpoint_file.replace(backup1)
 
         # Atomic write: write to temp then rename
-        temp_path = CHECKPOINT_FILE.with_suffix(".tmp")
+        temp_path = self.checkpoint_file.with_suffix(self.checkpoint_file.suffix + ".tmp")
         try:
             with open(temp_path, "w", encoding="utf-8") as f:
                 json.dump(state, f, indent=2, default=str)
-            temp_path.replace(CHECKPOINT_FILE)
+            temp_path.replace(self.checkpoint_file)
         except Exception:
             if temp_path.exists():
                 temp_path.unlink()
@@ -56,11 +78,11 @@ class CheckpointManager:
 
     async def load(self) -> dict | None:
         """Load checkpoint if one exists."""
-        if not CHECKPOINT_FILE.exists():
+        if not self.checkpoint_file.exists():
             return None
 
         try:
-            with open(CHECKPOINT_FILE, "r", encoding="utf-8") as f:
+            with open(self.checkpoint_file, "r", encoding="utf-8") as f:
                 return json.load(f)
         except (json.JSONDecodeError, IOError):
             return None
@@ -68,7 +90,7 @@ class CheckpointManager:
     async def restore(self) -> bool:
         """Restore agent state from checkpoint. Returns True if restored."""
         state = await self.load()
-        if not state:
+        if not state or not self.agent:
             return False
 
         self.agent.history = state.get("history", [])
@@ -80,19 +102,19 @@ class CheckpointManager:
 
     async def clear(self):
         """Clear checkpoint after successful completion."""
-        if CHECKPOINT_FILE.exists():
-            CHECKPOINT_FILE.unlink()
+        if self.checkpoint_file.exists():
+            self.checkpoint_file.unlink()
 
     def has_checkpoint(self) -> bool:
         """Check if a checkpoint exists."""
-        return CHECKPOINT_FILE.exists()
+        return self.checkpoint_file.exists()
 
     def get_checkpoint_age(self) -> float | None:
         """Get the age of the checkpoint in seconds."""
         state = None
-        if CHECKPOINT_FILE.exists():
+        if self.checkpoint_file.exists():
             try:
-                with open(CHECKPOINT_FILE, "r", encoding="utf-8") as f:
+                with open(self.checkpoint_file, "r", encoding="utf-8") as f:
                     state = json.load(f)
             except Exception:
                 return None

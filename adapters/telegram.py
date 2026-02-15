@@ -6,6 +6,11 @@ import asyncio
 import logging
 from typing import Optional
 
+try:
+    import telegram  # Backward-compatible patch target for tests
+except Exception:
+    telegram = None
+
 from adapters.base import BaseAdapter
 
 logger = logging.getLogger(__name__)

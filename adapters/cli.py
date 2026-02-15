@@ -20,9 +20,15 @@ class CLIAdapter(BaseAdapter):
 
     name = "cli"
 
-    def __init__(self, agent, config: dict):
-        super().__init__(agent, config)
+    def __init__(self, agent, config: dict | None = None):
+        super().__init__(agent, config or {})
         self._spinner_task = None
+
+    async def process_message(self, content: str):
+        """Backward-compatible single-message processor used in tests."""
+        if hasattr(self.agent, "message_loop"):
+            return await self.agent.message_loop(content)
+        return await self.agent.monologue(content)
 
     async def start(self):
         """Start the CLI input loop."""

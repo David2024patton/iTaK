@@ -146,13 +146,48 @@ class SelfHealEngine:
       - backoff_seconds: [1, 5, 15]
     """
 
-    def __init__(self, agent: "Agent"):
+    def __init__(self, agent: Optional["Agent"] = None, config: Optional[dict] = None):
+        if isinstance(agent, dict) and config is None:
+            config = agent
+            agent = None
+
         self.agent = agent
-        self.max_per_error = 3
+        cfg = config or {}
+        self.max_per_error = int(cfg.get("max_healing_attempts", 3) or 3)
         self.max_per_session = 10
         self.backoff = [1, 5, 15]
         self.session_retries = 0
         self.error_log: list[ClassifiedError] = []
+
+    def classify_error(self, exc: Exception) -> str:
+        """Backward-compatible string classifier used by older tests."""
+        classified = self.classify(exc)
+        msg = str(exc).lower()
+        if "connection" in msg or "timeout" in msg or "network" in msg:
+            return "network"
+        if isinstance(exc, SyntaxError) or "syntax" in msg:
+            return "syntax"
+        return classified.category.value
+
+    async def _search_similar_errors(self, error_text: str) -> list[dict]:
+        """Compatibility hook for historical error lookups."""
+        if not self.agent or not getattr(self.agent, "memory", None):
+            return []
+        try:
+            return await self.agent.memory.search(error_text, limit=3)
+        except Exception:
+            return []
+
+    def should_attempt_healing(self, error: Exception, attempt: int = 0) -> bool:
+        """Guard against infinite retry loops."""
+        return attempt < self.max_per_error and self.is_healable_error(error)
+
+    def is_healable_error(self, error: Exception) -> bool:
+        """Return False for security-sensitive errors."""
+        if isinstance(error, PermissionError):
+            return False
+        classified = self.classify(error)
+        return classified.severity != ErrorSeverity.CRITICAL
 
     # ----- Step 1: Classify --------------------------------------------------
 

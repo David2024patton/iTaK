@@ -221,6 +221,7 @@ class SQLiteStore:
         ).fetchall()
         return {
             "total_memories": total,
+            "total_entries": total,
             "categories": {cat: cnt for cat, cnt in categories},
         }
 

@@ -121,7 +121,9 @@ class MCPConnection:
         }
 
         msg = json.dumps(request) + "\n"
-        self.process.stdin.write(msg.encode())
+        write_result = self.process.stdin.write(msg.encode())
+        if asyncio.iscoroutine(write_result):
+            await write_result
         await self.process.stdin.drain()
 
         # Read response line
@@ -146,7 +148,9 @@ class MCPConnection:
         }
 
         msg = json.dumps(notification) + "\n"
-        self.process.stdin.write(msg.encode())
+        write_result = self.process.stdin.write(msg.encode())
+        if asyncio.iscoroutine(write_result):
+            await write_result
         await self.process.stdin.drain()
 
     async def _discover_tools(self):
@@ -212,9 +216,14 @@ class MCPClient:
     """
 
     def __init__(self, agent: Optional["Agent"] = None):
-        self.agent = agent
+        if isinstance(agent, list):
+            self.agent = None
+            self._configs = list(agent)
+        else:
+            self.agent = agent
+            self._configs: list[MCPServerConfig] = []
         self.connections: dict[str, MCPConnection] = {}
-        self._configs: list[MCPServerConfig] = []
+        self.servers = self._configs
 
     def load_config(self, mcp_config: dict):
         """Load MCP server configurations from config.json.

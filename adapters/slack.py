@@ -5,6 +5,11 @@ iTaK Slack Adapter - Slack bot using Socket Mode.
 import asyncio
 import logging
 
+try:
+    import slack_bolt  # Backward-compatible patch target for tests
+except Exception:
+    slack_bolt = None
+
 from adapters.base import BaseAdapter
 
 logger = logging.getLogger(__name__)

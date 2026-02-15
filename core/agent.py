@@ -71,14 +71,21 @@ class Agent:
 
     def __init__(
         self,
-        number: int = 0,
+        number: int | dict = 0,
         config: Optional[dict] = None,
         context: Optional[AgentContext] = None,
         superior: Optional["Agent"] = None,
+        user_id: Optional[str] = None,
     ):
+        if isinstance(number, dict) and config is None:
+            config = number
+            number = 0
+
         self.number = number
         self.config = self._load_config(config)
         self.context = context or AgentContext()
+        if user_id:
+            self.context.user_id = user_id
         self.superior = superior
         self.subordinate: Optional["Agent"] = None
 
@@ -286,6 +293,10 @@ class Agent:
         self._running: bool = False
         self._start_time: float = time.time()
         self._last_llm_meta: dict = {}
+        self._total_cost: float = 0.0
+        cost_cfg = self.config.get("cost", {})
+        self._cost_budget: float = float(cost_cfg.get("budget", 0.0) or 0.0)
+        self._cost_warn_threshold: float = float(cost_cfg.get("warn_threshold", 0.8) or 0.8)
 
         # Load tools and extensions
         self._load_tools()
@@ -998,6 +1009,10 @@ class Agent:
                 "total_iterations": self.total_iterations,
             })
 
+    async def message_loop(self, user_message: str) -> str:
+        """Backward-compatible alias for monologue."""
+        return await self.monologue(user_message)
+
     async def _handle_intervention(self):
         """Check if user sent a message mid-execution."""
         if self.context.intervention_queue:
@@ -1052,3 +1067,17 @@ class Agent:
             "tools": len(self._tools),
             "extensions": sum(len(v) for v in self._extensions.values()),
         }
+
+    def add_cost(self, amount: float):
+        """Track accumulated model/tool spend for this agent session."""
+        self._total_cost += max(0.0, float(amount))
+
+    def get_total_cost(self) -> float:
+        """Return total tracked spend for this session."""
+        return round(self._total_cost, 10)
+
+    def is_over_budget(self) -> bool:
+        """Return True when spend has crossed configured budget."""
+        if self._cost_budget <= 0:
+            return False
+        return self._total_cost >= self._cost_budget
