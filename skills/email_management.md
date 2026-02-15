@@ -152,31 +152,6 @@ Auth Token: eyJhbGci...
 {
     "tool_name": "email_tool",
     "tool_args": {
-        "action": "send",
-        "to": "recipient@example.com",
-        "subject": "Status Update",
-        "body": "The task has been completed successfully."
-    }
-}
-```
-
-### Example 5: Read recent emails (requires IMAP config)
-```json
-{
-    "tool_name": "email_tool",
-    "tool_args": {
-        "action": "read",
-        "folder": "INBOX",
-        "limit": 5
-    }
-}
-```
-
-### Example 6: List all folders (requires IMAP config)
-```json
-{
-    "tool_name": "email_tool",
-    "tool_args": {
         "action": "read",
         "folder": "INBOX",
         "limit": 5
