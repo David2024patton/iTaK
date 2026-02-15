@@ -6,7 +6,9 @@ Provides REST API + WebSocket for real-time agent monitoring.
 import asyncio
 import json
 import logging
+import secrets
 import time
+import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
@@ -106,7 +108,544 @@ def create_app(agent: "Agent"):
     # WebSocket connections for real-time updates
     ws_clients: list[WebSocket] = []
 
+    # --- Agent Zero compatibility state (poll-based mode) ---
+    csrf_token = secrets.token_hex(16)
+    runtime_id = "itak-webui"
+    contexts: dict[str, dict] = {}
+    context_counter = 0
+    notifications: list[dict] = []
+    notifications_guid = uuid.uuid4().hex
+    notifications_version = 0
+    sio_server = None
+    sio_runtime_epoch = uuid.uuid4().hex
+    sio_sequence = 0
+    sio_sid_seqbase: dict[str, int] = {}
+
+    compat_settings = {
+        "chat_model_provider": "openai",
+        "chat_model_name": "gpt-4o-mini",
+        "chat_model_api_base": "",
+        "chat_model_ctx_length": 128000,
+        "chat_model_ctx_history": 0.7,
+        "chat_model_vision": True,
+        "chat_model_rl_requests": 60,
+        "chat_model_rl_input": 1000000,
+        "chat_model_rl_output": 1000000,
+        "chat_model_kwargs": "{}",
+        "util_model_provider": "openai",
+        "util_model_name": "gpt-4o-mini",
+        "util_model_api_base": "",
+        "util_model_rl_requests": 120,
+        "util_model_rl_input": 1000000,
+        "util_model_rl_output": 1000000,
+        "util_model_kwargs": "{}",
+        "browser_model_provider": "openai",
+        "browser_model_name": "gpt-4o-mini",
+        "browser_model_api_base": "",
+        "browser_model_vision": True,
+        "browser_model_rl_requests": 60,
+        "browser_model_rl_input": 1000000,
+        "browser_model_rl_output": 1000000,
+        "browser_model_kwargs": "{}",
+        "browser_http_headers": "{}",
+        "embed_model_provider": "openai",
+        "embed_model_name": "text-embedding-3-small",
+        "embed_model_api_base": "",
+        "embed_model_rl_requests": 120,
+        "embed_model_rl_input": 1000000,
+        "embed_model_kwargs": "{}",
+        "agent_profile": "default",
+        "agent_knowledge_subdir": "skills",
+        "agent_memory_subdir": "memory",
+        "memory_recall_enabled": True,
+        "memory_recall_delayed": False,
+        "memory_recall_query_prep": True,
+        "memory_recall_post_filter": True,
+        "memory_recall_interval": 3,
+        "memory_recall_history_len": 20,
+        "memory_recall_similarity_threshold": 0.75,
+        "memory_recall_memories_max_search": 20,
+        "memory_recall_memories_max_result": 6,
+        "memory_recall_solutions_max_search": 20,
+        "memory_recall_solutions_max_result": 6,
+        "memory_memorize_enabled": True,
+        "memory_memorize_consolidation": True,
+        "memory_memorize_replace_threshold": 0.88,
+        "stt_model_size": "base",
+        "stt_language": "en",
+        "stt_silence_threshold": 0.02,
+        "stt_silence_duration": 1.2,
+        "stt_waiting_timeout": 3,
+        "tts_kokoro": False,
+        "shell_interface": "bash",
+        "websocket_server_restart_enabled": True,
+        "uvicorn_access_logs_enabled": False,
+        "workdir_path": str(Path.cwd()),
+        "workdir_show": True,
+        "workdir_max_depth": 3,
+        "workdir_max_lines": 400,
+        "workdir_max_folders": 200,
+        "workdir_max_files": 500,
+        "workdir_gitignore": ".git\nnode_modules\n__pycache__",
+        "auth_login": "",
+        "auth_password": "",
+        "root_password": "",
+        "api_keys": {},
+        "litellm_global_kwargs": "{}",
+        "variables": "",
+        "secrets": "",
+        "mcp_server_enabled": bool(getattr(agent, "mcp_server", None)),
+        "mcp_server_token": agent.config.get("mcp_server", {}).get("token", ""),
+        "mcp_client_init_timeout": 15,
+        "mcp_client_tool_timeout": 90,
+        "a2a_server_enabled": False,
+        "rfc_url": "",
+        "rfc_password": "",
+        "rfc_port_http": 80,
+        "rfc_port_ssh": 22,
+        "update_check_enabled": False,
+    }
+
+    compat_additional = {
+        "chat_providers": [{"value": "openai", "label": "OpenAI"}, {"value": "google", "label": "Google"}],
+        "embedding_providers": [{"value": "openai", "label": "OpenAI"}],
+        "agent_subdirs": [{"value": "default", "label": "default"}],
+        "knowledge_subdirs": [{"value": "skills", "label": "skills"}],
+        "stt_models": [{"value": "tiny", "label": "tiny"}, {"value": "base", "label": "base"}, {"value": "small", "label": "small"}],
+        "shell_interfaces": [{"value": "bash", "label": "Bash"}],
+        "is_dockerized": True,
+        "runtime_settings": {"uvicorn_access_logs_enabled": False},
+    }
+
+    def _make_context(name: str | None = None) -> dict:
+        nonlocal context_counter
+        context_counter += 1
+        ctx_id = f"ctx_{secrets.token_hex(4)}"
+        return {
+            "id": ctx_id,
+            "no": context_counter,
+            "name": name or f"Chat {context_counter}",
+            "created_at": time.time(),
+            "running": False,
+            "paused": False,
+            "log_guid": uuid.uuid4().hex,
+            "log_version": 0,
+            "next_no": 1,
+            "logs": [],
+            "message_queue": [],
+            "project": None,
+        }
+
+    def _ensure_context(ctx_id: str | None = None) -> dict:
+        if ctx_id and ctx_id in contexts:
+            return contexts[ctx_id]
+        new_ctx = _make_context()
+        contexts[new_ctx["id"]] = new_ctx
+        return new_ctx
+
+    def _push_log(ctx: dict, log_type: str, content: str, heading: str = "", kvps: dict | None = None):
+        entry = {
+            "no": ctx["next_no"],
+            "type": log_type,
+            "heading": heading,
+            "content": content,
+            "kvps": kvps or {},
+        }
+        ctx["next_no"] += 1
+        ctx["logs"].append(entry)
+        ctx["log_version"] += 1
+
+    def _list_contexts() -> list[dict]:
+        return sorted([
+            {
+                "id": c["id"],
+                "no": c["no"],
+                "name": c["name"],
+                "created_at": c["created_at"],
+                "running": c["running"],
+                "project": c.get("project"),
+                "message_queue": c.get("message_queue", []),
+            }
+            for c in contexts.values()
+        ], key=lambda x: x.get("created_at", 0), reverse=True)
+
+    def _list_tasks_for_sidebar() -> list[dict]:
+        if not (hasattr(agent, "task_board") and agent.task_board):
+            return []
+        tasks = agent.task_board.list_all(limit=200)
+        output = []
+        for idx, task in enumerate(tasks, 1):
+            data = task.to_dict()
+            output.append({
+                "id": data.get("id"),
+                "no": idx,
+                "task_name": data.get("title") or "Task",
+                "state": data.get("status", "idle"),
+                "running": data.get("status") == "in_progress",
+                "created_at": data.get("created_at", 0),
+                "project": None,
+            })
+        return output
+
+    def _build_poll_snapshot(context_id: str | None, log_from: int = 0, notifications_from: int = 0) -> dict:
+        ctx = _ensure_context(context_id)
+        logs = ctx["logs"] if int(log_from or 0) <= 0 else []
+        notifs = [n for n in notifications if n.get("version", 0) > int(notifications_from or 0)]
+        return {
+            "ok": True,
+            "context": ctx["id"],
+            "log_guid": ctx["log_guid"],
+            "log_version": ctx["log_version"],
+            "logs": logs,
+            "log_progress": "",
+            "log_progress_active": False,
+            "paused": bool(ctx.get("paused")),
+            "contexts": _list_contexts(),
+            "tasks": _list_tasks_for_sidebar(),
+            "notifications": notifs,
+            "notifications_guid": notifications_guid,
+            "notifications_version": notifications_version,
+            "deselect_chat": False,
+        }
+
+    def _add_notification(message: str, ntype: str = "info", title: str = "Notification", priority: int = 10, group: str = ""):
+        nonlocal notifications_version
+        notifications_version += 1
+        notifications.append({
+            "id": uuid.uuid4().hex,
+            "version": notifications_version,
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "title": title,
+            "message": message,
+            "type": ntype,
+            "priority": priority,
+            "display_time": 4,
+            "read": False,
+            "group": group,
+        })
+
+    def _next_sio_envelope(event_name: str, data: dict, correlation_id: str | None = None) -> dict:
+        nonlocal sio_sequence
+        sio_sequence += 1
+        return {
+            "handlerId": "itak.state_sync",
+            "eventId": f"{event_name}-{uuid.uuid4().hex}",
+            "correlationId": correlation_id or f"push-{uuid.uuid4().hex}",
+            "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "data": {
+                "runtime_epoch": sio_runtime_epoch,
+                "seq": sio_sequence,
+                **(data or {}),
+            },
+        }
+
+    _ensure_context(None)
+
     # --- REST Endpoints ---
+
+    @app.get("/csrf_token")
+    async def csrf_token_endpoint():
+        return {"ok": True, "token": csrf_token, "runtime_id": runtime_id}
+
+    @app.get("/logout")
+    async def logout_endpoint():
+        return {"ok": True}
+
+    @app.post("/banners")
+    async def banners(payload: dict | None = None):
+        return {"ok": True, "banners": []}
+
+    @app.post("/message_async")
+    async def message_async(request: Request):
+        payload = {}
+        message = ""
+        context_id = None
+        message_id = None
+
+        content_type = request.headers.get("content-type", "")
+        if "multipart/form-data" in content_type:
+            form = await request.form()
+            message = str(form.get("text", "") or "")
+            context_id = str(form.get("context", "") or "") or None
+            message_id = str(form.get("message_id", "") or "") or None
+        else:
+            payload = await request.json()
+            message = str(payload.get("text", "") or "")
+            context_id = payload.get("context")
+            message_id = payload.get("message_id")
+
+        ctx = _ensure_context(context_id)
+        ctx["running"] = True
+        _push_log(ctx, "user", message, kvps={"message_id": message_id} if message_id else {})
+
+        try:
+            response = await agent.monologue(message)
+        except Exception as e:
+            response = f"Error: {e}"
+        finally:
+            ctx["running"] = False
+
+        _push_log(ctx, "response", str(response), kvps={"finished": True})
+        return {"ok": True, "context": ctx["id"]}
+
+    @app.post("/poll")
+    async def poll(payload: dict):
+        return _build_poll_snapshot(
+            context_id=payload.get("context"),
+            log_from=payload.get("log_from", 0),
+            notifications_from=payload.get("notifications_from", 0),
+        )
+
+    @app.post("/chat_create")
+    async def chat_create(payload: dict):
+        new_ctx = _make_context()
+        contexts[new_ctx["id"]] = new_ctx
+        return {"ok": True, "ctxid": new_ctx["id"]}
+
+    @app.post("/chat_remove")
+    async def chat_remove(payload: dict):
+        ctx_id = payload.get("context")
+        if ctx_id in contexts:
+            del contexts[ctx_id]
+        if not contexts:
+            _ensure_context(None)
+        return {"ok": True}
+
+    @app.post("/chat_reset")
+    async def chat_reset(payload: dict):
+        ctx = _ensure_context(payload.get("context"))
+        ctx["logs"] = []
+        ctx["log_version"] = 0
+        ctx["next_no"] = 1
+        ctx["log_guid"] = uuid.uuid4().hex
+        return {"ok": True}
+
+    @app.post("/chat_export")
+    async def chat_export(payload: dict):
+        ctx = _ensure_context(payload.get("ctxid"))
+        return {"ok": True, "ctxid": ctx["id"], "content": json.dumps(ctx, indent=2)}
+
+    @app.post("/chat_load")
+    async def chat_load(payload: dict):
+        loaded = []
+        for raw in payload.get("chats", []):
+            try:
+                data = json.loads(raw)
+                new_ctx = _make_context(name=data.get("name") or "Imported chat")
+                logs = data.get("logs", [])
+                if isinstance(logs, list):
+                    new_ctx["logs"] = logs
+                    new_ctx["log_version"] = len(logs)
+                    new_ctx["next_no"] = len(logs) + 1
+                contexts[new_ctx["id"]] = new_ctx
+                loaded.append(new_ctx["id"])
+            except Exception:
+                continue
+        return {"ok": True, "ctxids": loaded}
+
+    @app.post("/pause")
+    async def pause(payload: dict):
+        ctx = _ensure_context(payload.get("context"))
+        ctx["paused"] = bool(payload.get("paused", False))
+        return {"ok": True, "paused": ctx["paused"]}
+
+    @app.post("/nudge")
+    async def nudge(payload: dict):
+        _add_notification("Agent nudged", "info", "Nudge")
+        return {"ok": True}
+
+    @app.post("/upload")
+    async def upload(request: Request):
+        form = await request.form()
+        files = []
+        for key in form.keys():
+            values = form.getlist(key)
+            for value in values:
+                name = getattr(value, "filename", None)
+                if name:
+                    files.append(name)
+        return {"ok": True, "filenames": files}
+
+    @app.post("/message_queue_add")
+    async def message_queue_add(payload: dict):
+        ctx = _ensure_context(payload.get("context"))
+        item = {
+            "id": payload.get("item_id") or uuid.uuid4().hex,
+            "text": payload.get("text", ""),
+            "attachments": payload.get("attachments", []),
+        }
+        ctx["message_queue"].append(item)
+        return {"ok": True, "item": item}
+
+    @app.post("/message_queue_remove")
+    async def message_queue_remove(payload: dict):
+        ctx = _ensure_context(payload.get("context"))
+        item_id = payload.get("item_id")
+        if item_id:
+            ctx["message_queue"] = [i for i in ctx["message_queue"] if i.get("id") != item_id]
+        else:
+            ctx["message_queue"] = []
+        return {"ok": True}
+
+    @app.post("/message_queue_send")
+    async def message_queue_send(payload: dict):
+        ctx = _ensure_context(payload.get("context"))
+        send_all = bool(payload.get("send_all"))
+        item_id = payload.get("item_id")
+        to_send = []
+        if send_all:
+            to_send = list(ctx["message_queue"])
+            ctx["message_queue"] = []
+        elif item_id:
+            for item in ctx["message_queue"]:
+                if item.get("id") == item_id:
+                    to_send = [item]
+            ctx["message_queue"] = [i for i in ctx["message_queue"] if i.get("id") != item_id]
+        for item in to_send:
+            _push_log(ctx, "user", item.get("text", ""), kvps={"queued": True})
+        return {"ok": True}
+
+    @app.post("/notification_create")
+    async def notification_create(payload: dict):
+        _add_notification(
+            message=payload.get("message", ""),
+            ntype=payload.get("type", "info"),
+            title=payload.get("title", "Notification"),
+            priority=int(payload.get("priority", 10) or 10),
+            group=payload.get("group", ""),
+        )
+        return {"ok": True}
+
+    @app.post("/notifications_mark_read")
+    async def notifications_mark_read(payload: dict):
+        ids = set(payload.get("notification_ids", []) or [])
+        mark_all = bool(payload.get("mark_all", False))
+        for notification in notifications:
+            if mark_all or notification.get("id") in ids:
+                notification["read"] = True
+        return {"ok": True}
+
+    @app.post("/notifications_clear")
+    async def notifications_clear(payload: dict | None = None):
+        notifications.clear()
+        return {"ok": True}
+
+    @app.post("/settings_get")
+    async def settings_get(request: Request):
+        return {"ok": True, "settings": compat_settings, "additional": compat_additional}
+
+    @app.post("/settings_set")
+    async def settings_set(payload: dict):
+        incoming = payload.get("settings", {}) if isinstance(payload, dict) else {}
+        if isinstance(incoming, dict):
+            compat_settings.update(incoming)
+        return {"ok": True, "settings": compat_settings, "additional": compat_additional}
+
+    @app.post("/settings_workdir_file_structure")
+    async def settings_workdir_file_structure(payload: dict):
+        workdir = Path(payload.get("workdir_path") or Path.cwd())
+        max_depth = int(payload.get("workdir_max_depth") or 2)
+        if not workdir.exists():
+            return {"ok": False, "data": f"Path does not exist: {workdir}"}
+
+        lines: list[str] = []
+
+        def walk(path: Path, depth: int, prefix: str = ""):
+            if depth > max_depth:
+                return
+            try:
+                entries = sorted(path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
+            except Exception:
+                return
+            for item in entries[:50]:
+                lines.append(f"{prefix}{item.name}{'/' if item.is_dir() else ''}")
+                if item.is_dir():
+                    walk(item, depth + 1, prefix + "  ")
+
+        walk(workdir, 0)
+        return {"ok": True, "data": "\n".join(lines)}
+
+    @app.post("/projects")
+    async def projects(payload: dict):
+        action = payload.get("action", "list") if isinstance(payload, dict) else "list"
+        if action in {"list", "list_options"}:
+            return {"ok": True, "data": []}
+        return {"ok": True, "data": None}
+
+    @app.post("/agents")
+    async def agents(payload: dict):
+        return {"ok": True, "data": [{"key": "default", "label": "Default", "name": "default"}]}
+
+    @app.post("/skills")
+    async def skills(payload: dict):
+        action = payload.get("action", "list") if isinstance(payload, dict) else "list"
+        if action == "list":
+            return {"ok": True, "data": []}
+        return {"ok": True}
+
+    @app.post("/skills_import_preview")
+    async def skills_import_preview(request: Request):
+        return {"ok": True, "data": {"items": []}}
+
+    @app.post("/skills_import")
+    async def skills_import(request: Request):
+        return {"ok": True, "data": {"imported": 0}}
+
+    @app.post("/memory_dashboard")
+    async def memory_dashboard(payload: dict | None = None):
+        return {"ok": True, "data": {"rows": [], "summary": {}}}
+
+    @app.post("/mcp_servers_status")
+    async def mcp_servers_status(payload: dict | None = None):
+        if hasattr(agent, "mcp_client") and agent.mcp_client:
+            status = agent.mcp_client.get_status()
+            return {"ok": True, "data": status}
+        return {"ok": True, "data": {"servers": {}}}
+
+    @app.post("/mcp_servers_apply")
+    async def mcp_servers_apply(payload: dict):
+        return {"ok": True}
+
+    @app.post("/mcp_server_get_detail")
+    async def mcp_server_get_detail(payload: dict):
+        return {"ok": True, "data": {}}
+
+    @app.post("/mcp_server_get_log")
+    async def mcp_server_get_log(payload: dict):
+        return {"ok": True, "data": []}
+
+    @app.post("/tunnel_proxy")
+    async def tunnel_proxy(payload: dict):
+        action = (payload or {}).get("action", "")
+        if action == "status":
+            return {"success": True, "status": "stopped", "notifications": []}
+        if action == "create":
+            return {
+                "success": True,
+                "tunnel_url": "https://example-tunnel.invalid",
+                "notifications": [{"message": "Tunnel mode not configured in iTaK backend; using placeholder URL.", "type": "warning"}],
+            }
+        return {"success": True, "notifications": []}
+
+    @app.post("/scheduler_tasks_list")
+    async def scheduler_tasks_list(payload: dict | None = None):
+        return {"ok": True, "tasks": []}
+
+    @app.post("/scheduler_task_create")
+    async def scheduler_task_create(payload: dict):
+        return {"ok": True}
+
+    @app.post("/scheduler_task_update")
+    async def scheduler_task_update(payload: dict):
+        return {"ok": True}
+
+    @app.post("/scheduler_task_run")
+    async def scheduler_task_run(payload: dict):
+        return {"ok": True}
+
+    @app.post("/scheduler_task_delete")
+    async def scheduler_task_delete(payload: dict):
+        return {"ok": True}
 
     @app.get("/api/health")
     async def health():
@@ -750,6 +1289,14 @@ def create_app(agent: "Agent"):
             except Exception:
                 ws_clients.remove(ws)
 
+        if sio_server:
+            try:
+                snapshot = _build_poll_snapshot(context_id=None, log_from=0, notifications_from=0)
+                envelope = _next_sio_envelope("state_push", {"snapshot": snapshot})
+                await sio_server.emit("state_push", envelope, namespace="/state_sync")
+            except Exception:
+                pass
+
     if hasattr(agent, "progress") and agent.progress:
         agent.progress.register_callback(ws_broadcast)
 
@@ -758,6 +1305,74 @@ def create_app(agent: "Agent"):
     static_dir = Path(__file__).parent / "static"
     if static_dir.exists():
         app.mount("/", StaticFiles(directory=str(static_dir), html=True))
+
+    try:
+        import socketio
+
+        sio_server = socketio.AsyncServer(
+            async_mode="asgi",
+            cors_allowed_origins="*",
+            logger=False,
+            engineio_logger=False,
+        )
+
+        @sio_server.on("connect", namespace="/state_sync")
+        async def state_sync_connect(sid, environ, auth):
+            provided_csrf = ""
+            if isinstance(auth, dict):
+                provided_csrf = str(auth.get("csrf_token", "") or "")
+            if provided_csrf and provided_csrf != csrf_token:
+                return False
+            sio_sid_seqbase[sid] = sio_sequence
+            return True
+
+        @sio_server.on("disconnect", namespace="/state_sync")
+        async def state_sync_disconnect(sid):
+            sio_sid_seqbase.pop(sid, None)
+
+        @sio_server.on("state_request", namespace="/state_sync")
+        async def state_sync_request(sid, payload):
+            payload = payload or {}
+            request_data = payload.get("data", {}) if isinstance(payload, dict) else {}
+            if not isinstance(request_data, dict):
+                request_data = {}
+            correlation_id = payload.get("correlationId") if isinstance(payload, dict) else None
+            context_id = request_data.get("context")
+            log_from = request_data.get("log_from", 0)
+            notifications_from = request_data.get("notifications_from", 0)
+
+            snapshot = _build_poll_snapshot(
+                context_id=context_id,
+                log_from=log_from,
+                notifications_from=notifications_from,
+            )
+
+            seq_base = sio_sid_seqbase.get(sid, sio_sequence)
+            sio_sid_seqbase[sid] = sio_sequence
+            return {
+                "correlationId": correlation_id,
+                "results": [{
+                    "ok": True,
+                    "data": {
+                        "runtime_epoch": sio_runtime_epoch,
+                        "seq_base": seq_base,
+                        "snapshot": snapshot,
+                    },
+                }],
+            }
+
+        @sio_server.on("connect", namespace="/")
+        async def default_connect(sid, environ, auth):
+            return True
+
+        wrapped_app = socketio.ASGIApp(
+            sio_server,
+            other_asgi_app=app,
+            socketio_path="socket.io",
+        )
+        return wrapped_app
+    except Exception as e:
+        logger.warning(f"Socket.IO compatibility disabled: {e}")
 
     return app
 

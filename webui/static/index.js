@@ -638,6 +638,7 @@ async function startPolling() {
 
       const shouldPoll =
         syncMode === "DEGRADED" ||
+        syncMode === "DISCONNECTED" ||
         (missingSyncSinceMs != null && Date.now() - missingSyncSinceMs > 2000);
       if (!shouldPoll) {
         setTimeout(_doPoll.bind(this), nextInterval);
