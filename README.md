@@ -216,6 +216,14 @@ cd iTaK
 ### 2. Install Dependencies
 
 ```bash
+python install.py
+```
+
+The installer detects your OS, checks/install prerequisites, asks whether you already have databases/SearXNG, and auto-starts missing services in Docker.
+
+Or install manually:
+
+```bash
 python -m venv venv
 # Windows
 venv\Scripts\activate
