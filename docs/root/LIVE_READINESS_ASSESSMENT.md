@@ -179,8 +179,8 @@ These enhance functionality but aren't required:
 
 6. **✅ Deployment Ready**
    - Dockerfile provided
-   - install/docker/docker-compose.yml for full stack
-   - Example configs (install/config/.env.example, install/config/config.json.example)
+   - docker-compose.yml for full stack
+   - Example configs (.env.example, install/config/config.json.example)
    - Non-root user in Docker for security
 
 7. **✅ Feature-Rich**
@@ -199,7 +199,7 @@ These enhance functionality but aren't required:
 ### Phase 1: Environment Setup (15 min)
 
 - [ ] Install Python dependencies: `pip install -r install/requirements/requirements.txt`
-- [ ] Copy config files: `cp install/config/config.json.example config.json && cp install/config/.env.example .env`
+- [ ] Copy config files: `cp install/config/config.json.example config.json && cp .env.example .env`
 - [ ] Add at least one LLM API key to `.env`
 - [ ] Generate and set WebUI auth token in `config.json`
 - [ ] Run `python -m app.main --doctor` and verify all critical checks pass
@@ -278,7 +278,7 @@ pip install -r install/requirements/requirements.txt
 
 # 2. Configure
 cp install/config/config.json.example config.json
-cp install/config/.env.example .env
+cp .env.example .env
 echo "GOOGLE_API_KEY=your_actual_key_here" >> .env
 
 # 3. Test

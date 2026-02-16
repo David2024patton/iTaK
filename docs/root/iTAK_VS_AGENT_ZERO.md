@@ -175,11 +175,11 @@ git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
 
 # Step 2: Configure .env file with API keys
-cp install/config/.env.example .env
+cp .env.example .env
 nano .env  # Add GEMINI_API_KEY=your_key
 
 # Step 3: Start with docker-compose
-docker compose --project-directory . -f install/docker/docker-compose.yml up -d
+docker compose up -d
 ```
 
 **User Experience:**
@@ -208,7 +208,7 @@ cd iTaK
 pip install -r install/requirements/requirements.txt
 
 # Step 3: Configure files
-cp install/config/.env.example .env
+cp .env.example .env
 cp install/config/config.json.example config.json
 nano .env  # Add API keys
 
@@ -345,14 +345,14 @@ docker run -p 50001:80 agent0ai/agent-zero
 
 ```bash
 # Docker Option
-docker compose --project-directory . -f install/docker/docker-compose.yml up -d
+docker compose up -d
 # Visit http://localhost:8000
 
 # OR Python Option (more control)
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
 pip install -r install/requirements/requirements.txt
-cp install/config/.env.example .env  # Add API keys
+cp .env.example .env  # Add API keys
 python -m app.main
 ```
 
@@ -433,7 +433,7 @@ iTaK equivalent:
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
-docker compose --project-directory . -f install/docker/docker-compose.yml up -d
+docker compose up -d
 # OR: pip install -r install/requirements/requirements.txt && python -m app.main --webui
 ```
 

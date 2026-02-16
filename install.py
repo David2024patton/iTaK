@@ -248,8 +248,8 @@ def setup_configuration() -> bool:
     
     success = True
     
-    # Copy install/config/.env.example to .env if it doesn't exist
-    env_example = Path("install/config/.env.example")
+    # Copy .env.example to .env if it doesn't exist
+    env_example = Path(".env.example")
     env_file = Path(".env")
     
     if env_example.exists():
@@ -265,6 +265,12 @@ def setup_configuration() -> bool:
             print_info(f"{env_file} already exists, skipping")
     else:
         print_warning(f"{env_example} not found")
+
+    if env_file.exists():
+        if ensure_env_ports(env_file):
+            print_success("Ensured random host ports in .env")
+        else:
+            print_warning("Could not ensure random host ports in .env")
     
     # Copy install/config/config.json.example to config.json if it doesn't exist
     config_example = Path("install/config/config.json.example")
@@ -296,6 +302,65 @@ def ensure_webui_auth_token(config_path: Path) -> bool:
     """Generate and persist a unique WebUI auth token when missing/blank."""
     try:
         data = json.loads(config_path.read_text(encoding="utf-8"))
+    except Exception:
+        return False
+
+
+def ensure_env_ports(env_path: Path) -> bool:
+    """Ensure .env has random 5-digit host ports when missing/blank."""
+    try:
+        lines = env_path.read_text(encoding="utf-8").splitlines()
+    except Exception:
+        return False
+
+    keys = [
+        "WEBUI_PORT",
+        "NEO4J_HTTP_PORT",
+        "NEO4J_BOLT_PORT",
+        "WEAVIATE_PORT",
+        "SEARXNG_PORT",
+    ]
+
+    existing = {}
+    for line in lines:
+        if not line or line.lstrip().startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        existing[key.strip()] = value.strip()
+
+    randomize = existing.get("ITAK_RANDOM_PORTS", "").strip().lower() in {"1", "true", "yes"}
+
+    used = set()
+    for key in keys:
+        value = existing.get(key, "").strip()
+        if value.isdigit():
+            used.add(int(value))
+
+    def random_port() -> int:
+        for _ in range(1000):
+            port = secrets.randbelow(55535) + 10000
+            if port not in used:
+                used.add(port)
+                return port
+        return secrets.randbelow(55535) + 10000
+
+    updated = []
+    for line in lines:
+        if "=" not in line or line.lstrip().startswith("#"):
+            updated.append(line)
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+        if key == "ITAK_RANDOM_PORTS" and randomize:
+            value = "false"
+        if key in keys and (randomize or not value or value == "0"):
+            value = str(random_port())
+        updated.append(f"{key}={value}")
+
+    try:
+        env_path.write_text("\n".join(updated) + "\n", encoding="utf-8")
+        return True
     except Exception:
         return False
 

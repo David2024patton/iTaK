@@ -30,10 +30,12 @@ COPY . .
 # Create data directories
 RUN mkdir -p data/db data/logs
 
+# Ensure entrypoint is executable
+RUN chmod +x /app/install/docker/entrypoint.sh
+
 # Non-root user for security
 RUN useradd -m -s /bin/bash itak && chown -R itak:itak /app
 USER itak
 
 # Default entry point
-ENTRYPOINT ["python", "-m", "app.main"]
-CMD ["--adapter", "cli"]
+ENTRYPOINT ["/app/install/docker/entrypoint.sh"]

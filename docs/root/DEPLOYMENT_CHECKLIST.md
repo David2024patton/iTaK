@@ -46,7 +46,7 @@ The detailed checklist starts below.
 
    ```bash
    cp install/config/config.json.example config.json
-   cp install/config/.env.example .env
+  cp .env.example .env
    ```
 
 3. Add at least one LLM key in `.env`
@@ -103,7 +103,7 @@ The detailed checklist starts below.
 3. Configure limits and service stack
 
    ```bash
-   docker compose --project-directory . -f install/docker/docker-compose.yml up -d
+  docker compose up -d
    ```
 
 - [ ] Rate limits reviewed for team usage

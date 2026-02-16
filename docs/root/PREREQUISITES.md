@@ -400,9 +400,9 @@ installers/quick-install.bat   # Windows
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
-cp install/config/.env.example .env
+cp .env.example .env
 # Edit .env with your API keys
-docker compose --project-directory . -f install/docker/docker-compose.yml up -d
+docker compose up -d
 ```
 
 ### Option 3: Python Install
@@ -411,7 +411,7 @@ docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
 pip install -r install/requirements/requirements.txt
-cp install/config/.env.example .env
+cp .env.example .env
 # Edit .env with your API keys
 python -m app.main --webui
 ```

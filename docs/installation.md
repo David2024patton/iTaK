@@ -255,7 +255,7 @@ playwright install chromium
 **macOS / Linux / WSL:**
 
 ```bash
-cp install/config/.env.example .env
+cp .env.example .env
 cp install/config/config.json.example config.json
 ```
 
@@ -369,8 +369,170 @@ For containerized deployment:
 ### Using Docker Compose
 
 ```bash
-docker compose --project-directory . -f install/docker/docker-compose.yml up -d
+docker compose up -d
 ```
+
+### Hosted Platforms (Pick Yours)
+
+Open the dropdown for your platform and follow the exact UI fields.
+
+<details>
+<summary>Dokploy (Docker Compose app)</summary>
+
+Steps:
+1. Apps -> New App -> Docker Compose.
+2. Connect GitHub repo and branch.
+3. Compose file: [docker-compose.yml](docker-compose.yml); working directory: repo root.
+4. Optional: manifest [dokploy.yml](dokploy.yml).
+5. Environment: paste values from [.env.example](.env.example).
+6. Expose `WEBUI_PORT` to your domain and deploy.
+</details>
+
+<details>
+<summary>Coolify (Docker Compose resource)</summary>
+
+Steps:
+1. New Resource -> Docker Compose.
+2. Connect repo and select branch.
+3. Base directory: repo root; compose file: [docker-compose.yml](docker-compose.yml).
+4. Environment: paste values from [.env.example](.env.example).
+5. Add domain mapping to `WEBUI_PORT` and deploy.
+</details>
+
+<details>
+<summary>Fly.io / Render / Railway (single-container mode)</summary>
+
+These platforms do not run a full multi-service compose stack by default.
+Deploy the app container and use managed services for Neo4j/Weaviate/SearXNG:
+
+Steps:
+1. Create a new app/service from the repo.
+2. Build path: [install/docker/Dockerfile](install/docker/Dockerfile).
+3. Environment: paste values from [.env.example](.env.example).
+4. Set `NEO4J_URI`, `WEAVIATE_URL`, and `SEARXNG_URL` to managed endpoints.
+5. Set service port to `48920` or set `ITAK_SET_webui__port=8080`.
+</details>
+
+<details>
+<summary>CapRover (Docker Compose or Dockerfile)</summary>
+
+Steps:
+1. Apps -> Create New App.
+2. Deploy method: Dockerfile or Docker Compose.
+3. If Compose: use [docker-compose.yml](docker-compose.yml) at repo root.
+4. Environment: paste values from [.env.example](.env.example).
+5. Expose `WEBUI_PORT` in HTTP settings and deploy.
+</details>
+
+<details>
+<summary>Portainer (Stack)</summary>
+
+Steps:
+1. Stacks -> Add Stack.
+2. Paste or upload [docker-compose.yml](docker-compose.yml).
+3. Environment: paste values from [.env.example](.env.example).
+4. Deploy the stack and map `WEBUI_PORT` to your host.
+</details>
+
+<details>
+<summary>Dokku (single-container mode)</summary>
+
+Steps:
+1. Create app in Dokku.
+2. Enable Dockerfile deploy using [install/docker/Dockerfile](install/docker/Dockerfile).
+3. Set env vars from [.env.example](.env.example).
+4. Use managed services for Neo4j/Weaviate/SearXNG.
+5. Set `ITAK_SET_webui__port` if you need a custom port.
+</details>
+
+<details>
+<summary>Heroku (container)</summary>
+
+Steps:
+1. Create app -> Deploy -> Container Registry.
+2. Build from [install/docker/Dockerfile](install/docker/Dockerfile).
+3. Config Vars: paste values from [.env.example](.env.example).
+4. Set `ITAK_SET_webui__port=$PORT`.
+5. Deploy and open the app URL.
+</details>
+
+<details>
+<summary>DigitalOcean App Platform (container)</summary>
+
+Steps:
+1. Create app -> Web Service from repo.
+2. Build from [install/docker/Dockerfile](install/docker/Dockerfile).
+3. HTTP port: `48920` (or set `ITAK_SET_webui__port=8080` and use `8080`).
+4. Environment: paste values from [.env.example](.env.example).
+5. Deploy and open the app URL.
+</details>
+
+<details>
+<summary>AWS ECS/Fargate (container)</summary>
+
+Steps:
+1. Build/push image to ECR.
+2. Create task definition (Fargate) with port `48920`.
+3. Add env vars from [.env.example](.env.example).
+4. Create service with load balancer target `48920`.
+5. Deploy and open the service URL.
+</details>
+
+<details>
+<summary>GCP Cloud Run (container)</summary>
+
+Steps:
+1. Build/push image to Artifact Registry.
+2. Create Cloud Run service with port `48920`.
+3. Add env vars from [.env.example](.env.example).
+4. Allow unauthenticated if public.
+5. Deploy and open the service URL.
+</details>
+
+<details>
+<summary>Azure Container Apps (container)</summary>
+
+Steps:
+1. Create Container App from your registry image.
+2. Enable External ingress; target port `48920`.
+3. Add env vars from [.env.example](.env.example).
+4. Deploy and open the app URL.
+</details>
+
+<details>
+<summary>Vercel / Netlify (not supported)</summary>
+
+Steps:
+1. Not supported for full stack.
+2. Use Dokploy/Coolify or a container platform instead.
+</details>
+
+### Port + Adapter Notes
+
+- Random 5-digit ports: keep `ITAK_RANDOM_PORTS=true` in your env and run
+   `python install.py --skip-deps --minimal` once before deploying, or set
+   `WEBUI_PORT`, `NEO4J_HTTP_PORT`, `NEO4J_BOLT_PORT`, `WEAVIATE_PORT`, and
+   `SEARXNG_PORT` directly in the platform UI.
+- Choose adapter: set `ITAK_ARGS` (example: `--adapter discord --webui`).
+
+### Security Note
+
+We do not run Docker-in-Docker or mount the host Docker socket inside the app
+container. Use Docker Compose for the full stack to avoid elevated host access.
+
+### Common Pitfalls
+
+- Wrong working directory (must be repo root)
+- `.env` not created from [.env.example](.env.example)
+- `WEBUI_PORT` not exposed to your domain
+
+### Quick Validate
+
+```bash
+docker compose ps
+```
+
+Open: `http://<host>:<WEBUI_PORT>`
 
 ### Using Dockerfile
 

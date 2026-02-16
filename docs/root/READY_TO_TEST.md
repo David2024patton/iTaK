@@ -53,7 +53,7 @@ pip install -r install/requirements/requirements-ci.txt
 ```bash
 # Create config files from examples
 cp install/config/config.json.example config.json
-cp install/config/.env.example .env
+cp .env.example .env
 
 # Edit .env and add at least ONE API key:
 # GOOGLE_API_KEY=your_key_here

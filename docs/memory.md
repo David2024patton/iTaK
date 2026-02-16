@@ -332,7 +332,7 @@ memu-server:
 Then:
 
 ```bash
-docker compose --project-directory . -f install/docker/docker-compose.yml up -d memu-server
+docker compose up -d memu-server
 ```
 
 ### Cloud Mode (Optional)
@@ -397,7 +397,7 @@ pytest tests/test_memu.py
 Run integration tests (requires memu-server):
 
 ```bash
-docker compose --project-directory . -f install/docker/docker-compose.yml up -d memu-server
+docker compose up -d memu-server
 pytest tests/test_memu.py -m integration
 ```
 

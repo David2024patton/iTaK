@@ -200,9 +200,10 @@ iTaK/
 ├── config.json                # Configuration (never committed)
 ├── install/config/config.json.example  # Template configuration
 ├── .env                       # Secrets (never committed)
-├── install/config/.env.example # Template secrets
+├── .env.example               # Template secrets (root)
+├── dokploy.yml                # Dokploy deployment manifest
 ├── install/docker/Dockerfile  # Container build
-├── install/docker/docker-compose.yml  # Full stack deployment
+├── docker-compose.yml         # Full stack deployment (root)
 ├── install/requirements/requirements.txt  # Python dependencies
 │
 ├── core/                      # The brain

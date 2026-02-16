@@ -1,0 +1,11 @@
+# Dokploy deployment manifest for iTaK (full stack)
+# This file is intended for Dokploy's Docker Compose app type.
+
+version: "1"
+applications:
+  itak:
+    name: itak
+    type: docker-compose
+    compose_file: docker-compose.yml
+    env_file: .env
+    restart: unless-stopped

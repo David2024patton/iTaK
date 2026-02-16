@@ -77,7 +77,7 @@ python install.py
 
 ```bash
 # Copy the example file
-cp install/config/.env.example .env
+cp .env.example .env
 
 # Edit .env and add your API key
 # NEVER commit this file to git!

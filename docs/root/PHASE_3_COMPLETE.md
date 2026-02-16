@@ -298,7 +298,7 @@ pip install -r install/requirements/requirements.txt
 
 # 2. Configure
 cp install/config/config.json.example config.json
-cp install/config/.env.example .env
+cp .env.example .env
 # Edit .env with your API key
 
 # 3. Run diagnostics

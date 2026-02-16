@@ -334,7 +334,7 @@ python -m app.main --adapter discord --webui
 
 ```bash
 # Run with everything enabled
-docker compose --project-directory . -f install/docker/docker-compose.yml up -d  # Starts Neo4j, Weaviate, iTaK, WebUI
+docker compose up -d  # Starts Neo4j, Weaviate, iTaK, WebUI
 # Access dashboard: http://localhost:48920
 # All 3 repos + Neo4j working together
 ```
