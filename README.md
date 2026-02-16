@@ -220,6 +220,12 @@ python -m app.main --webui
 
 **New to iTaK?** Start here:
 
+## 🧹 Markdown Lint Enforcement
+
+- Run markdown lint manually: `tools/check_markdown_lint.sh`
+- Install local pre-commit enforcement: `tools/install_git_hooks.sh`
+- CI also enforces markdown lint on every push and pull request.
+
 👉 **[INSTALLATION GUIDE](docs/root/INSTALLATION_GUIDE.md)** - Complete step-by-step walkthrough for new users:
 
 - 5-step installation (5-10 minutes)
