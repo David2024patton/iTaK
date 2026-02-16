@@ -1,5 +1,23 @@
 # iTaK - Master Gameplan
 
+## At a Glance
+- Audience: Users, operators, developers, and contributors working with iTaK.
+- Scope: This page explains `iTaK - Master Gameplan`.
+- Last reviewed: 2026-02-16.
+
+## Quick Start
+- Docs hub: [../WIKI.md](../WIKI.md)
+- Beginner path: [../NOOBS_FIRST_DAY.md](../NOOBS_FIRST_DAY.md)
+- AI-oriented project map: [../AI_CONTEXT.md](../AI_CONTEXT.md)
+
+## Deep Dive
+The detailed content for this topic starts below.
+
+## AI Notes
+- Use explicit file paths and exact command examples from this page when automating tasks.
+- Treat scale/compliance statements as environment-dependent unless paired with test or audit evidence.
+
+
 > **The Best of All Worlds:** A personal AI agent that combines the elegance of OpenClaw's memory, the power of Agent Zero's architecture, the simplicity of Nanobot, and the security of building it yourself.
 
 ---
