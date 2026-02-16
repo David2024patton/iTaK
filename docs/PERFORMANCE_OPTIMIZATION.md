@@ -1,7 +1,7 @@
 # iTaK Performance Optimization Summary
 
 ## At a Glance
-- Audience: Users, operators, developers, and contributors working with iTaK.
+- Audience: Developers and operators tuning performance, throughput, and resource usage.
 - Scope: This page explains `iTaK Performance Optimization Summary`.
 - Last reviewed: 2026-02-16.
 
@@ -14,8 +14,8 @@
 The detailed content for this topic starts below.
 
 ## AI Notes
-- Use explicit file paths and exact command examples from this page when automating tasks.
-- Treat scale/compliance statements as environment-dependent unless paired with test or audit evidence.
+- Preserve benchmark context (hardware, load shape, sample size) when summarizing performance outcomes.
+- Treat improvement percentages as scenario-dependent unless reproduced with current measurements.
 
 
 This document summarizes the performance improvements made to the iTaK codebase to address slow and inefficient code patterns.

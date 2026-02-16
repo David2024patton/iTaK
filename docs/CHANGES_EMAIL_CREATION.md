@@ -1,7 +1,7 @@
 # Summary: Email Account Creation Feature Added
 
 ## At a Glance
-- Audience: Users, operators, developers, and contributors working with iTaK.
+- Audience: Maintainers reviewing implementation details for email account creation support.
 - Scope: This page explains `Summary: Email Account Creation Feature Added`.
 - Last reviewed: 2026-02-16.
 
@@ -14,8 +14,8 @@
 The detailed content for this topic starts below.
 
 ## AI Notes
-- Use explicit file paths and exact command examples from this page when automating tasks.
-- Treat scale/compliance statements as environment-dependent unless paired with test or audit evidence.
+- Keep request/response examples aligned with current tool schema when generating migration guidance.
+- Distinguish shipped behavior from planned follow-ups to avoid overstating feature completeness.
 
 
 ## What Was Requested

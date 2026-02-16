@@ -1,7 +1,7 @@
 # iTaK Integration Design
 
 ## At a Glance
-- Audience: Users, operators, developers, and contributors working with iTaK.
+- Audience: Developers integrating channels, APIs, and system architecture components.
 - Scope: This page explains `iTaK Integration Design`.
 - Last reviewed: 2026-02-16.
 
@@ -14,8 +14,8 @@
 The detailed content for this topic starts below.
 
 ## AI Notes
-- Use explicit file paths and exact command examples from this page when automating tasks.
-- Treat scale/compliance statements as environment-dependent unless paired with test or audit evidence.
+- Use explicit endpoint names, adapter flags, and file paths for automation tasks.
+- Note root endpoints vs `/api/*` endpoints to avoid integration mismatches.
 
 
 ## Overview

@@ -1,7 +1,7 @@
 # iTaK vs Agent-Zero: Feature Comparison
 
 ## At a Glance
-- Audience: Users, operators, developers, and contributors working with iTaK.
+- Audience: Evaluators comparing iTaK with other agent frameworks for fit and tradeoffs.
 - Scope: This page explains `iTaK vs Agent-Zero: Feature Comparison`.
 - Last reviewed: 2026-02-16.
 
@@ -14,8 +14,8 @@
 The detailed content for this topic starts below.
 
 ## AI Notes
-- Use explicit file paths and exact command examples from this page when automating tasks.
-- Treat scale/compliance statements as environment-dependent unless paired with test or audit evidence.
+- Separate implemented features from externally certified/audited claims.
+- Mark scale/compliance statements as environment-dependent unless verified.
 
 
 > **TL;DR:** Both are powerful agentic frameworks. **Agent-Zero** is great for getting started quickly with Docker. **iTaK** is stronger for deployments needing security controls, multi-channel access, and advanced orchestration.

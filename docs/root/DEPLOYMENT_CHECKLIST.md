@@ -1,7 +1,7 @@
 # iTaK Deployment Checklist
 
 ## At a Glance
-- Audience: Users, operators, developers, and contributors working with iTaK.
+- Audience: Security-conscious operators and developers implementing hardening controls.
 - Scope: This page explains `iTaK Deployment Checklist`.
 - Last reviewed: 2026-02-16.
 
@@ -14,8 +14,8 @@
 The detailed content for this topic starts below.
 
 ## AI Notes
-- Use explicit file paths and exact command examples from this page when automating tasks.
-- Treat scale/compliance statements as environment-dependent unless paired with test or audit evidence.
+- Preserve threat-model assumptions and include guardrail checks in runbooks.
+- Avoid absolute compliance claims without independent audit evidence.
 
 
 Quick reference checklist for deploying iTaK to different environments.

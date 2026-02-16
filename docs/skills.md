@@ -1,7 +1,7 @@
 # Skills Reference
 
 ## At a Glance
-- Audience: Users, operators, developers, and contributors working with iTaK.
+- Audience: Developers and contributors authoring, maintaining, and mapping iTaK skills.
 - Scope: This page explains `Skills Reference`.
 - Last reviewed: 2026-02-16.
 
@@ -14,8 +14,8 @@
 The detailed content for this topic starts below.
 
 ## AI Notes
-- Use explicit file paths and exact command examples from this page when automating tasks.
-- Treat scale/compliance statements as environment-dependent unless paired with test or audit evidence.
+- Match skill intent to concrete tool capabilities before proposing workflow changes.
+- Keep filename-based discovery assumptions explicit when adding or renaming skills.
 
 
 > All skills that ship with iTaK, plus how to create your own.

@@ -1,7 +1,7 @@
 # Getting Started
 
 ## At a Glance
-- Audience: Users, operators, developers, and contributors working with iTaK.
+- Audience: New users, operators, and developers setting up iTaK environments.
 - Scope: This page explains `Getting Started`.
 - Last reviewed: 2026-02-16.
 
@@ -14,8 +14,8 @@
 The detailed content for this topic starts below.
 
 ## AI Notes
-- Use explicit file paths and exact command examples from this page when automating tasks.
-- Treat scale/compliance statements as environment-dependent unless paired with test or audit evidence.
+- Use commands as ordered steps; verify prerequisites before launching services.
+- Re-validate service ports and env/config files after any setup change.
 
 
 > From zero to running agent in 5 minutes.

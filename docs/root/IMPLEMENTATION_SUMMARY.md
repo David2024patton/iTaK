@@ -1,7 +1,7 @@
 # Implementation Summary: Skills and Tools Enhancement
 
 ## At a Glance
-- Audience: Users, operators, developers, and contributors working with iTaK.
+- Audience: Maintainers auditing completed scope for skills and tools enhancements.
 - Scope: This page explains `Implementation Summary: Skills and Tools Enhancement`.
 - Last reviewed: 2026-02-16.
 
@@ -14,8 +14,8 @@
 The detailed content for this topic starts below.
 
 ## AI Notes
-- Use explicit file paths and exact command examples from this page when automating tasks.
-- Treat scale/compliance statements as environment-dependent unless paired with test or audit evidence.
+- Keep implementation claims tied to concrete files and shipped tool/skill pairs.
+- Mark any unresolved gaps as backlog items rather than implied completion.
 
 
 ## Problem Statement Requirements

@@ -1,7 +1,7 @@
 # Email Account Creation Feature
 
 ## At a Glance
-- Audience: Users, operators, developers, and contributors working with iTaK.
+- Audience: Developers and operators configuring autonomous email account workflows.
 - Scope: This page explains `Email Account Creation Feature`.
 - Last reviewed: 2026-02-16.
 
@@ -14,8 +14,8 @@
 The detailed content for this topic starts below.
 
 ## AI Notes
-- Use explicit file paths and exact command examples from this page when automating tasks.
-- Treat scale/compliance statements as environment-dependent unless paired with test or audit evidence.
+- Preserve exact tool action names and payload shapes when generating email automation calls.
+- Verify provider limitations (temporary inbox lifecycle, rate limits) before production use.
 
 
 ## Overview

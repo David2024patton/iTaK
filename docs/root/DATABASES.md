@@ -1,7 +1,7 @@
 # iTaK Database Architecture
 
 ## At a Glance
-- Audience: Users, operators, developers, and contributors working with iTaK.
+- Audience: Operators and developers managing iTaK data stores and memory layers.
 - Scope: This page explains `iTaK Database Architecture`.
 - Last reviewed: 2026-02-16.
 
@@ -14,8 +14,8 @@
 The detailed content for this topic starts below.
 
 ## AI Notes
-- Use explicit file paths and exact command examples from this page when automating tasks.
-- Treat scale/compliance statements as environment-dependent unless paired with test or audit evidence.
+- Preserve database role boundaries (SQLite/Neo4j/Weaviate/SearXNG) when suggesting architecture changes.
+- Verify storage and backup procedures against deployed environment constraints before rollout.
 
 
 Complete guide to all databases used in iTaK.

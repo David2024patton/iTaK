@@ -1,7 +1,7 @@
 # 📘 Phase 4 Overview - Mission-Critical Testing
 
 ## At a Glance
-- Audience: Users, operators, developers, and contributors working with iTaK.
+- Audience: Developers and operators validating quality, readiness, and regression safety.
 - Scope: This page explains `📘 Phase 4 Overview - Mission-Critical Testing`.
 - Last reviewed: 2026-02-16.
 
@@ -14,8 +14,8 @@
 The detailed content for this topic starts below.
 
 ## AI Notes
-- Use explicit file paths and exact command examples from this page when automating tasks.
-- Treat scale/compliance statements as environment-dependent unless paired with test or audit evidence.
+- Prefer reproducible commands (`pytest`, smoke scripts) and capture exact outputs.
+- Treat numeric metrics as snapshots unless tied to current command output.
 
 
 **Target:** 80% Coverage  

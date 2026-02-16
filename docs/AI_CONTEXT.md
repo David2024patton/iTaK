@@ -1,7 +1,7 @@
 # iTaK AI Context
 
 ## At a Glance
-- Audience: Users, operators, developers, and contributors working with iTaK.
+- Audience: Beginners, operators, and AI agents navigating iTaK documentation quickly.
 - Scope: This page explains `iTaK AI Context`.
 - Last reviewed: 2026-02-16.
 
@@ -14,8 +14,8 @@
 The detailed content for this topic starts below.
 
 ## AI Notes
-- Use explicit file paths and exact command examples from this page when automating tasks.
-- Treat scale/compliance statements as environment-dependent unless paired with test or audit evidence.
+- Follow role-based paths first, then dive into module-specific deep references.
+- Keep links and commands current so both humans and automation can rely on them.
 
 
 > Structured project facts for AI agents and automation.

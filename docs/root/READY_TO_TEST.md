@@ -1,7 +1,7 @@
 # 🧪 Ready to Test - iTaK Quick Start
 
 ## At a Glance
-- Audience: Users, operators, developers, and contributors working with iTaK.
+- Audience: Developers and operators validating quality, readiness, and regression safety.
 - Scope: This page explains `🧪 Ready to Test - iTaK Quick Start`.
 - Last reviewed: 2026-02-16.
 
@@ -14,8 +14,8 @@
 The detailed content for this topic starts below.
 
 ## AI Notes
-- Use explicit file paths and exact command examples from this page when automating tasks.
-- Treat scale/compliance statements as environment-dependent unless paired with test or audit evidence.
+- Prefer reproducible commands (`pytest`, smoke scripts) and capture exact outputs.
+- Treat numeric metrics as snapshots unless tied to current command output.
 
 
 > **TL;DR:** Yes, iTaK is ready for development and functional testing. Follow the checklist below to validate your environment.
