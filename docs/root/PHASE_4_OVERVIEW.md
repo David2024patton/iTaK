@@ -1,4 +1,4 @@
-# 📘 Phase 4 Overview - Mission-Critical Testing
+# Phase 4 Overview - Mission-Critical Testing
 
 ## At a Glance
 - Audience: Developers and operators validating quality, readiness, and regression safety.

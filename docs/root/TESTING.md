@@ -1,4 +1,4 @@
-# 🧪 Testing Guide
+# Testing Guide
 
 ## At a Glance
 - Audience: Developers and operators validating quality, readiness, and regression safety.

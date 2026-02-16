@@ -1,4 +1,4 @@
-# 🚀 iTaK Installation Guide - New User Walkthrough
+# iTaK Installation Guide - New User Walkthrough
 
 ## At a Glance
 - Audience: New users, operators, and developers setting up iTaK environments.

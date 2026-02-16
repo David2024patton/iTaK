@@ -1,4 +1,4 @@
-# 🧪 Ready to Test - iTaK Quick Start
+# Ready to Test - iTaK Quick Start
 
 ## At a Glance
 - Audience: Developers and operators validating quality, readiness, and regression safety.

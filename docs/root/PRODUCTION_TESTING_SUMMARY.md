@@ -1,4 +1,4 @@
-# 🎯 iTaK Production Testing - Summary Report
+# iTaK Production Testing - Summary Report
 
 ## At a Glance
 - Audience: Developers and operators validating quality, readiness, and regression safety.
