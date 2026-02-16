@@ -1,7 +1,9 @@
 # Tool: email_tool
 
 ## When to Use
+
 Use this tool when the user needs to:
+
 - **Create a new email address** (free, temporary, no setup required)
 - Check emails from temporary email accounts
 - Send emails
@@ -11,6 +13,7 @@ Use this tool when the user needs to:
 - Set up automated responses
 
 ## Arguments
+
 | Arg | Type | Required | Description |
 |-----|------|----------|-------------|
 | action | str | Yes | Email action: create_account, check_temp_mail, send, read, list_folders |
@@ -26,10 +29,13 @@ Use this tool when the user needs to:
 ## Configuration Required
 
 ### For Creating Email Accounts
+
 **No configuration needed!** The `create_account` action uses the free Mail.tm API.
 
 ### For SMTP/IMAP (Existing Accounts)
+
 Only required for sending/reading from existing email providers:
+
 ```json
 {
     "email": {
@@ -52,6 +58,7 @@ Only required for sending/reading from existing email providers:
 ## Examples
 
 ### Example 1: Create a new email address (no config needed!)
+
 ```json
 {
     "tool_name": "email_tool",
@@ -62,6 +69,7 @@ Only required for sending/reading from existing email providers:
 ```
 
 ### Example 2: Create email with custom username
+
 ```json
 {
     "tool_name": "email_tool",
@@ -73,6 +81,7 @@ Only required for sending/reading from existing email providers:
 ```
 
 ### Example 3: Check temporary email inbox
+
 ```json
 {
     "tool_name": "email_tool",
@@ -86,6 +95,7 @@ Only required for sending/reading from existing email providers:
 ```
 
 ### Example 4: Send an email (requires SMTP config)
+
 ```json
 {
     "tool_name": "email_tool",
@@ -99,6 +109,7 @@ Only required for sending/reading from existing email providers:
 ```
 
 ### Example 5: Read recent emails (requires IMAP config)
+
 ```json
 {
     "tool_name": "email_tool",
@@ -111,6 +122,7 @@ Only required for sending/reading from existing email providers:
 ```
 
 ### Example 6: List folders (requires IMAP config)
+
 ```json
 {
     "tool_name": "email_tool",
@@ -121,6 +133,7 @@ Only required for sending/reading from existing email providers:
 ```
 
 ## Tips
+
 - **Create account first** - No configuration needed, just call create_account
 - Store the returned email address and password to check emails later
 - Temporary email accounts are free but not permanent (may be deleted)

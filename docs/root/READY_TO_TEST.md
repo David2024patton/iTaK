@@ -1,28 +1,32 @@
 # Ready to Test - iTaK Quick Start
 
 ## At a Glance
+
 - Audience: Developers and operators validating quality, readiness, and regression safety.
 - Scope: Define practical test flow, readiness criteria, and how to validate changes safely.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Run focused checks first (`pytest -q` or targeted smoke scripts).
 - Use [TESTING.md](TESTING.md) for canonical test commands and order.
 - Capture outputs alongside the environment context for reproducibility.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Prefer reproducible commands (`pytest`, smoke scripts) and capture exact outputs.
 - Treat numeric metrics as snapshots unless tied to current command output.
-
 
 > **TL;DR:** Yes, iTaK is ready for development and functional testing. Follow the checklist below to validate your environment.
 
 ## ✅ Quick Readiness Checklist
 
 ### 1️⃣ Prerequisites Installed
+
 ```bash
 # Check Python version (must be 3.11+)
 python --version
@@ -35,6 +39,7 @@ docker --version
 ```
 
 ### 2️⃣ Dependencies Installed
+
 ```bash
 # Install all dependencies
 pip install -r install/requirements/requirements.txt
@@ -44,6 +49,7 @@ pip install -r install/requirements/requirements-ci.txt
 ```
 
 ### 3️⃣ Configuration Files
+
 ```bash
 # Create config files from examples
 cp install/config/config.json.example config.json
@@ -56,6 +62,7 @@ cp install/config/.env.example .env
 ```
 
 ### 4️⃣ Run System Diagnostics
+
 ```bash
 # Comprehensive system check
 python -m app.main --doctor
@@ -66,6 +73,7 @@ python -m app.main --doctor
 ```
 
 ### 5️⃣ Run Existing Tests
+
 ```bash
 # Run all tests (from project root)
 cd /path/to/iTaK
@@ -123,6 +131,7 @@ PYTHONPATH=$(pwd) pytest --cov=. --cov-report=term-missing
 ## 🚀 How to Test
 
 ### Option 1: Quick Validation (5 minutes)
+
 ```bash
 # 1. Run doctor diagnostic
 python -m app.main --doctor
@@ -135,6 +144,7 @@ python -m app.main
 ```
 
 ### Option 2: Full Functional Test (30 minutes)
+
 ```bash
 # 1. System diagnostic
 python -m app.main --doctor
@@ -157,6 +167,7 @@ python -m app.main --adapter discord --webui
 ```
 
 ### Option 3: Developer Testing
+
 ```bash
 # 1. Run tests with coverage
 PYTHONPATH=$(pwd) pytest --cov=. --cov-report=html
@@ -181,6 +192,7 @@ python -c "from tools import *; print('Tools OK')"
 ### Doctor Check Failures
 
 **"Missing required package"**
+
 ```bash
 pip install <package-name>
 # Or reinstall all
@@ -188,17 +200,20 @@ pip install -r install/requirements/requirements.txt
 ```
 
 **"config.json not found"**
+
 ```bash
 cp install/config/config.json.example config.json
 ```
 
 **"No LLM API key configured"**
+
 ```bash
 # Edit .env and add at least one:
 echo "GOOGLE_API_KEY=your_key_here" >> .env
 ```
 
 **"Python version too old"**
+
 ```bash
 # Install Python 3.11 or newer
 # Use pyenv or system package manager
@@ -207,6 +222,7 @@ echo "GOOGLE_API_KEY=your_key_here" >> .env
 ### Test Failures
 
 **"No tests found"**
+
 ```bash
 # Verify pytest is installed
 pip install pytest pytest-asyncio
@@ -216,6 +232,7 @@ pytest --collect-only
 ```
 
 **"Import errors"**
+
 ```bash
 # Ensure you're in the project root
 cd /path/to/iTaK
@@ -231,6 +248,7 @@ pip install -r install/requirements/requirements.txt
 ```
 
 **"Async tests hanging"**
+
 ```bash
 # Check pytest.ini has asyncio_mode=auto
 cat tests/pytest.ini
@@ -241,12 +259,14 @@ cat tests/pytest.ini
 ## 📊 Test Coverage Status
 
 Current test coverage (as of v4.0 - Phase 4 Complete):
+
 - **Total test files:** 13 (13 comprehensive test suites)
 - **Test suites:** 55+ test classes
 - **Test cases:** 258 tests
 - **Coverage:** ~85% (estimated)
 
 **What's tested:**
+
 - ✅ Logger setup and secret masking
 - ✅ SQLite memory operations (save/retrieve/search/delete)
 - ✅ Tool result formatting and cost tracking
@@ -271,12 +291,14 @@ Current test coverage (as of v4.0 - Phase 4 Complete):
 ## 🎓 Next Steps
 
 ### For Users / Testers
+
 1. Run `python -m app.main --doctor` to validate your setup
 2. Run `pytest` to execute existing tests
 3. Start `python -m app.main` and interact with the agent
 4. Report any issues on GitHub
 
 ### For Developers
+
 1. Add test files for untested components
 2. Increase coverage to 70%+ target
 3. Add integration tests for adapters

@@ -1,22 +1,25 @@
 # Core Module Reference
 
 ## At a Glance
+
 - Audience: Developers extending iTaK behavior via tools, prompts, models, and core modules.
 - Scope: Describe module responsibilities, configuration surfaces, and extension patterns used in day-to-day work.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Locate the owning module and expected inputs before editing behavior.
 - Cross-check data flow with [root/DATABASES.md](root/DATABASES.md) when state is involved.
 - Re-run focused tests after updates to confirm no regression in tool contracts.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Keep argument names and defaults exact when generating tool/model calls.
 - Prefer evidence from code paths over assumptions when documenting behavior.
-
 
 > Every file in `core/` explained in detail with examples.
 
@@ -50,6 +53,7 @@ This is the monologue engine. Everything else orbits around this file.
 ### Classes
 
 #### `AgentConfig`
+
 ```python
 @dataclass
 class AgentConfig:
@@ -60,9 +64,11 @@ class AgentConfig:
     checkpoint_enabled: bool = True # Save state for crash recovery
     checkpoint_interval_steps: int = 3
 ```
+
 Loaded from `config.json` under the `agent` key. Controls how the agent behaves at a fundamental level.
 
 #### `AgentContext`
+
 ```python
 @dataclass
 class AgentContext:
@@ -73,9 +79,11 @@ class AgentContext:
     intervention_queue: list = []   # Messages from user mid-execution
     data: dict = {}                 # Arbitrary shared data
 ```
+
 Shared across the agent lifecycle. Adapters set `adapter_name` and `user_id` before calling `monologue()`.
 
 #### Exception Classes
+
 ```python
 class RepairableException(Exception):
     """Error that can be forwarded to LLM for self-repair."""
@@ -88,6 +96,7 @@ class InterventionException(Exception):
 ```
 
 #### `Agent`
+
 The main class. Key methods:
 
 | Method | Purpose |
@@ -143,6 +152,7 @@ Each subsystem uses a try/except ImportError pattern so any missing dependency d
 **Lines:** ~280 | **Handles all LLM API calls.**
 
 ### `ModelRouter`
+
 Routes requests to the right model based on the task:
 
 ```python
@@ -162,6 +172,7 @@ vector = await router.embed("some text")
 ```
 
 #### Model Configuration (config.json)
+
 ```json
 {
     "models": {
@@ -218,6 +229,7 @@ class EventType(str, Enum):
 ```
 
 Usage:
+
 ```python
 self.logger.log(EventType.TOOL_CALL, {
     "tool": "code_execution",
@@ -306,6 +318,7 @@ Step 5: LEARN      --> If fixed, save the solution to memory
 ```
 
 ### Error Categories
+
 ```python
 class ErrorCategory(str, Enum):
     DEPENDENCY = "dependency"   # Missing package
@@ -320,11 +333,13 @@ class ErrorCategory(str, Enum):
 ```
 
 ### Budget Limits
+
 - Max 3 retries per individual error
 - Max 10 retries per session
 - Backoff: 1s, 5s, 15s between retries
 
 ### Example Flow
+
 ```
 Tool "code_execution" fails: ModuleNotFoundError: requests
   |
@@ -437,6 +452,7 @@ result = await self.swarm.execute(
 ```
 
 Agent profiles define specialization:
+
 ```json
 {
     "profiles": {
@@ -454,6 +470,7 @@ Agent profiles define specialization:
 **Lines:** ~165 | **Multi-user RBAC system.**
 
 Three permission tiers:
+
 - **owner** - Full access, can manage other users
 - **sudo** - Full tool access, can't manage users
 - **user** - Basic access, restricted tools

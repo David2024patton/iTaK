@@ -1,22 +1,25 @@
 # iTaK Integration Design
 
 ## At a Glance
+
 - Audience: Developers integrating channels, APIs, and system architecture components.
 - Scope: Explain component boundaries, integration points, and expected behavior across interfaces.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Identify the integration boundary first (adapter, API endpoint, or UI component).
 - Trace implementation details from [root/IMPLEMENTATION_SUMMARY.md](root/IMPLEMENTATION_SUMMARY.md).
 - Validate behavior with smoke checks after each configuration change.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Use explicit endpoint names, adapter flags, and file paths for automation tasks.
 - Note root endpoints vs `/api/*` endpoints to avoid integration mismatches.
-
 
 ## Overview
 
@@ -84,6 +87,7 @@ Plus **Neo4j** knowledge graphs for relationship-aware memory.
 ### Memory Systems
 
 #### MemGPT/Letta Approach
+
 ```
 Agent ──> [Core Memory] ──> [Archival Memory]
               (always)        (search on demand)
@@ -92,6 +96,7 @@ Agent ──> [Core Memory] ──> [Archival Memory]
 ```
 
 #### iTaK Enhancement
+
 ```
 Agent ──> [Tier 1: Markdown] ──┬──> [Tier 2: SQLite + Vectors]
           (identity, always)   │     (recent conversations)
@@ -108,6 +113,7 @@ Agent ──> [Tier 1: Markdown] ──┬──> [Tier 2: SQLite + Vectors]
 ### Execution Loop
 
 #### Agent Zero Pattern
+
 ```python
 while True:  # Outer loop (until response)
     while True:  # Inner loop (tool execution)
@@ -119,6 +125,7 @@ while True:  # Outer loop (until response)
 ```
 
 #### iTaK Enhancement
+
 ```python
 while True:  # Outer loop
     while True:  # Inner loop
@@ -141,6 +148,7 @@ while True:  # Outer loop
 ### Multi-Channel Architecture
 
 #### OpenClaw Pattern
+
 ```
 Adapter (Discord/Telegram/Slack)
     ↓
@@ -154,6 +162,7 @@ Adapter-Specific Sending
 ```
 
 #### iTaK Enhancement
+
 ```
 Adapter ──> [Presence Manager] ──> Agent
               (typing indicators)      ↓
@@ -203,6 +212,7 @@ All features are accessible via `config.json`:
 ## Extension Points
 
 ### Agent Zero Hooks (Inherited)
+
 1. `agent_init` - After agent initialization
 2. `message_loop_start` - Before each message loop
 3. `message_loop_end` - After each message loop
@@ -212,6 +222,7 @@ All features are accessible via `config.json`:
 7. `process_chain_end` - After full chain completes
 
 ### iTaK Additions
+
 - **Self-heal hook**: Triggered on any RepairableException
 - **Task board hooks**: Auto-create tasks from user messages
 - **Presence hooks**: Broadcast state changes to all adapters
@@ -241,6 +252,7 @@ All features are accessible via `config.json`:
 iTaK ensures all three source repos are properly integrated:
 
 ### ✅ Agent Zero Features
+
 - [x] Monologue engine with extension hooks
 - [x] Dynamic tool loading
 - [x] 4-model architecture (Chat, Utility, Browser, Embeddings)
@@ -249,6 +261,7 @@ iTaK ensures all three source repos are properly integrated:
 - [x] MCP client for external tool servers
 
 ### ✅ Letta/MemGPT Features
+
 - [x] Self-managing memory tiers (4 layers)
 - [x] Self-editing memory capabilities
 - [x] Agent state persistence across sessions
@@ -256,6 +269,7 @@ iTaK ensures all three source repos are properly integrated:
 - [x] Automatic memory consolidation
 
 ### ✅ OpenClaw Features
+
 - [x] Multi-channel adapters (Discord, Telegram, Slack, CLI)
 - [x] Presence system with typing indicators
 - [x] Multi-user RBAC with 3 tiers
@@ -265,6 +279,7 @@ iTaK ensures all three source repos are properly integrated:
 - [x] Security-first design
 
 ### ✅ Neo4j Integration
+
 - [x] Knowledge graph as Tier 3 memory
 - [x] Entity and relationship storage
 - [x] Graph-based memory retrieval
@@ -273,6 +288,7 @@ iTaK ensures all three source repos are properly integrated:
 ## Usage Examples
 
 ### Example 1: Agent Zero Style (Basic Chat)
+
 ```bash
 # Just like Agent Zero - monologue engine
 python -m app.main
@@ -280,6 +296,7 @@ python -m app.main
 ```
 
 ### Example 2: MemGPT Style (Memory Management)
+
 ```bash
 # Self-editing memory like MemGPT
 python -m app.main
@@ -290,6 +307,7 @@ python -m app.main
 ```
 
 ### Example 3: OpenClaw Style (Multi-Channel)
+
 ```bash
 # Run on Discord + WebUI simultaneously
 python -m app.main --adapter discord --webui
@@ -297,6 +315,7 @@ python -m app.main --adapter discord --webui
 ```
 
 ### Example 4: Neo4j Knowledge Graph
+
 ```python
 # Enable Neo4j in config.json
 {
@@ -312,6 +331,7 @@ python -m app.main --adapter discord --webui
 ```
 
 ### Example 5: Full Stack (All Features)
+
 ```bash
 # Run with everything enabled
 docker compose --project-directory . -f install/docker/docker-compose.yml up -d  # Starts Neo4j, Weaviate, iTaK, WebUI
@@ -353,12 +373,14 @@ docker compose --project-directory . -f install/docker/docker-compose.yml up -d 
 ## Conclusion
 
 iTaK successfully integrates:
+
 - **100% of Agent Zero's core architecture** (monologue, extensions, models)
 - **100% of MemGPT/Letta's memory innovation** (4-tier self-managing system)
 - **100% of OpenClaw's connectivity features** (multi-channel, RBAC, media)
 - **Neo4j knowledge graphs** as a 3rd memory tier
 
 Plus **8 unique features** that none of the source projects had:
+
 1. Self-healing engine
 2. Mission Control task board
 3. Webhook automation

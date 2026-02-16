@@ -1,22 +1,25 @@
 # Testing Guide
 
 ## At a Glance
+
 - Audience: Developers and operators validating quality, readiness, and regression safety.
 - Scope: Define practical test flow, readiness criteria, and how to validate changes safely.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Run focused checks first (`pytest -q` or targeted smoke scripts).
 - Use [TESTING.md](TESTING.md) for canonical test commands and order.
 - Capture outputs alongside the environment context for reproducibility.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Prefer reproducible commands (`pytest`, smoke scripts) and capture exact outputs.
 - Treat numeric metrics as snapshots unless tied to current command output.
-
 
 > Comprehensive guide for testing iTaK components, writing tests, and ensuring quality.
 
@@ -71,6 +74,7 @@ pytest --cov=. --cov-report=term-missing
 ### Pytest Configuration
 
 **`pytest.ini`:**
+
 ```ini
 [pytest]
 testpaths = tests
@@ -111,10 +115,12 @@ iTaK/
 ### Test Dependencies
 
 **Core:**
+
 - `pytest>=8.0.0` - Test framework
 - `pytest-asyncio>=0.24.0` - Async test support
 
 **Optional:**
+
 - `pytest-cov` - Coverage reporting
 - `pytest-mock` - Mocking utilities
 - `pytest-timeout` - Test timeout enforcement
@@ -366,11 +372,13 @@ class TestWithFixtures:
 ### Current Snapshot
 
 Repository snapshot (2026-02-16):
+
 - **Pytest collected tests:** 396 (`pytest tests --collect-only -q`)
 - **Test files:** 17 (`tests/test_*.py`)
 - **Coverage:** run `pytest --cov=. --cov-report=term-missing` to calculate for your environment
 
 **Key suites in tree:**
+
 - ✅ Core / Agent: `test_core.py`, `test_agent.py`, `test_agent_safety.py`
 - ✅ Memory: `test_memory.py`, `test_memu.py`
 - ✅ Tools: `test_tools.py`
@@ -397,7 +405,8 @@ Optional dynamic target:
 ```bash
 WEBUI_BASE_URL=http://127.0.0.1:43067 bash tools/check_system_smoke.sh
 ```
-  - Tool pipeline, secret lifecycle, crash recovery, multi-user
+
+- Tool pipeline, secret lifecycle, crash recovery, multi-user
 - ✅ Adapters (adapters/*.py) - 20 tests
   - Discord, Telegram, Slack, CLI, base interface, performance
 - ✅ WebUI (webui/*.py) - 23 tests
@@ -445,12 +454,14 @@ pytest --cov=. --cov-report=term | grep "TOTAL"
 ### Core Components
 
 #### Agent Loop
+
 ```bash
 # TODO: Create tests/test_agent.py
 pytest tests/test_agent.py
 ```
 
 **What to test:**
+
 - Message processing
 - Monologue loop execution
 - Tool execution integration
@@ -458,12 +469,14 @@ pytest tests/test_agent.py
 - Context management
 
 #### Model Router
+
 ```bash
 # TODO: Create tests/test_models.py
 pytest tests/test_models.py
 ```
 
 **What to test:**
+
 - Model selection
 - Fallback chains
 - Token counting
@@ -471,12 +484,14 @@ pytest tests/test_models.py
 - Streaming responses
 
 #### Tools
+
 ```bash
 # TODO: Create tests/test_tools.py
 pytest tests/test_tools.py
 ```
 
 **What to test:**
+
 - Tool registration
 - Tool execution
 - Parameter validation
@@ -491,6 +506,7 @@ pytest tests/test_memory.py
 ```
 
 **What to test:**
+
 - Tier management
 - CRUD operations
 - Search functionality
@@ -506,6 +522,7 @@ pytest tests/test_security.py
 ```
 
 **What to test:**
+
 - SSRF protection
 - Path traversal protection
 - Secret masking
@@ -521,6 +538,7 @@ pytest tests/test_adapters.py
 ```
 
 **What to test:**
+
 - Message handling
 - Event processing
 - Connection management
@@ -535,6 +553,7 @@ pytest tests/test_webui.py
 ```
 
 **What to test:**
+
 - API endpoints
 - Authentication
 - WebSocket connections
@@ -657,6 +676,7 @@ python -m app.main --adapter slack --webui
 ### GitHub Actions Workflow
 
 **`.github/workflows/ci.yml`:**
+
 ```yaml
 name: CI
 
@@ -693,6 +713,7 @@ jobs:
 ### CI Requirements
 
 **`install/requirements/requirements-ci.txt`** (minimal deps for fast CI):
+
 ```
 litellm>=1.50.0,<2.0.0
 pydantic>=2.0.0,<3.0.0
@@ -711,6 +732,7 @@ pytest-asyncio>=0.24.0,<1.0.0
 ### Common Issues
 
 **"No tests found"**
+
 ```bash
 # Check pytest configuration
 pytest --collect-only
@@ -723,6 +745,7 @@ touch tests/__init__.py
 ```
 
 **"Import errors in tests"**
+
 ```bash
 # Ensure project root is in PYTHONPATH (REQUIRED)
 export PYTHONPATH="${PYTHONPATH}:$(pwd)"
@@ -736,6 +759,7 @@ PYTHONPATH=$(pwd) pytest
 ```
 
 **"Async tests hanging"**
+
 ```bash
 # Verify pytest.ini has asyncio_mode=auto
 cat tests/pytest.ini
@@ -745,6 +769,7 @@ pip install pytest-asyncio
 ```
 
 **"Coverage not found"**
+
 ```bash
 # Install coverage plugin
 pip install pytest-cov
@@ -754,6 +779,7 @@ pytest --cov=. --cov-report=term
 ```
 
 **"Test failures due to missing config"**
+
 ```bash
 # Create minimal test config
 cp install/config/config.json.example config.json
@@ -769,6 +795,7 @@ def mock_config():
 ## Best Practices
 
 ### DO
+
 ✅ Write tests for all new features  
 ✅ Test edge cases and error conditions  
 ✅ Use descriptive test names  
@@ -780,6 +807,7 @@ def mock_config():
 ✅ Run tests before committing  
 
 ### DON'T
+
 ❌ Test implementation details  
 ❌ Write tests that depend on execution order  
 ❌ Leave hardcoded paths or credentials  

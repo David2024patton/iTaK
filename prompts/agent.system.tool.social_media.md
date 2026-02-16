@@ -1,7 +1,9 @@
 # Tool: social_media_tool
 
 ## When to Use
+
 Use this tool when the user needs to:
+
 - Post content to social media (Twitter, Facebook, LinkedIn, Instagram)
 - Read social media feeds
 - Reply to posts or comments
@@ -10,6 +12,7 @@ Use this tool when the user needs to:
 - Monitor social media activity
 
 ## Arguments
+
 | Arg | Type | Required | Description |
 |-----|------|----------|-------------|
 | platform | str | Yes | Platform: twitter, facebook, linkedin, instagram |
@@ -20,6 +23,7 @@ Use this tool when the user needs to:
 | limit | int | No | Number of posts to retrieve (default: 10) |
 
 ## Configuration Required
+
 Each platform needs API credentials in config.json:
 
 ```json
@@ -47,6 +51,7 @@ Each platform needs API credentials in config.json:
 ## Examples
 
 ### Example 1: Post to Twitter
+
 ```json
 {
     "tool_name": "social_media_tool",
@@ -59,6 +64,7 @@ Each platform needs API credentials in config.json:
 ```
 
 ### Example 2: Read LinkedIn feed
+
 ```json
 {
     "tool_name": "social_media_tool",
@@ -71,6 +77,7 @@ Each platform needs API credentials in config.json:
 ```
 
 ### Example 3: Reply to Facebook post
+
 ```json
 {
     "tool_name": "social_media_tool",
@@ -84,6 +91,7 @@ Each platform needs API credentials in config.json:
 ```
 
 ### Example 4: Like Instagram post
+
 ```json
 {
     "tool_name": "social_media_tool",
@@ -96,6 +104,7 @@ Each platform needs API credentials in config.json:
 ```
 
 ## Tips
+
 - Get API credentials from each platform's developer portal
 - Test with read-only operations first
 - Respect rate limits to avoid being blocked

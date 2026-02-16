@@ -1,6 +1,8 @@
 # iTaK - AGENTS.md
-# Behavioral Rules and Global Instructions
-# These rules are injected into every agent's system prompt.
+
+## Behavioral Rules and Global Instructions
+
+These rules are injected into every agent's system prompt.
 
 ## Core Rules
 

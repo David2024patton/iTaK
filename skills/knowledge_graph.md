@@ -1,11 +1,14 @@
 # Skill: Knowledge Graph
+
 Category: tool
 Tags: neo4j, graph, relationships, entities, context
 
 ## When to Use
+
 When you need to store or recall RELATIONSHIPS between things - people, projects, tools, concepts. The graph is best for "what's connected to X?" questions.
 
 ## Steps
+
 1. Identify entities (people, projects, tools, services)
 2. Identify relationships between them (uses, built_by, runs_on, depends_on)
 3. Save relationships with `action: "save_relationship"`
@@ -14,6 +17,7 @@ When you need to store or recall RELATIONSHIPS between things - people, projects
 ## Examples
 
 ### Example 1: Save a project relationship
+
 ```json
 {
     "tool_name": "knowledge_tool",
@@ -28,6 +32,7 @@ When you need to store or recall RELATIONSHIPS between things - people, projects
 ```
 
 ### Example 2: Map infrastructure
+
 ```json
 {
     "tool_name": "knowledge_tool",
@@ -42,6 +47,7 @@ When you need to store or recall RELATIONSHIPS between things - people, projects
 ```
 
 ### Example 3: Recall everything about a project
+
 ```json
 {
     "tool_name": "knowledge_tool",
@@ -53,6 +59,7 @@ When you need to store or recall RELATIONSHIPS between things - people, projects
 ```
 
 ## Relationship Types
+
 | Type | Example |
 |------|---------|
 | `uses` | iTaK uses FastAPI |
@@ -62,6 +69,7 @@ When you need to store or recall RELATIONSHIPS between things - people, projects
 | `related_to` | Polymarket related_to trading |
 
 ## Common Errors
+
 | Error | Fix |
 |-------|-----|
 | Neo4j not connected | Check NEO4J_URI and NEO4J_PASSWORD in .env |

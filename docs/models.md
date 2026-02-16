@@ -1,22 +1,25 @@
 # Models & LLM Providers Guide
 
 ## At a Glance
+
 - Audience: Developers extending iTaK behavior via tools, prompts, models, and core modules.
 - Scope: Describe module responsibilities, configuration surfaces, and extension patterns used in day-to-day work.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Locate the owning module and expected inputs before editing behavior.
 - Cross-check data flow with [root/DATABASES.md](root/DATABASES.md) when state is involved.
 - Re-run focused tests after updates to confirm no regression in tool contracts.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Keep argument names and defaults exact when generating tool/model calls.
 - Prefer evidence from code paths over assumptions when documenting behavior.
-
 
 > How to add, swap, and configure LLM providers.
 
@@ -38,10 +41,12 @@ iTaK uses **LiteLLM** as a universal adapter - one API that talks to 100+ LLM pr
 ## Provider Setup
 
 ### Google Gemini (Recommended)
+
 ```bash
 # .env
 GOOGLE_API_KEY=your_key_here
 ```
+
 ```json
 {
     "models": {
@@ -54,10 +59,12 @@ GOOGLE_API_KEY=your_key_here
 ```
 
 ### OpenAI
+
 ```bash
 # .env
 OPENAI_API_KEY=sk-your_key_here
 ```
+
 ```json
 {
     "models": {
@@ -70,10 +77,12 @@ OPENAI_API_KEY=sk-your_key_here
 ```
 
 ### Anthropic Claude
+
 ```bash
 # .env
 ANTHROPIC_API_KEY=sk-ant-your_key_here
 ```
+
 ```json
 {
     "models": {
@@ -85,11 +94,13 @@ ANTHROPIC_API_KEY=sk-ant-your_key_here
 ```
 
 ### Local Ollama (Free, Self-Hosted)
+
 ```bash
 # No API key needed - install Ollama and pull models
 ollama pull llama3.1:8b
 ollama pull nomic-embed-text
 ```
+
 ```json
 {
     "models": {
@@ -101,10 +112,12 @@ ollama pull nomic-embed-text
 ```
 
 ### OpenRouter (100+ Models, One Key)
+
 ```bash
 # .env
 OPENROUTER_API_KEY=sk-or-your_key_here
 ```
+
 ```json
 {
     "models": {
@@ -115,10 +128,12 @@ OPENROUTER_API_KEY=sk-or-your_key_here
 ```
 
 ### Groq (Fast Inference)
+
 ```bash
 # .env
 GROQ_API_KEY=gsk_your_key_here
 ```
+
 ```json
 {
     "models": {
@@ -168,6 +183,7 @@ This uses Claude for thinking, Groq for cheap tasks, Gemini for vision, and Open
 ```
 
 ### Parameter Guide
+
 | Parameter | Low Value | High Value | Recommendation |
 |-----------|-----------|------------|----------------|
 | `temperature` | 0.0 (exact) | 1.0 (creative) | 0.7 for chat, 0.3 for utility |

@@ -1,33 +1,37 @@
 # iTaK Testing Guide
 
 ## At a Glance
+
 - Audience: Developers and operators validating quality, readiness, and regression safety.
 - Scope: Define practical test flow, readiness criteria, and how to validate changes safely.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Run focused checks first (`pytest -q` or targeted smoke scripts).
 - Use [TESTING.md](TESTING.md) for canonical test commands and order.
 - Capture outputs alongside the environment context for reproducibility.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Prefer reproducible commands (`pytest`, smoke scripts) and capture exact outputs.
 - Treat numeric metrics as snapshots unless tied to current command output.
-
 
 ## ⚠️ IMPORTANT SECURITY NOTE
 
 **Never share API keys publicly!** API keys should be kept private and secure.
 
 If you've accidentally exposed an API key:
+
 1. **Immediately revoke it** at the provider's dashboard
 2. Create a new key
 3. Keep the new key private (never commit to git, never share in chat)
 
-For Google Gemini API keys: https://aistudio.google.com/app/apikey
+For Google Gemini API keys: <https://aistudio.google.com/app/apikey>
 
 ---
 
@@ -45,11 +49,13 @@ iTaK has comprehensive testing at multiple levels:
 ## Prerequisites for Testing
 
 ### Required
+
 - Python 3.11 or higher
 - Git
 - At least one LLM API key (keep it private!)
 
 ### Optional (for full testing)
+
 - Docker (for database services)
 - Neo4j, Weaviate, SearXNG (via Docker)
 
@@ -79,6 +85,7 @@ nano .env
 ```
 
 Add at least ONE API key to `.env`:
+
 ```bash
 # Choose one or more providers:
 GEMINI_API_KEY=your_private_key_here
@@ -87,6 +94,7 @@ GEMINI_API_KEY=your_private_key_here
 ```
 
 **Security checklist:**
+
 - ✅ .env is in .gitignore (already configured)
 - ✅ Never commit .env to git
 - ✅ Never share API keys publicly
@@ -100,6 +108,7 @@ python -m app.main --doctor
 ```
 
 This will check:
+
 - Python version
 - Required packages
 - Directory structure
@@ -120,6 +129,7 @@ PYTHONPATH=$(pwd) python -m pytest tests/ --cov=. --cov-report=html
 ```
 
 **Available test suites:**
+
 - `tests/test_core.py` - Core functionality (12 tests)
 - `tests/test_security.py` - Security features (28 tests)
 - `tests/test_agent.py` - Agent behavior (20 tests)
@@ -144,6 +154,7 @@ python test_installer.py
 ```
 
 Tests:
+
 - Python syntax validation
 - Import checks
 - Help command
@@ -185,6 +196,7 @@ For development/testing without consuming API quota:
 ### Use Mocked Responses
 
 The test suite includes mocked LLM responses:
+
 ```bash
 # Unit tests use mocks by default
 PYTHONPATH=$(pwd) python -m pytest tests/ -v
@@ -282,23 +294,28 @@ python -m memory_profiler main.py
 ### Common Issues
 
 **Issue: "No LLM API key found"**
+
 - Solution: Add API key to .env file
 - Check: `cat .env | grep API_KEY`
 
 **Issue: "Module not found"**
+
 - Solution: Install dependencies
 - Run: `pip install -r install/requirements/requirements.txt`
 
 **Issue: "Docker not found"**
+
 - Solution: Install Docker or use minimal install
 - Run: `python install.py --minimal`
 
 **Issue: "Database connection failed"**
+
 - Solution: Start services
 - Run: `docker compose up -d`
 - Check: `docker compose ps`
 
 **Issue: Tests failing with API errors**
+
 - Solution: Check API key is valid
 - Solution: Check internet connection
 - Solution: Use mocked tests instead
@@ -326,6 +343,7 @@ PYTHONPATH=$(pwd) python -m pytest tests/test_security.py -v
 ```
 
 Tests include:
+
 - Secret masking
 - PII redaction
 - Path traversal prevention
@@ -362,6 +380,7 @@ python test_installer.py
 ### Automated Testing
 
 Set up GitHub Actions or similar CI/CD to run tests automatically on:
+
 - Pull requests
 - Commits to main branch
 - Scheduled intervals
@@ -396,7 +415,8 @@ open htmlcov/index.html
 
 ## Best Practices
 
-### DO:
+### DO
+
 - ✅ Keep API keys in .env (never commit)
 - ✅ Run tests before deploying
 - ✅ Use --doctor to diagnose issues
@@ -404,7 +424,8 @@ open htmlcov/index.html
 - ✅ Review test output carefully
 - ✅ Update tests when adding features
 
-### DON'T:
+### DON'T
+
 - ❌ Commit .env to git
 - ❌ Share API keys publicly
 - ❌ Skip security tests
@@ -417,6 +438,7 @@ open htmlcov/index.html
 ## Summary
 
 iTaK is thoroughly tested with:
+
 - 258 unit/integration tests
 - 7 installer tests
 - System diagnostics

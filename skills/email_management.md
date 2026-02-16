@@ -1,9 +1,12 @@
 # Skill: Email Management
+
 Category: tool
 Tags: email, smtp, imap, communication, mail, account-creation
 
 ## When to Use
+
 Use this skill when you need to:
+
 - **Create your own email address** (temporary, free)
 - Send emails programmatically
 - Read and check emails
@@ -15,6 +18,7 @@ Use this skill when you need to:
 ## Steps
 
 ### Creating Your Own Email Account
+
 1. Use `email_tool` with action "create_account"
 2. Optionally provide a username (auto-generated if not provided)
 3. System creates a free temporary email via Mail.tm API
@@ -22,23 +26,27 @@ Use this skill when you need to:
 5. **No configuration required** - works out of the box!
 
 ### Checking Temporary Email
+
 1. Use action "check_temp_mail"
 2. Provide the username (email address) and password from creation
 3. Returns list of received emails
 
 ### Sending an Email
+
 1. Use `email_tool` with action "send"
 2. Provide recipient address (to)
 3. Specify subject and body content
 4. Email will be sent via configured SMTP server
 
 ### Reading Emails (IMAP)
+
 1. Use action "read" to fetch emails
 2. Optionally specify folder (default: INBOX)
 3. Set limit for number of emails to retrieve
 4. Emails will be retrieved via IMAP
 
 ### Listing Email Folders
+
 1. Use action "list_folders"
 2. Returns all available IMAP folders
 3. Use folder names with "read" action
@@ -46,9 +54,11 @@ Use this skill when you need to:
 ## Configuration
 
 ### For Creating Email Accounts (Temporary)
+
 **No configuration needed!** The `create_account` action uses the free Mail.tm API service which requires no API keys or credentials. Just call it and get a working email address.
 
 ### For SMTP/IMAP (Existing Accounts)
+
 The email tool requires SMTP and IMAP configuration in `config.json` for sending/reading from existing email providers:
 
 ```json
@@ -71,6 +81,7 @@ The email tool requires SMTP and IMAP configuration in `config.json` for sending
 ```
 
 ### Gmail Setup
+
 1. Enable 2-factor authentication
 2. Generate an App Password (not your regular password)
 3. Use App Password in configuration
@@ -78,6 +89,7 @@ The email tool requires SMTP and IMAP configuration in `config.json` for sending
 5. IMAP: imap.gmail.com:993
 
 ### Outlook/Office365 Setup
+
 1. SMTP: smtp.office365.com:587
 2. IMAP: outlook.office365.com:993
 3. Use your email and password
@@ -85,6 +97,7 @@ The email tool requires SMTP and IMAP configuration in `config.json` for sending
 ## Examples
 
 ### Example 1: Create your own email address
+
 ```json
 {
     "tool_name": "email_tool",
@@ -95,6 +108,7 @@ The email tool requires SMTP and IMAP configuration in `config.json` for sending
 ```
 
 Response:
+
 ```
 ✅ Successfully created temporary email account!
 
@@ -111,6 +125,7 @@ Auth Token: eyJhbGci...
 ```
 
 ### Example 2: Check temporary email inbox
+
 ```json
 {
     "tool_name": "email_tool",
@@ -124,6 +139,7 @@ Auth Token: eyJhbGci...
 ```
 
 ### Example 3: Create account with custom username
+
 ```json
 {
     "tool_name": "email_tool",
@@ -135,6 +151,7 @@ Auth Token: eyJhbGci...
 ```
 
 ### Example 4: Send an email (requires SMTP config)
+
 ```json
 {
     "tool_name": "email_tool",
@@ -148,6 +165,7 @@ Auth Token: eyJhbGci...
 ```
 
 ### Example 5: Read recent emails (requires IMAP config)
+
 ```json
 {
     "tool_name": "email_tool",
@@ -160,6 +178,7 @@ Auth Token: eyJhbGci...
 ```
 
 ### Example 6: List all folders (requires IMAP config)
+
 ```json
 {
     "tool_name": "email_tool",
@@ -185,6 +204,7 @@ Auth Token: eyJhbGci...
 ## Temporary Email Features
 
 **Mail.tm Service:**
+
 - ✅ Completely free, no API key required
 - ✅ Instant account creation
 - ✅ Can receive emails immediately
@@ -194,6 +214,7 @@ Auth Token: eyJhbGci...
 - ⚠️ Cannot send emails from temp accounts (receive-only)
 
 ## Security Notes
+
 - Never hardcode passwords in code
 - Temporary email accounts are public - don't use for sensitive data
 - Use App Passwords instead of account passwords for Gmail

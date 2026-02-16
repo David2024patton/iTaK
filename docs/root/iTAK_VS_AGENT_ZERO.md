@@ -1,22 +1,25 @@
 # iTaK vs Agent-Zero: Feature Comparison
 
 ## At a Glance
+
 - Audience: Evaluators comparing iTaK with other agent frameworks for fit and tradeoffs.
 - Scope: Compare capabilities and tradeoffs using repository-backed evidence and deployment-aware caveats.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Read this as a comparison guide, not as an external certification record.
 - Cross-verify capability claims in [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md).
 - Treat scale/compliance statements as deployment-dependent unless independently audited.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Separate implemented features from externally certified/audited claims.
 - Mark scale/compliance statements as environment-dependent unless verified.
-
 
 > **TL;DR:** Both are powerful agentic frameworks. **Agent-Zero** is great for getting started quickly with Docker. **iTaK** is stronger for deployments needing security controls, multi-channel access, and advanced orchestration.
 
@@ -54,18 +57,21 @@ The detailed content for this topic starts below.
 Choose **iTaK** if you need:
 
 ### 1. **Production Deployments**
+
 - ✅ Large automated test suite (**396 collected tests** as of 2026-02-16)
 - ✅ Compliance-oriented test scenarios (HIPAA, PCI DSS, SOC2, GDPR)
 - ✅ **Security hardened** (RBAC, secret masking, PII redaction)
 - ⚠️ Uptime/SLA outcomes depend on deployment and infrastructure validation
 
 ### 2. **Multi-Channel Communication**
+
 - ✅ **5 built-in adapters:** Terminal, Web, Discord, Telegram, Slack
 - ✅ **Role-based access control** (RBAC) for each channel
 - ✅ **Easy scaling** to multiple channels simultaneously
 - ✅ **Webhook integrations** for n8n, Zapier, custom apps
 
 ### 3. **Advanced Memory & Knowledge**
+
 - ✅ **4-tier memory system:**
   - **Recall** - Recent conversation memory
   - **Archival** - Long-term compressed memories
@@ -75,6 +81,7 @@ Choose **iTaK** if you need:
 - ✅ **Memory consolidation** and auto-archiving
 
 ### 4. **Enterprise Features**
+
 - ✅ **Advanced swarm coordination** (parallel/sequential strategies)
 - ✅ **Task board** (Kanban Mission Control)
 - ✅ **Real-time monitoring** (heartbeat system)
@@ -82,6 +89,7 @@ Choose **iTaK** if you need:
 - ✅ Load/performance tests are included (high-concurrency scenarios in test suite)
 
 ### 5. **Regulated Industries**
+
 - ✅ Healthcare (HIPAA compliance tests)
 - ✅ Finance (PCI DSS compliance tests)
 - ✅ SaaS (SOC2 compliance tests)
@@ -94,24 +102,28 @@ Choose **iTaK** if you need:
 Choose **Agent-Zero** if you need:
 
 ### 1. **Quick Experimentation**
+
 - ✅ **Docker-first** approach (2 commands to run)
 - ✅ **Video installation guides** for each OS
 - ✅ **Minimal setup** to get started
 - ✅ **Skills system** (SKILL.md standard) for portability
 
 ### 2. **Simplicity Over Features**
+
 - ✅ **Focused scope** (no overwhelming features)
 - ✅ **Clean Web UI** with settings page
 - ✅ **Straightforward** memory system
 - ✅ **Easy customization** via prompts
 
 ### 3. **Development/Personal Use**
+
 - ✅ Great for **personal projects**
 - ✅ Good for **learning** agentic frameworks
 - ✅ Perfect for **prototyping** ideas
 - ✅ No compliance requirements
 
 ### 4. **Agent-Zero Ecosystem**
+
 - ✅ **SKILL.md compatibility** (Anthropic standard)
 - ✅ **A2A protocol** (agent-to-agent communication)
 - ✅ **Git-based projects** with authentication
@@ -137,6 +149,7 @@ docker run -p 50080:80 agent0ai/agent-zero
 ```
 
 **User Experience:**
+
 - ✅ See the UI immediately
 - ✅ Understand what it looks like before configuring
 - ✅ Web-based configuration (no file editing)
@@ -166,6 +179,7 @@ docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 ```
 
 **User Experience:**
+
 - ✅ Runs configured and ready from the start
 - ✅ Full stack (iTaK + Neo4j + Weaviate + SearXNG)
 - ✅ Production-like environment immediately
@@ -202,6 +216,7 @@ http://localhost:8000
 ```
 
 **User Experience:**
+
 - ✅ Complete control over environment
 - ✅ Easy debugging and customization
 - ✅ See exactly what's being installed
@@ -231,6 +246,7 @@ http://localhost:8000
 | **Production-ready?** | ⚠️ Can misconfigure | ✅ Forces proper setup |
 
 **Summary:**
+
 - **Agent-Zero:** Better first-time user experience (run → see → configure → restart)
 - **iTaK:** Better for proper deployment (configure → run → works correctly)
 
@@ -241,6 +257,7 @@ http://localhost:8000
 ### Memory Systems
 
 **iTaK:**
+
 ```
 4-Tier Memory Architecture:
 ├── Recall Store (SQLite) - Immediate conversation memory
@@ -250,6 +267,7 @@ http://localhost:8000
 ```
 
 **Agent-Zero:**
+
 ```
 Basic Persistent Memory:
 ├── Memory files in directory structure
@@ -264,6 +282,7 @@ Basic Persistent Memory:
 ### Multi-Agent Capabilities
 
 **iTaK:**
+
 - **Swarm Coordinator** with strategies:
   - Parallel execution (all agents work simultaneously)
   - Sequential execution (agents work in order)
@@ -274,6 +293,7 @@ Basic Persistent Memory:
 - **Inter-agent communication** via MCP
 
 **Agent-Zero:**
+
 - **Superior-subordinate hierarchy**
 - **Agents create sub-agents** for subtasks
 - **Clean context** through delegation
@@ -286,6 +306,7 @@ Basic Persistent Memory:
 ### Security
 
 **iTaK:**
+
 - ✅ **SecretManager** - API key encryption and masking
 - ✅ **OutputGuard** - PII and sensitive data redaction
 - ✅ **PathGuard** - Path traversal prevention
@@ -296,6 +317,7 @@ Basic Persistent Memory:
 - ✅ **28 security tests** ensuring hardening
 
 **Agent-Zero:**
+
 - ⚠️ **Security warnings** in documentation
 - ⚠️ **Isolated Docker** environment
 - ⚠️ **User responsibility** for secure deployment
@@ -307,6 +329,7 @@ Basic Persistent Memory:
 ### Installation & Setup
 
 **Agent-Zero:**
+
 ```bash
 # Quick Start (2 commands)
 docker pull agent0ai/agent-zero
@@ -315,6 +338,7 @@ docker run -p 50001:80 agent0ai/agent-zero
 ```
 
 **iTaK:**
+
 ```bash
 # Docker Option
 docker compose --project-directory . -f install/docker/docker-compose.yml up -d
@@ -335,6 +359,7 @@ python -m app.main
 ### Multi-Channel Access
 
 **iTaK:**
+
 ```bash
 # Run on Discord
 python -m app.main --adapter discord
@@ -353,6 +378,7 @@ python -m app.main --adapter cli
 ```
 
 **Agent-Zero:**
+
 ```bash
 # Only Web UI available
 docker run -p 50001:80 agent0ai/agent-zero
@@ -365,6 +391,7 @@ docker run -p 50001:80 agent0ai/agent-zero
 ### Testing & Quality
 
 **iTaK:**
+
 - ✅ **396 pytest-collected tests** (current repository snapshot)
 - ⚠️ Coverage percentage is not asserted in this document
 - ✅ **Security tests** (28 tests)
@@ -375,6 +402,7 @@ docker run -p 50001:80 agent0ai/agent-zero
 - ✅ **CI/CD pipeline** with automated testing
 
 **Agent-Zero:**
+
 - ⚠️ **Unknown test coverage**
 - ⚠️ **Community testing** through usage
 - ⚠️ **Iterative development** approach
@@ -390,12 +418,14 @@ If you're coming from Agent-Zero and want to try iTaK:
 ### 1. **Installation**
 
 Agent-Zero's Docker approach:
+
 ```bash
 docker pull agent0ai/agent-zero
 docker run -p 50001:80 agent0ai/agent-zero
 ```
 
 iTaK equivalent:
+
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
@@ -406,12 +436,14 @@ docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 ### 2. **Configuration**
 
 Agent-Zero uses environment variables (`A0_SET_*`):
+
 ```env
 A0_SET_CHAT_MODEL_PROVIDER=anthropic
 A0_SET_CHAT_MODEL_NAME=claude-sonnet-4-5
 ```
 
 iTaK uses `.env` + `config.json`:
+
 ```env
 # .env
 ANTHROPIC_API_KEY=sk-ant-...
@@ -429,6 +461,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 ### 3. **Skills → Tools**
 
 Agent-Zero's `SKILL.md` files:
+
 ```
 /a0/agents/agent0/skills/my-skill/
 ├── SKILL.md
@@ -436,6 +469,7 @@ Agent-Zero's `SKILL.md` files:
 ```
 
 iTaK's tool structure:
+
 ```
 /tools/
 ├── my_tool.py
@@ -445,10 +479,12 @@ iTaK's tool structure:
 ### 4. **Memory Access**
 
 Agent-Zero approach:
+
 - Memory automatically managed by utility LLM
 - Files stored in `/a0/usr/memory/`
 
 iTaK approach:
+
 ```python
 # Explicit memory operations
 await agent.memory.save("key", "value")
@@ -458,10 +494,12 @@ result = await agent.memory.search("query")
 ### 5. **Multi-Agent**
 
 Agent-Zero:
+
 - Agents automatically create subordinates
 - Hierarchy managed by prompts
 
 iTaK:
+
 ```python
 # Swarm coordinator
 from core.swarm import SwarmCoordinator
@@ -479,13 +517,15 @@ results = await swarm.execute(task)
 
 Want to combine strengths? Here's how:
 
-### Use Agent-Zero For:
+### Use Agent-Zero For
+
 1. **Rapid prototyping** (get ideas running fast)
 2. **Personal experiments** (no production concerns)
 3. **Learning** agentic patterns
 4. **Skills development** (SKILL.md is portable)
 
-### Then Migrate to iTaK For:
+### Then Migrate to iTaK For
+
 1. **Production deployment** (when quality matters)
 2. **Multi-channel** rollout (Discord, Telegram, Slack)
 3. **Enterprise features** (compliance, security, RBAC)
@@ -496,6 +536,7 @@ Want to combine strengths? Here's how:
 ## 🎓 Learning Path
 
 ### Week 1: Agent-Zero
+
 - ✅ Install via Docker
 - ✅ Experiment with prompts
 - ✅ Try different LLMs
@@ -503,6 +544,7 @@ Want to combine strengths? Here's how:
 - ✅ Learn agentic patterns
 
 ### Week 2: iTaK Basics
+
 - ✅ Install iTaK (Python)
 - ✅ Configure multi-channel
 - ✅ Explore 4-tier memory
@@ -510,6 +552,7 @@ Want to combine strengths? Here's how:
 - ✅ Test self-healing
 
 ### Week 3: iTaK Advanced
+
 - ✅ Set up Neo4j knowledge graph
 - ✅ Configure swarms
 - ✅ Add webhook integrations
@@ -517,6 +560,7 @@ Want to combine strengths? Here's how:
 - ✅ Deploy to production
 
 ### Week 4: Production
+
 - ✅ Run compliance tests
 - ✅ Set up monitoring
 - ✅ Configure load balancing
@@ -528,12 +572,14 @@ Want to combine strengths? Here's how:
 ## 🤝 Community & Support
 
 ### Agent-Zero
+
 - **GitHub:** [agent0ai/agent-zero](https://github.com/agent0ai/agent-zero)
 - **Discord:** Active community
 - **Documentation:** Video guides + written docs
 - **Development:** Frequent updates
 
 ### iTaK
+
 - **GitHub:** [David2024patton/iTaK](https://github.com/David2024patton/iTaK)
 - **Documentation:** 13 comprehensive guides
 - **Testing:** 396 pytest-collected tests (2026-02-16 snapshot)

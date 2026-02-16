@@ -32,13 +32,14 @@ python install.py
 ```
 
 **That's it!** The installer will:
+
 - ✅ Detect your OS automatically
 - ✅ Install prerequisites (Docker, Git)
 - ✅ Let you choose: Minimal or Full Stack
 - ✅ Configure everything
 - ✅ Start iTaK
 
-**Then visit http://localhost:8000 and configure via Web UI!**
+**Then visit <http://localhost:8000> and configure via Web UI!**
 
 ### Installation Options
 
@@ -117,6 +118,7 @@ python -m app.main --webui
 ## ✨ Feature List
 
 ### 🧠 Core Engine
+
 - **Double-loop monologue engine** - Agent Zero-style `while True` loop that thinks, acts, and only stops when it explicitly decides to respond
 - **LiteLLM model router** - Use any LLM (OpenAI, Anthropic, Gemini, local Ollama) with automatic fallback chains
 - **Extension hooks** - 24 hook points for plugins with async/sync support (`agent_init`, `message_loop_start`, `tool_execute_before/after`, etc.)
@@ -125,6 +127,7 @@ python -m app.main --webui
 - **Runtime invariant checks** - Validates subsystem health on every iteration
 
 ### 🧬 Memory (MemGPT-Inspired)
+
 - **Tier 1 - Core Context**: Always-loaded identity, personality, active instructions
 - **Tier 2 - Recall Memory**: Recent conversation history with configurable cap and automatic overflow handling
 - **Tier 3 - Archival Memory**: Searchable long-term storage (SQLite + vector embeddings)
@@ -132,6 +135,7 @@ python -m app.main --webui
 - **History management** - Automatic trimming with configurable `history_cap` setting
 
 ### 🛡️ Security & Reliability
+
 - **Secret management** - Auto-detect and mask API keys in logs and outputs
 - **Security scanner** - Static analysis on generated code for vulnerabilities
 - **Rate limiting** - Per-user, per-tool, and global rate limits
@@ -141,6 +145,7 @@ python -m app.main --webui
 - **Error isolation** - Component failures don't crash the agent
 
 ### 🔧 Tool System
+
 - **Dynamic tool loading** - Drop a `.py` file in `tools/`, it's instantly available
 - **Code execution** - Sandboxed Python/shell execution with timeout
 - **Web search** - SearXNG / DuckDuckGo integration
@@ -149,35 +154,41 @@ python -m app.main --webui
 - **Memory tools** - Save, search, delete, manage all 4 tiers
 
 ### 🩹 Self-Healing Engine
+
 - **5-step auto-recovery pipeline**: Classify error → Check memory for past fixes → LLM reasoning → Web research → Learn from fix
 - **Error classification** by category (syntax, runtime, network, auth, resource, logic) and severity
 - **Retry budgets** with exponential backoff - won't loop forever
 
 ### 📋 Mission Control (Task Board)
+
 - **Kanban-style task tracking**: `inbox` → `in_progress` → `review` → `done` / `failed`
 - **SQLite-backed persistence** - Tasks survive restarts
 - **Auto-tracking** - Tasks created from user requests, progress updated during execution
 - **Dashboard view** - Full CRUD via REST API
 
 ### 🔌 MCP (Model Context Protocol)
+
 - **MCP Client** - Connect to external MCP tool servers (GitHub, filesystem, databases)
 - **MCP Server** - Expose iTaK as a tool server for Cursor, VS Code, n8n, other agents
 - **6 exposed tools**: `send_message`, `search_memory`, `list_tasks`, `get_task`, `create_task`, `get_status`
 - **Bearer token auth** - Secure external access
 
 ### 🌐 Webhook Engine (n8n / Zapier)
+
 - **Inbound webhooks** - External services POST tasks to iTaK
 - **Outbound event hooks** - Fire webhooks on `task_completed`, `error_critical`, `daily_report`
 - **Callback URLs** - Results sent back to the caller automatically
 - **Secret-based auth** - Verify inbound requests
 
 ### 🐝 Agent Swarms
+
 - **Parallel sub-agent execution** - Multiple specialists working simultaneously
 - **3 execution strategies**: Parallel, Sequential, Pipeline (output → next input)
 - **4 merge strategies**: Concat, Summarize (LLM), Best, Custom
 - **Agent profiles** - Researcher, Coder, DevOps (custom profiles via markdown)
 
 ### 📡 Multi-Channel Adapters
+
 - **CLI** - Terminal-based chat
 - **Discord** - Full bot with DM + channel support
 - **Telegram** - Inline keyboard + voice support
@@ -185,16 +196,19 @@ python -m app.main --webui
 - **WebUI Dashboard** - Real-time monitoring + chat
 
 ### 🎭 Presence System
+
 - **8 agent states**: idle, thinking, tool_use, searching, writing, deploying, healing, error
 - **Cross-adapter broadcasting** - Discord typing indicators, dashboard status badges
 - **Auto-timeout** - "⏳ Still working..." after 60 seconds of activity
 
 ### 📎 Media Pipeline
+
 - **Inbound**: Download, classify, extract content (images → vision model, audio → Whisper, docs → text)
 - **Outbound**: Per-adapter file sending with size limit enforcement
 - **Room-scoped storage** with JSON manifests
 
 ### 💚 Heartbeat & Reliability
+
 - **Periodic health checks** with configurable intervals
 - **Crash recovery** - Checkpoint/restore system preserves agent state
 - **Cost tracking** - Budget caps with warnings and hard stops
@@ -207,6 +221,7 @@ python -m app.main --webui
 **New to iTaK?** Start here:
 
 👉 **[INSTALLATION GUIDE](docs/root/INSTALLATION_GUIDE.md)** - Complete step-by-step walkthrough for new users:
+
 - 5-step installation (5-10 minutes)
 - What iTaK does once installed
 - Common use cases with examples
@@ -331,6 +346,7 @@ python installers/setup.py
 ```
 
 The setup script will:
+
 - ✅ Check for Python 3.11+ and pip
 - ✅ Install all Python dependencies
 - ✅ Install Playwright browsers for automation
@@ -480,10 +496,12 @@ pytest -v
 The dashboard provides real-time monitoring at `http://localhost:48920`:
 
 ### Monitor Tab
+
 ![iTaK Dashboard - Monitor Tab](screenshots/dashboard-monitor.png)
 *Real-time agent stats, memory layers, live logs, chat interface, and memory search*
 
 ### Mission Control Tab
+
 ![iTaK Dashboard - Mission Control](screenshots/dashboard-mission-control.png)
 *Kanban-style task board with inbox, in progress, review, and done columns*
 

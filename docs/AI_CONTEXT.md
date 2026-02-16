@@ -1,22 +1,25 @@
 # iTaK AI Context
 
 ## At a Glance
+
 - Audience: Beginners, operators, and AI agents navigating iTaK documentation quickly.
 - Scope: Provide an AI-readable map of architecture, subsystems, and where to find canonical details.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Start with architecture summary: [architecture.md](architecture.md).
 - Review execution surfaces: [tools.md](tools.md) and [webui.md](webui.md).
 - Use this page as the index before touching any subsystem doc.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Follow role-based paths first, then dive into module-specific deep references.
 - Keep links and commands current so both humans and automation can rely on them.
-
 
 > Structured project facts for AI agents and automation.
 

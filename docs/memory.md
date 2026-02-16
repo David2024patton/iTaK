@@ -1,22 +1,25 @@
 # Memory System Reference
 
 ## At a Glance
+
 - Audience: Developers extending iTaK behavior via tools, prompts, models, and core modules.
 - Scope: Describe module responsibilities, configuration surfaces, and extension patterns used in day-to-day work.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Locate the owning module and expected inputs before editing behavior.
 - Cross-check data flow with [root/DATABASES.md](root/DATABASES.md) when state is involved.
 - Re-run focused tests after updates to confirm no regression in tool contracts.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Keep argument names and defaults exact when generating tool/model calls.
 - Prefer evidence from code paths over assumptions when documenting behavior.
-
 
 > iTaK's 4-tier memory architecture explained in full detail.
 
@@ -38,6 +41,7 @@ Layer 4: Weaviate Vectors  --> Deep semantic search
 The simplest layer. Four files that are loaded into every system prompt:
 
 ### `SOUL.md` - Agent Identity
+
 ```markdown
 # Who Am I
 I am iTaK (Intelligent Task Automation Kernel), a personal AI agent.
@@ -51,9 +55,11 @@ I am not a chatbot. I am an autonomous agent that can:
 2. Transparency - I always tell the user what I'm doing.
 ...
 ```
+
 **Purpose:** Gives the LLM a sense of identity. The agent reads this every time it builds a system prompt.
 
 ### `USER.md` - User Preferences
+
 ```markdown
 # Identity
 - Name: (set by user)
@@ -65,9 +71,11 @@ I am not a chatbot. I am an autonomous agent that can:
 # Preferences
 - (learned over time)
 ```
+
 **Purpose:** The agent learns your preferences and records them here. Over time, it adapts to how you work.
 
 ### `MEMORY.md` - Learned Facts
+
 ```markdown
 ## 2025-12-15: Docker Compose Port Fix
 When services won't start, check if another container already holds the port.
@@ -77,9 +85,11 @@ Use `docker compose down` before `docker compose up` to avoid conflicts.
 The admin username MUST be `neo4j`. It can't be changed. Delete the volume
 to force a credential reset.
 ```
+
 **Purpose:** Solutions to problems, important decisions, reference material. The agent appends to this when it learns something worth remembering.
 
 ### `AGENTS.md` - Behavioral Rules
+
 ```markdown
 # Rules
 - Always test code after writing it
@@ -87,6 +97,7 @@ to force a credential reset.
 - Ask before destructive actions
 - Use the cheapest model for utility tasks
 ```
+
 **Purpose:** Hard behavioral constraints. The agent checks these before taking actions.
 
 ---
@@ -98,6 +109,7 @@ to force a credential reset.
 Local SQLite database with vector embeddings for semantic search.
 
 ### Schema
+
 ```sql
 CREATE TABLE memories (
     id TEXT PRIMARY KEY,
@@ -112,11 +124,13 @@ CREATE TABLE memories (
 ```
 
 ### How it works
+
 1. When saving: text gets embedded via `ModelRouter.embed()` and stored as a vector
 2. When searching: query gets embedded, then cosine similarity finds nearest matches
 3. Results above the threshold (default: 0.6) are returned
 
 ### Example
+
 ```python
 # Save a memory
 await memory.save(
@@ -147,6 +161,7 @@ Stores relationships between entities:
 ```
 
 ### Usage
+
 ```python
 # Save a relationship
 await memory.save_relationship(
@@ -164,6 +179,7 @@ context = await memory.get_entity_context("iTaK")
 ```
 
 ### Configuration
+
 ```json
 {
     "memory": {
@@ -219,6 +235,7 @@ class MemoryManager:
 ```
 
 ### Configuration
+
 ```json
 {
     "memory": {
@@ -313,6 +330,7 @@ memu-server:
 ```
 
 Then:
+
 ```bash
 docker compose --project-directory . -f install/docker/docker-compose.yml up -d memu-server
 ```
@@ -363,6 +381,7 @@ Extracted facts are tagged and routed to existing stores:
 ```
 
 During search, memu-extracted items:
+
 - Are found via normal SQLite/Neo4j/Weaviate searches
 - Have `memu_weight` applied during ranking
 - Display `source="memu"` in results for transparency
@@ -370,11 +389,13 @@ During search, memu-extracted items:
 ### Testing
 
 Run unit tests (mocked):
+
 ```bash
 pytest tests/test_memu.py
 ```
 
 Run integration tests (requires memu-server):
+
 ```bash
 docker compose --project-directory . -f install/docker/docker-compose.yml up -d memu-server
 pytest tests/test_memu.py -m integration

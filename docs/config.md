@@ -1,22 +1,25 @@
 # Configuration Reference
 
 ## At a Glance
+
 - Audience: Developers extending iTaK behavior via tools, prompts, models, and core modules.
 - Scope: Describe module responsibilities, configuration surfaces, and extension patterns used in day-to-day work.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Locate the owning module and expected inputs before editing behavior.
 - Cross-check data flow with [root/DATABASES.md](root/DATABASES.md) when state is involved.
 - Re-run focused tests after updates to confirm no regression in tool contracts.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Keep argument names and defaults exact when generating tool/model calls.
 - Prefer evidence from code paths over assumptions when documenting behavior.
-
 
 > Every config option in `config.json` explained.
 
@@ -203,10 +206,13 @@ iTaK uses a single `config.json` for all configuration. Secrets use `$ENV_VAR` s
 ## Section-by-Section Explanation
 
 ### `agent`
+
 Core agent behavior. `max_iterations` prevents infinite loops. `checkpoint_interval_steps` controls how often state is saved for crash recovery.
 
 ### `models`
+
 Four model slots:
+
 - **chat** - Main reasoning (use the smartest model you have)
 - **utility** - Cheap tasks like summarization (use a fast/cheap model)
 - **browser** - Vision-capable for screenshots (needs multimodal)
@@ -215,7 +221,9 @@ Four model slots:
 The `provider` is always `litellm`, which supports 100+ APIs. Model names use the format `provider/model-name`.
 
 ### `memory`
+
 Layer-by-layer configuration. Missing stores are silently skipped:
+
 - **sqlite** always works (local file)
 - **neo4j** requires a running Neo4j instance
 - **weaviate** requires a Weaviate cluster
@@ -234,17 +242,21 @@ Layer-by-layer configuration. Missing stores are silently skipped:
   - `append_to_memory_md: true` - Append extracted facts to MEMORY.md
 
 ### `security`
+
 - `sandbox_enabled: true` runs code in Docker containers
 - `rate_limit` prevents abuse across users, tools, and global
 
 ### `output_guard`
+
 - `skip_categories` lets you allow certain types through (e.g., `["email"]` to let emails pass)
 - `log_redactions: true` records what gets redacted for audit
 
 ### `adapters`
+
 Enable/disable each platform. `allowed_channels` restricts which channels the bot responds in (empty = all channels).
 
 ### `heartbeat`
+
 Periodic system health checks. Monitors disk space, memory stores, and model availability.
 
 ---

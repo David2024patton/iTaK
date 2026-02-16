@@ -1,7 +1,9 @@
 # Tool: git_tool
 
 ## When to Use
+
 Use this tool when the user needs to perform Git or GitHub operations such as:
+
 - Cloning repositories
 - Checking repository status
 - Viewing diffs or commit history
@@ -10,6 +12,7 @@ Use this tool when the user needs to perform Git or GitHub operations such as:
 - Switching branches
 
 ## Arguments
+
 | Arg | Type | Required | Description |
 |-----|------|----------|-------------|
 | action | str | Yes | Git action: clone, status, diff, add, commit, push, pull, checkout, log |
@@ -21,6 +24,7 @@ Use this tool when the user needs to perform Git or GitHub operations such as:
 ## Examples
 
 ### Example 1: Clone a repository
+
 ```json
 {
     "tool_name": "git_tool",
@@ -32,6 +36,7 @@ Use this tool when the user needs to perform Git or GitHub operations such as:
 ```
 
 ### Example 2: Check status and commit
+
 ```json
 {
     "tool_name": "git_tool",
@@ -51,6 +56,7 @@ Use this tool when the user needs to perform Git or GitHub operations such as:
 ```
 
 ### Example 3: Push to remote
+
 ```json
 {
     "tool_name": "git_tool",
@@ -63,6 +69,7 @@ Use this tool when the user needs to perform Git or GitHub operations such as:
 ```
 
 ## Tips
+
 - Always check status before committing
 - Use descriptive commit messages
 - Pull before pushing to avoid conflicts

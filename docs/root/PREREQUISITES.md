@@ -1,22 +1,25 @@
 # iTaK Prerequisites Installation Guide
 
 ## At a Glance
+
 - Audience: New users, operators, and developers setting up iTaK environments.
 - Scope: Guide environment setup from prerequisites to first successful launch with validation checkpoints.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Verify prerequisites and environment variables before running setup scripts.
 - Execute installation steps in order from [INSTALL.md](INSTALL.md).
 - Confirm service readiness with [QUICK_START.md](QUICK_START.md).
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Use commands as ordered steps; verify prerequisites before launching services.
 - Re-validate service ports and env/config files after any setup change.
-
 
 Complete guide for installing all prerequisites needed to run iTaK.
 
@@ -34,16 +37,19 @@ Complete guide for installing all prerequisites needed to run iTaK.
 We provide automatic installers that detect your OS and install everything needed:
 
 ### Linux / macOS
+
 ```bash
 ./installers/install-prerequisites.sh
 ```
 
 ### Windows
+
 ```cmd
 installers/install-prerequisites.bat
 ```
 
 These scripts will install:
+
 - ✅ Docker (or skip if you prefer Python)
 - ✅ Python 3.11+ (if not present)
 - ✅ Git (if not present)
@@ -130,7 +136,7 @@ docker --version
 ### Windows
 
 1. **Download Docker Desktop:**
-   - Visit: https://docs.docker.com/desktop/install/windows-install/
+   - Visit: <https://docs.docker.com/desktop/install/windows-install/>
    - Download Docker Desktop for Windows
    - Or use our script: `installers/install-prerequisites.bat`
 
@@ -140,6 +146,7 @@ docker --version
    - Restart when prompted
 
 3. **Enable WSL 2 (if prompted):**
+
    ```powershell
    wsl --install
    ```
@@ -149,6 +156,7 @@ docker --version
    - Wait for Docker to start (whale icon in system tray)
 
 5. **Verify:**
+
    ```cmd
    docker --version
    docker compose version
@@ -199,7 +207,7 @@ python3.11 --version
 ### Windows
 
 1. **Download Python:**
-   - Visit: https://www.python.org/downloads/
+   - Visit: <https://www.python.org/downloads/>
    - Download Python 3.11 or later
    - Or use our script: `installers/install-prerequisites.bat`
 
@@ -209,6 +217,7 @@ python3.11 --version
    - Click "Install Now"
 
 3. **Verify:**
+
    ```cmd
    python --version
    pip --version
@@ -248,7 +257,7 @@ git --version
 ### Windows
 
 1. **Download:**
-   - Visit: https://git-scm.com/download/win
+   - Visit: <https://git-scm.com/download/win>
    - Download Git for Windows
    - Or use our script: `installers/install-prerequisites.bat`
 
@@ -258,6 +267,7 @@ git --version
    - Select "Git from the command line and also from 3rd-party software"
 
 3. **Verify:**
+
    ```cmd
    git --version
    ```
@@ -269,6 +279,7 @@ git --version
 After installation, verify everything works:
 
 ### Check Docker
+
 ```bash
 docker --version
 docker compose version
@@ -276,17 +287,20 @@ docker ps  # Should show running containers (if any)
 ```
 
 ### Check Python
+
 ```bash
 python3 --version  # Should be 3.11 or higher
 python3 -m pip --version
 ```
 
 ### Check Git
+
 ```bash
 git --version  # Should be 2.0 or higher
 ```
 
 ### Check System Resources
+
 ```bash
 # Linux/macOS
 free -h  # Check available RAM
@@ -303,12 +317,14 @@ systeminfo | findstr Memory
 ### "Docker daemon not running"
 
 **Linux:**
+
 ```bash
 sudo systemctl start docker
 sudo systemctl enable docker  # Start on boot
 ```
 
 **macOS/Windows:**
+
 - Start Docker Desktop from Applications/Start Menu
 - Wait for whale icon to appear
 
@@ -373,12 +389,14 @@ df -h
 Once prerequisites are installed:
 
 ### Option 1: Quick Start (2 minutes)
+
 ```bash
 ./installers/quick-install.sh  # Linux/macOS
 installers/quick-install.bat   # Windows
 ```
 
 ### Option 2: Full Install (10 minutes)
+
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
@@ -388,6 +406,7 @@ docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 ```
 
 ### Option 3: Python Install
+
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
@@ -401,9 +420,9 @@ python -m app.main --webui
 
 ## 📚 Additional Resources
 
-- **Docker Documentation:** https://docs.docker.com/get-started/
-- **Python Documentation:** https://docs.python.org/3/
-- **Git Documentation:** https://git-scm.com/doc
+- **Docker Documentation:** <https://docs.docker.com/get-started/>
+- **Python Documentation:** <https://docs.python.org/3/>
+- **Git Documentation:** <https://git-scm.com/doc>
 - **iTaK Quick Start:** [QUICK_START.md](QUICK_START.md)
 - **iTaK Full Guide:** [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md)
 
@@ -422,7 +441,7 @@ Choose the path that matches your experience level and needs!
 
 ## ❓ Need Help?
 
-- **GitHub Issues:** https://github.com/David2024patton/iTaK/issues
+- **GitHub Issues:** <https://github.com/David2024patton/iTaK/issues>
 - **Documentation:** Full guides in `/docs`
 - **Quick Start:** [QUICK_START.md](QUICK_START.md) for fastest path
 

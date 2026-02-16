@@ -1,22 +1,25 @@
 # Adapters Reference
 
 ## At a Glance
+
 - Audience: Developers integrating channels, APIs, and system architecture components.
 - Scope: Explain component boundaries, integration points, and expected behavior across interfaces.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Identify the integration boundary first (adapter, API endpoint, or UI component).
 - Trace implementation details from [root/IMPLEMENTATION_SUMMARY.md](root/IMPLEMENTATION_SUMMARY.md).
 - Validate behavior with smoke checks after each configuration change.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Use explicit endpoint names, adapter flags, and file paths for automation tasks.
 - Note root endpoints vs `/api/*` endpoints to avoid integration mismatches.
-
 
 > Every communication adapter explained with setup instructions and examples.
 
@@ -32,6 +35,7 @@ CLI      ─┘
 ```
 
 All adapters inherit from `BaseAdapter` and share:
+
 - Output Guard integration (PII/secret scrubbing)
 - Progress broadcasting
 - Message handling pipeline
@@ -76,6 +80,7 @@ def _sanitize_output(self, text: str) -> str:
 **Lines:** ~85 | **Local terminal interface for development.**
 
 ### Usage
+
 ```bash
 python -m app.main --adapter cli
 ```
@@ -90,6 +95,7 @@ python -m app.main --adapter cli
 ```
 
 ### Features
+
 - Colorized output (green for agent, blue for status)
 - Progress updates shown inline
 - Ctrl+C for graceful shutdown
@@ -105,10 +111,13 @@ python -m app.main --adapter cli
 
 1. Create a bot at [discord.dev](https://discord.com/developers/applications)
 2. Add the token to `.env`:
+
 ```bash
 DISCORD_TOKEN=your_token_here
 ```
-3. Configure in `config.json`:
+
+1. Configure in `config.json`:
+
 ```json
 {
     "adapters": {
@@ -141,6 +150,7 @@ DISCORD_TOKEN=your_token_here
 ### Multi-user
 
 Discord users are identified by their Discord ID. Combined with the `users.py` RBAC system:
+
 - Unknown users get the `unknown_user_role` (default: `user`)
 - Registered users get their assigned role
 - Owner users can manage other users via commands
@@ -155,10 +165,13 @@ Discord users are identified by their Discord ID. Combined with the `users.py` R
 
 1. Create a bot via [@BotFather](https://t.me/botfather)
 2. Add the token to `.env`:
+
 ```bash
 TELEGRAM_TOKEN=your_token_here
 ```
-3. Configure in `config.json`:
+
+1. Configure in `config.json`:
+
 ```json
 {
     "adapters": {
@@ -173,6 +186,7 @@ TELEGRAM_TOKEN=your_token_here
 ```
 
 ### Features
+
 - Private and group chats
 - Markdown formatting in responses
 - Typing indicator
@@ -190,11 +204,14 @@ TELEGRAM_TOKEN=your_token_here
 1. Create a Slack App at [api.slack.com](https://api.slack.com/apps)
 2. Enable Socket Mode
 3. Add tokens to `.env`:
+
 ```bash
 SLACK_TOKEN=xoxb-your-bot-token
 SLACK_APP_TOKEN=xapp-your-app-token
 ```
-4. Configure in `config.json`:
+
+1. Configure in `config.json`:
+
 ```json
 {
     "adapters": {
@@ -207,6 +224,7 @@ SLACK_APP_TOKEN=xapp-your-app-token
 ```
 
 ### Features
+
 - Socket Mode (no public URL needed)
 - Channel/DM messaging
 - Thread support

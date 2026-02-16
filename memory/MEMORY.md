@@ -1,6 +1,8 @@
 # iTaK - MEMORY.md
-# Key Decisions, Lessons Learned, Important Facts
-# This file grows as the agent accumulates knowledge.
+
+## Key Decisions, Lessons Learned, Important Facts
+
+This file grows as the agent accumulates knowledge.
 
 ## Architecture Decisions
 
@@ -25,50 +27,64 @@
 <!-- Agent will append facts here as it discovers them -->
 
 ## MemU Extraction - 2026-02-13 22:37
+
 - Fact one
 - Fact two
 
 ## MemU Extraction - 2026-02-13 22:37
+
 - Complex fact
 
 ## MemU Extraction - 2026-02-13 22:38
+
 - Fact one
 - Fact two
 
 ## MemU Extraction - 2026-02-13 22:38
+
 - Complex fact
 
 ## MemU Extraction - 2026-02-13 22:38
+
 - Fact one
 - Fact two
 
 ## MemU Extraction - 2026-02-13 22:38
+
 - Complex fact
 
 ## MemU Extraction - 2026-02-13 22:40
+
 - Fact one
 - Fact two
 
 ## MemU Extraction - 2026-02-13 22:40
+
 - Complex fact
 
 ## MemU Extraction - 2026-02-15 04:33
+
 - Fact one
 - Fact two
 
 ## MemU Extraction - 2026-02-15 04:33
+
 - Complex fact
 
 ## MemU Extraction - 2026-02-15 04:49
+
 - Fact one
 - Fact two
 
 ## MemU Extraction - 2026-02-15 04:49
+
 - Complex fact
 
 ## MemU Extraction - 2026-02-15 16:21
+
 - Fact one
 - Fact two
 
 ## MemU Extraction - 2026-02-15 16:21
+
 - Complex fact

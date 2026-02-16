@@ -1,22 +1,25 @@
 # Skills Reference
 
 ## At a Glance
+
 - Audience: Developers and contributors authoring, maintaining, and mapping iTaK skills.
 - Scope: Describe module responsibilities, configuration surfaces, and extension patterns used in day-to-day work.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Locate the owning module and expected inputs before editing behavior.
 - Cross-check data flow with [root/DATABASES.md](root/DATABASES.md) when state is involved.
 - Re-run focused tests after updates to confirm no regression in tool contracts.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Match skill intent to concrete tool capabilities before proposing workflow changes.
 - Keep filename-based discovery assumptions explicit when adding or renaming skills.
-
 
 > All skills that ship with iTaK, plus how to create your own.
 

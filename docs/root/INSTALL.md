@@ -1,22 +1,25 @@
 # iTaK Installation - ONE Command
 
 ## At a Glance
+
 - Audience: New users, operators, and developers setting up iTaK environments.
 - Scope: Guide environment setup from prerequisites to first successful launch with validation checkpoints.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Verify prerequisites and environment variables before running setup scripts.
 - Execute installation steps in order from [INSTALL.md](INSTALL.md).
 - Confirm service readiness with [QUICK_START.md](QUICK_START.md).
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Use commands as ordered steps; verify prerequisites before launching services.
 - Re-validate service ports and env/config files after any setup change.
-
 
 ## 🚀 Quick Install (All Platforms)
 
@@ -29,37 +32,45 @@ python install.py
 ```
 
 That's it! The installer will:
+
 1. ✅ Auto-detect your operating system
 2. ✅ Install prerequisites if needed (Docker, Git)
 3. ✅ Ask: Minimal or Full Stack?
 4. ✅ Configure everything automatically
 5. ✅ Start iTaK
 
-Then visit **http://localhost:8000** to access iTaK!
+Then visit **<http://localhost:8000>** to access iTaK!
 
 ---
 
 ## 📋 Installation Options
 
 ### Interactive (Recommended)
+
 ```bash
 python install.py
 ```
+
 The installer will ask you questions and guide you through the process.
 
 ### Full Stack (All Databases)
+
 ```bash
 python install.py --full-stack
 ```
+
 Installs iTaK + Neo4j + Weaviate + SearXNG (production-ready setup).
 
 ### Minimal (iTaK Only)
+
 ```bash
 python install.py --minimal
 ```
+
 Installs just iTaK without databases (fastest, good for testing).
 
 ### Show Help
+
 ```bash
 python install.py --help
 ```
@@ -69,6 +80,7 @@ python install.py --help
 ## 🖥️ Platform Support
 
 The Python installer works on:
+
 - ✅ **Linux** (Ubuntu, Debian, Fedora, RHEL, CentOS, Arch)
 - ✅ **macOS** (Intel and Apple Silicon)
 - ✅ **WSL** (Windows Subsystem for Linux)
@@ -79,13 +91,15 @@ The Python installer works on:
 ## 📦 What Gets Installed
 
 ### Minimal Install
+
 - ✅ iTaK AI agent
-- ✅ Web UI (http://localhost:8000)
+- ✅ Web UI (<http://localhost:8000>)
 - ✅ SQLite database (local storage)
 - ✅ Python dependencies
 - ⏱️ Time: **2 minutes**
 
 ### Full Stack Install
+
 - ✅ Everything in Minimal, plus:
 - ✅ Neo4j (knowledge graph database)
 - ✅ Weaviate (vector database for embeddings)
@@ -97,11 +111,13 @@ The Python installer works on:
 ## 🔧 Prerequisites
 
 The installer checks and installs:
+
 - 🐍 **Python 3.11+** (required - you need this to run the installer)
 - 🐳 **Docker** (for full stack)
 - 📦 **Git** (for cloning the repository)
 
 **Don't have Python 3.11+?**
+
 - Ubuntu/Debian: `sudo apt install python3.11`
 - Fedora: `sudo dnf install python3.11`
 - macOS: `brew install python@3.11`
@@ -112,17 +128,20 @@ The installer checks and installs:
 ## 🎯 Step-by-Step Walkthrough
 
 ### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
 ```
 
 ### 2. Run the Installer
+
 ```bash
 python install.py
 ```
 
 or on some systems:
+
 ```bash
 python3 install.py
 ```
@@ -130,6 +149,7 @@ python3 install.py
 ### 3. Follow the Prompts
 
 The installer will:
+
 - Detect your OS
 - Check Python version
 - Ask: Full Stack or Minimal?
@@ -141,6 +161,7 @@ The installer will:
 ### 4. Configure API Keys
 
 Edit `.env` and add at least ONE API key:
+
 ```bash
 # Choose one or more:
 GEMINI_API_KEY=your_gemini_key_here
@@ -150,42 +171,53 @@ ANTHROPIC_API_KEY=your_anthropic_key_here
 
 ### 5. Access iTaK
 
-Visit http://localhost:8000 in your browser!
+Visit <http://localhost:8000> in your browser!
 
 ---
 
 ## 🐛 Troubleshooting
 
 ### Python version too old
+
 ```
 Error: Python 3.11+ required, but you have 3.9
 ```
+
 **Solution:** Upgrade Python to 3.11 or later.
 
 ### Docker not found (Full Stack)
+
 ```
 Error: Docker not found! Cannot start full stack.
 ```
-**Solution:** 
+
+**Solution:**
+
 - The installer tries to install Docker automatically on Linux
 - On macOS, install Docker Desktop manually
 - On Windows, use WSL and install Docker in WSL
 
 ### Permission denied
+
 ```
 Error: Permission denied
 ```
+
 **Solution:** On Linux, you may need to add your user to the docker group:
+
 ```bash
 sudo usermod -aG docker $USER
 newgrp docker
 ```
 
 ### WSL on Windows
+
 ```
 Windows detected. iTaK works best in WSL.
 ```
-**Solution:** 
+
+**Solution:**
+
 1. Open PowerShell as Administrator
 2. Run: `wsl --install`
 3. Restart your computer
@@ -209,6 +241,7 @@ Windows detected. iTaK works best in WSL.
 **You don't need these anymore!** Use `python install.py` instead.
 
 The following scripts are kept for backwards compatibility but are deprecated:
+
 - ~~install.sh~~ → Use `python install.py`
 - ~~install.bat~~ → Use `python install.py`
 - ~~quick-install.sh~~ → Use `python install.py --minimal`
@@ -223,8 +256,8 @@ The following scripts are kept for backwards compatibility but are deprecated:
 
 ## ❓ Questions?
 
-- GitHub Issues: https://github.com/David2024patton/iTaK/issues
-- Documentation: https://github.com/David2024patton/iTaK
+- GitHub Issues: <https://github.com/David2024patton/iTaK/issues>
+- Documentation: <https://github.com/David2024patton/iTaK>
 - Quick Start: [QUICK_START.md](QUICK_START.md)
 
 ---

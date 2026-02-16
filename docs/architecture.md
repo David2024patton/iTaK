@@ -1,22 +1,25 @@
 # iTaK Architecture Guide
 
 ## At a Glance
+
 - Audience: Developers integrating channels, APIs, and system architecture components.
 - Scope: Explain component boundaries, integration points, and expected behavior across interfaces.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Identify the integration boundary first (adapter, API endpoint, or UI component).
 - Trace implementation details from [root/IMPLEMENTATION_SUMMARY.md](root/IMPLEMENTATION_SUMMARY.md).
 - Validate behavior with smoke checks after each configuration change.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Use explicit endpoint names, adapter flags, and file paths for automation tasks.
 - Note root endpoints vs `/api/*` endpoints to avoid integration mismatches.
-
 
 > This document explains how iTaK works from the ground up. Every component, every flow, every decision. If you're an LLM reading this to understand your own code - this is your map.
 
@@ -36,6 +39,7 @@ The detailed content for this topic starts below.
 iTaK is an **autonomous AI agent** that operates in a monologue loop. It is NOT a chatbot - it doesn't just respond to messages. It thinks, plans, uses tools, and iterates until the task is done.
 
 The architecture is inspired by [Agent Zero](https://github.com/frdel/agent-zero)'s double while-True loop pattern, enhanced with:
+
 - 4-tier memory system (Markdown - SQLite - Neo4j - Weaviate)
 - 24 extension hooks for plugin behavior
 - Self-healing error recovery

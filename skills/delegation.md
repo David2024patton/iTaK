@@ -1,11 +1,14 @@
 # Skill: Task Delegation
+
 Category: tool
 Tags: delegation, sub-agent, parallel, swarm
 
 ## When to Use
+
 When the task is complex and can be broken into independent subtasks, or when a specialized role (researcher, coder, tester) would do a better job on a piece of the work.
 
 ## Steps
+
 1. Identify which part of the task can be delegated
 2. Choose the right role for the sub-agent
 3. Limit the sub-agent's tool access to what it needs
@@ -15,6 +18,7 @@ When the task is complex and can be broken into independent subtasks, or when a 
 ## Examples
 
 ### Example 1: Delegate research
+
 ```json
 {
     "tool_name": "delegate_task",
@@ -27,6 +31,7 @@ When the task is complex and can be broken into independent subtasks, or when a 
 ```
 
 ### Example 2: Delegate testing
+
 ```json
 {
     "tool_name": "delegate_task",
@@ -39,11 +44,13 @@ When the task is complex and can be broken into independent subtasks, or when a 
 ```
 
 ## When NOT to Delegate
+
 - Simple tasks that take one tool call
 - Tasks that need your full conversation context
 - Tasks where the user expects YOU to do it (personal preference)
 
 ## Common Errors
+
 | Error | Fix |
 |-------|-----|
 | Sub-agent loops forever | Set max_iterations lower for sub-agents |

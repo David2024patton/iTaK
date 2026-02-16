@@ -1,22 +1,25 @@
 # iTaK Noob First Day Guide
 
 ## At a Glance
+
 - Audience: Beginners, operators, and AI agents navigating iTaK documentation quickly.
 - Scope: Walk first-time users through day-one setup, first run, and confidence checks.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Complete installation first: [installation.md](installation.md).
 - Run your first launch path: [getting-started.md](getting-started.md).
 - Validate health checks from [root/QUICK_START.md](root/QUICK_START.md).
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Follow role-based paths first, then dive into module-specific deep references.
 - Keep links and commands current so both humans and automation can rely on them.
-
 
 > If this is your first time touching iTaK, follow this page exactly.
 

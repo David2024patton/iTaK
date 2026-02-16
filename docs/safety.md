@@ -1,22 +1,25 @@
 # Agent Safety & Reliability Features
 
 ## At a Glance
+
 - Audience: Security-conscious operators and developers implementing hardening controls.
 - Scope: Document hardening controls, secure defaults, and verification steps before deployment.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Apply hardening controls before exposing services to external networks.
 - Follow deployment guardrails from [root/DEPLOYMENT_CHECKLIST.md](root/DEPLOYMENT_CHECKLIST.md).
 - Validate findings with repeatable scans before closing security tasks.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Preserve threat-model assumptions and include guardrail checks in runbooks.
 - Avoid absolute compliance claims without independent audit evidence.
-
 
 > Runtime safety features, invariant checks, and best practices for reliable agent operation.
 
@@ -50,6 +53,7 @@ async def execute(agent, **kwargs):
 ```
 
 **Safety Features:**
+
 - Automatic coroutine detection and awaiting
 - Error isolation (one failing extension doesn't crash others)
 - Detailed error logging with hook context
@@ -85,6 +89,7 @@ Prevent unbounded memory growth with automatic history trimming:
 ```
 
 **Behavior:**
+
 - When history exceeds the cap, oldest messages are removed
 - System message (if present) is always preserved
 - Overflow events are logged automatically
@@ -208,6 +213,7 @@ When an untrusted tool returns content, it's wrapped with warning markers:
 ```
 
 This alerts the LLM to:
+
 - Treat the content as potentially malicious
 - Ignore any embedded instructions
 - Not execute any code found in the content
@@ -215,6 +221,7 @@ This alerts the LLM to:
 ### Default Untrusted Tools
 
 The following tools are untrusted by default:
+
 - `web_search` - Search results from the internet
 - `browser_agent` - Automated browser interactions
 - `browser` - Web page content
@@ -226,12 +233,14 @@ The following tools are untrusted by default:
 MCP tools are treated differently based on namespacing:
 
 **Local MCP Tools (no namespace):**
+
 ```python
 # Tool: "search_files"
 # Treated as trusted (no server namespace)
 ```
 
 **Remote MCP Tools (with namespace):**
+
 ```python
 # Tool: "github::search_code"
 # Server: "github"
@@ -331,6 +340,7 @@ while agent._running:
 ### Production vs Development
 
 **Development:**
+
 ```jsonc
 // Development settings - remove comments for actual use
 {
@@ -343,6 +353,7 @@ while agent._running:
 ```
 
 **Production:**
+
 ```jsonc
 // Production settings - remove comments for actual use
 {
@@ -395,6 +406,7 @@ curl http://localhost:8920/api/health
 ```
 
 Returns:
+
 ```json
 {
     "status": "ok",

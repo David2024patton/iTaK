@@ -1,9 +1,12 @@
 # Skill: Web Research Protocol
+
 Category: tool
 Tags: search, web, research, scraping, browser
 
 ## Overview
+
 iTaK has two tools for web research:
+
 1. **web_search** - SearXNG search engine queries (fast, text results)
 2. **browser_agent** - Full browser automation (slower, visual, interactive)
 
@@ -47,12 +50,14 @@ iTaK has two tools for web research:
 ## Common Research Tasks
 
 ### Find and read documentation
+
 ```
 1. web_search("FastAPI middleware documentation")
 2. browser_agent("Navigate to [URL] and extract the middleware example")
 ```
 
 ### Compare solutions
+
 ```
 1. web_search("best Python HTTP client library 2024")
 2. Read top 3 articles
@@ -60,6 +65,7 @@ iTaK has two tools for web research:
 ```
 
 ### Solve an error
+
 ```
 1. web_search("Python error: [exact error message]")
 2. Find Stack Overflow answer

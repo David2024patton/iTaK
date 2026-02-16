@@ -5,6 +5,7 @@ This directory contains various installation scripts for iTaK. These are alterna
 ## 📋 Files Overview
 
 ### Universal Python Installer (Recommended)
+
 **Location:** `/install.py` (in repository root)
 
 The recommended way to install iTaK on all platforms. This is a standalone Python script that works on Linux, macOS, Windows, and WSL.
@@ -37,6 +38,7 @@ python install.py
 ## 🚀 Usage
 
 ### Quick Install
+
 ```bash
 # Linux/macOS/WSL
 ./installers/quick-install.sh
@@ -46,12 +48,14 @@ installers\quick-install.bat
 ```
 
 ### Full Stack Install
+
 ```bash
 # Linux/macOS/WSL
 ./installers/install-full-stack.sh
 ```
 
 ### Interactive Setup
+
 ```bash
 # Linux/macOS/WSL
 python installers/setup.py
@@ -61,6 +65,7 @@ python installers\setup.py
 ```
 
 ### Prerequisites Only
+
 ```bash
 # Linux/macOS/WSL
 ./installers/install-prerequisites.sh
@@ -72,6 +77,7 @@ installers\install-prerequisites.bat
 ## 📚 Documentation
 
 For complete installation instructions, see:
+
 - **[QUICK_START.md](../QUICK_START.md)** - Quick start guide
 - **[INSTALL.md](../INSTALL.md)** - Installation overview
 - **[INSTALLATION_GUIDE.md](../docs/root/INSTALLATION_GUIDE.md)** - Detailed installation guide
@@ -83,10 +89,12 @@ For complete installation instructions, see:
 **After:** All installer scripts are in the `installers/` directory
 
 **What stayed in root:**
+
 - `install.py` - Universal Python installer (recommended)
 - `README.md` - Repository readme
 
 **What moved to installers/:**
+
 - All `.sh` scripts (install, setup, quick-install, etc.)
 - All `.bat` scripts (install, setup, quick-install, etc.)
 - All `.ps1` scripts (detect-and-setup-wsl)

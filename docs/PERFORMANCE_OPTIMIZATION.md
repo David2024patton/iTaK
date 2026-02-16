@@ -1,22 +1,25 @@
 # iTaK Performance Optimization Summary
 
 ## At a Glance
+
 - Audience: Developers and operators tuning performance, throughput, and resource usage.
 - Scope: Summarize optimization work, measurement approach, and the conditions required to reproduce results.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Reproduce benchmark conditions before interpreting optimization outcomes.
 - Run baseline and optimized paths under the same workload profile.
 - Record CPU, latency, and memory deltas together to avoid skewed conclusions.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Preserve benchmark context (hardware, load shape, sample size) when summarizing performance outcomes.
 - Treat improvement percentages as scenario-dependent unless reproduced with current measurements.
-
 
 This document summarizes the performance improvements made to the iTaK codebase to address slow and inefficient code patterns.
 
@@ -29,11 +32,13 @@ This document summarizes the performance improvements made to the iTaK codebase 
 ## Critical Performance Fixes
 
 ### 1. Rate Limiter - Algorithm Optimization
+
 **File:** `security/rate_limiter.py`  
 **Issue:** O(n) list filtering on every request check  
 **Impact:** HIGH - Scales poorly with traffic (1200+ requests/hour × multiple categories)
 
 **Before:**
+
 ```python
 # O(n) list comprehension on every check
 self._requests[category] = [t for t in self._requests[category] if now - t < 3600]
@@ -41,6 +46,7 @@ recent_minute = sum(1 for t in self._requests[category] if now - t < 60)
 ```
 
 **After:**
+
 ```python
 # O(1) amortized with deque
 from collections import deque
@@ -56,11 +62,13 @@ while requests_deque and requests_deque[0] < cutoff_hour:
 ---
 
 ### 2. SQLite Store - Connection Pooling
+
 **File:** `memory/sqlite_store.py`  
 **Issue:** Opening/closing new database connection for every operation  
 **Impact:** HIGH - Database connection overhead multiplies with concurrent requests
 
 **Before:**
+
 ```python
 async def save(...):
     conn = sqlite3.connect(str(self.db_path))  # New connection
@@ -69,6 +77,7 @@ async def save(...):
 ```
 
 **After:**
+
 ```python
 import threading
 
@@ -88,17 +97,20 @@ def _get_connection(self):
 ---
 
 ### 3. Output Guard - Set Operations
+
 **File:** `security/output_guard.py`  
 **Issue:** Redundant set/list conversions in hot path  
 **Impact:** MEDIUM - Runs on every agent output
 
 **Before:**
+
 ```python
 # Double conversion: generator → set → list
 return list(set(r.category.value for r in self.redactions))
 ```
 
 **After:**
+
 ```python
 # Inline deduplication with set literal
 categories = {r.category.value for r in redactions}
@@ -110,11 +122,13 @@ categories = {r.category.value for r in redactions}
 ---
 
 ### 4. Config Watcher - File Caching
+
 **File:** `core/config_watcher.py`  
 **Issue:** Reading and parsing config.json multiple times per poll cycle  
 **Impact:** HIGH - Runs continuously (every 5 seconds)
 
 **Before:**
+
 ```python
 # Check mtime, then always read file
 with open(self._path, "r") as f:
@@ -122,6 +136,7 @@ with open(self._path, "r") as f:
 ```
 
 **After:**
+
 ```python
 def __init__(...):
     self._cached_config: Optional[dict] = None  # Cache config
@@ -138,11 +153,13 @@ def check_now(self):
 ---
 
 ### 5. Web Search - Import Optimization
+
 **File:** `tools/web_search.py`  
 **Issue:** Importing DDGS inside async function on every fallback call  
 **Impact:** MEDIUM - Affects search fallback path
 
 **Before:**
+
 ```python
 async def _search_duckduckgo(...):
     from duckduckgo_search import DDGS  # Import on every call
@@ -151,6 +168,7 @@ async def _search_duckduckgo(...):
 ```
 
 **After:**
+
 ```python
 # Module-level import with availability check
 try:
@@ -170,11 +188,13 @@ async def _search_duckduckgo(...):
 ---
 
 ### 6. Model Router - Instance Caching
+
 **File:** `core/models.py`  
 **Issue:** Loading FastEmbed model on every embedding call  
 **Impact:** MEDIUM - 100-500ms overhead per batch
 
 **Before:**
+
 ```python
 async def _fastembed(self, texts, model):
     from fastembed import TextEmbedding
@@ -183,6 +203,7 @@ async def _fastembed(self, texts, model):
 ```
 
 **After:**
+
 ```python
 def __init__(self, config):
     self._fastembed_cache: dict[str, Any] = {}  # Model cache
@@ -200,6 +221,7 @@ async def _fastembed(self, texts, model):
 ## Testing
 
 ### New Tests Added
+
 Created `tests/test_performance.py` with 10 comprehensive tests:
 
 1. **Rate Limiter**
@@ -225,6 +247,7 @@ Created `tests/test_performance.py` with 10 comprehensive tests:
    - ✅ Confirms DDGS imported at module level
 
 ### Test Results
+
 ```
 21 passed, 1 skipped in 0.28s
 ```
@@ -236,6 +259,7 @@ All existing tests pass with no regressions.
 ## Performance Metrics
 
 ### Before Optimizations
+
 - **Rate Limiter:** O(n) per check, ~1-5ms with 100 requests, ~50ms with 1000 requests
 - **SQLite Store:** 3-5 connection open/close cycles per search operation
 - **Config Watcher:** 17,280 file reads per day (1 every 5 seconds × 3 reads)
@@ -243,6 +267,7 @@ All existing tests pass with no regressions.
 - **FastEmbed:** Model loading overhead on every batch (~100-500ms)
 
 ### After Optimizations
+
 - **Rate Limiter:** O(k) per check where k = expired entries, consistently < 10ms even with 1000+ requests
 - **SQLite Store:** 1 persistent connection per thread, no repeated open/close
 - **Config Watcher:** ~0 file reads when unchanged (mtime check only), < 1ms
@@ -250,6 +275,7 @@ All existing tests pass with no regressions.
 - **FastEmbed:** Zero loading overhead after first use per model
 
 ### Estimated Overall Impact
+
 - **High-traffic scenarios:** 30-50% reduction in overhead
 - **Memory operations:** 40-60% faster with connection pooling
 - **Config polling:** 99.9% reduction in I/O operations
@@ -280,13 +306,16 @@ These optimizations establish patterns for future development:
 All changes are **backward compatible**. No API changes, only internal implementation improvements.
 
 ### Deployment Checklist
+
 - ✅ All tests pass
 - ✅ No breaking changes
 - ✅ Thread-safe connection pooling
 - ✅ Memory usage unchanged (or slightly reduced due to efficient data structures)
 
 ### Monitoring Recommendations
+
 After deployment, monitor:
+
 - Rate limiter check latency (should be consistently < 10ms)
 - SQLite query times (should improve by 40-60%)
 - Config watcher CPU usage (should decrease significantly)

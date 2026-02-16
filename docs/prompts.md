@@ -1,22 +1,25 @@
 # Prompts & Skills Reference
 
 ## At a Glance
+
 - Audience: Developers extending iTaK behavior via tools, prompts, models, and core modules.
 - Scope: Describe module responsibilities, configuration surfaces, and extension patterns used in day-to-day work.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Locate the owning module and expected inputs before editing behavior.
 - Cross-check data flow with [root/DATABASES.md](root/DATABASES.md) when state is involved.
 - Re-run focused tests after updates to confirm no regression in tool contracts.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Keep argument names and defaults exact when generating tool/model calls.
 - Prefer evidence from code paths over assumptions when documenting behavior.
-
 
 > How iTaK's prompt engineering and skill system works.
 
@@ -44,15 +47,18 @@ The result is a single massive system prompt that tells the LLM everything it ne
 ### File-by-File Breakdown
 
 #### `agent.system.main.md`
+
 The core system prompt. Tells the agent WHAT it is and HOW to respond.
 
 Key sections:
+
 - **Core Architecture**: "You operate in a monologue loop"
 - **Response Format**: JSON with `thoughts`, `headline`, `tool_name`, `tool_args`
 - **Memory System**: "You have a 4-layer brain"
 - **Rules**: Never expose secrets, test your work, etc.
 
 Example of the JSON format the LLM must produce:
+
 ```json
 {
     "thoughts": [
@@ -70,9 +76,11 @@ Example of the JSON format the LLM must produce:
 ```
 
 #### `agent.system.main.role.md`
+
 Personality and communication style.
 
 Key rules:
+
 - Talk naturally, like a friend who knows tech
 - Use contractions (you're, it's, don't)
 - **NEVER use em dashes** - always use regular hyphens
@@ -80,14 +88,18 @@ Key rules:
 - Keep it concise - say what needs to be said, then stop
 
 #### `agent.system.main.solving.md`
+
 Problem-solving methodology. Teaches the LLM how to:
+
 - Break down complex tasks
 - Handle ambiguity
 - When to ask vs. when to act
 - Multi-step planning
 
 #### `agent.system.tool.*.md`
+
 Each tool has its own prompt file with detailed usage instructions:
+
 - `agent.system.tool.code_exe.md` - Code execution guide
 - `agent.system.tool.browser.md` - Browser usage guide
 - `agent.system.tool.memory.md` - Memory usage guide
@@ -95,7 +107,9 @@ Each tool has its own prompt file with detailed usage instructions:
 - `agent.system.tool.search_engine.md` - Web search guide
 
 #### `profiles/`
+
 Specialized persona overrides. Example:
+
 - `profiles/coder.md` - Focused on writing code
 - Can add more for researcher, devops, etc.
 

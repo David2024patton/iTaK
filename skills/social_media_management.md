@@ -1,9 +1,12 @@
 # Skill: Social Media Management
+
 Category: tool
 Tags: social-media, twitter, facebook, linkedin, instagram, api, communication
 
 ## When to Use
+
 Use this skill when you need to:
+
 - Post updates to social media platforms
 - Read and monitor social media feeds
 - Reply to posts, tweets, or comments
@@ -13,6 +16,7 @@ Use this skill when you need to:
 - Automate social media responses
 
 ## Supported Platforms
+
 - **Twitter/X** - Post tweets, read timeline, reply, like
 - **Facebook** - Post updates, read feed, comment, like
 - **LinkedIn** - Share posts, read feed, comment, like
@@ -21,23 +25,27 @@ Use this skill when you need to:
 ## Steps
 
 ### Posting to Social Media
+
 1. Use `social_media_tool` with your chosen platform
 2. Set action to "post"
 3. Provide message content
 4. Post will be published to the platform
 
 ### Reading Social Media Feeds
+
 1. Set action to "read"
 2. Optionally specify limit for number of posts
 3. Returns recent posts from your feed
 
 ### Replying to Posts
+
 1. Set action to "reply"
 2. Provide the post_id you want to reply to
 3. Include your reply message
 4. Reply will be posted as a comment
 
 ### Liking Content
+
 1. Set action to "like"
 2. Provide the post_id to like
 3. Like will be registered on the platform
@@ -47,6 +55,7 @@ Use this skill when you need to:
 Each platform requires API credentials in `config.json`:
 
 ### Twitter/X Configuration
+
 ```json
 {
     "social_media": {
@@ -61,6 +70,7 @@ Each platform requires API credentials in `config.json`:
 ```
 
 ### Facebook Configuration
+
 ```json
 {
     "social_media": {
@@ -72,6 +82,7 @@ Each platform requires API credentials in `config.json`:
 ```
 
 ### LinkedIn Configuration
+
 ```json
 {
     "social_media": {
@@ -83,6 +94,7 @@ Each platform requires API credentials in `config.json`:
 ```
 
 ### Instagram Configuration
+
 ```json
 {
     "social_media": {
@@ -96,24 +108,28 @@ Each platform requires API credentials in `config.json`:
 ## Getting API Credentials
 
 ### Twitter/X
+
 1. Go to developer.twitter.com
 2. Create a new app
 3. Generate API keys and access tokens
 4. Enable required permissions (read/write)
 
 ### Facebook
+
 1. Go to developers.facebook.com
 2. Create a new app
 3. Get a Page Access Token
 4. Add required permissions (pages_manage_posts, etc.)
 
 ### LinkedIn
+
 1. Go to linkedin.com/developers
 2. Create a new app
 3. Request API access
 4. Generate access tokens with proper scopes
 
 ### Instagram
+
 1. Use Facebook Graph API
 2. Connect Instagram Business Account
 3. Get access token through Facebook
@@ -122,6 +138,7 @@ Each platform requires API credentials in `config.json`:
 ## Examples
 
 ### Example 1: Post a tweet
+
 ```json
 {
     "tool_name": "social_media_tool",
@@ -134,6 +151,7 @@ Each platform requires API credentials in `config.json`:
 ```
 
 ### Example 2: Read Facebook feed
+
 ```json
 {
     "tool_name": "social_media_tool",
@@ -146,6 +164,7 @@ Each platform requires API credentials in `config.json`:
 ```
 
 ### Example 3: Reply to a LinkedIn post
+
 ```json
 {
     "tool_name": "social_media_tool",
@@ -159,6 +178,7 @@ Each platform requires API credentials in `config.json`:
 ```
 
 ### Example 4: Like an Instagram post
+
 ```json
 {
     "tool_name": "social_media_tool",
@@ -171,7 +191,9 @@ Each platform requires API credentials in `config.json`:
 ```
 
 ### Example 5: Post to multiple platforms
+
 First post to Twitter:
+
 ```json
 {
     "tool_name": "social_media_tool",
@@ -184,6 +206,7 @@ First post to Twitter:
 ```
 
 Then post to LinkedIn:
+
 ```json
 {
     "tool_name": "social_media_tool",
@@ -217,6 +240,7 @@ Then post to LinkedIn:
 7. **Compliance**: Follow platform terms of service
 
 ## Security Notes
+
 - Store API credentials securely in config.json
 - Never commit credentials to version control
 - Use environment variables for sensitive data

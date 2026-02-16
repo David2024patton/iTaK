@@ -1,22 +1,25 @@
 # Getting Started
 
 ## At a Glance
+
 - Audience: New users, operators, and developers setting up iTaK environments.
 - Scope: Guide environment setup from prerequisites to first successful launch with validation checkpoints.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Verify prerequisites and environment variables before running setup scripts.
 - Execute installation steps in order from [root/INSTALL.md](root/INSTALL.md).
 - Confirm service readiness with [root/QUICK_START.md](root/QUICK_START.md).
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Use commands as ordered steps; verify prerequisites before launching services.
 - Re-validate service ports and env/config files after any setup change.
-
 
 > From zero to running agent in 5 minutes.
 
@@ -71,12 +74,14 @@ After installation, edit `.env` with your API keys and run `python -m app.main`.
 ### Option B: Manual Setup
 
 ### 1. Clone the repo
+
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
 ```
 
 ### 2. Install dependencies
+
 ```bash
 pip install -r install/requirements/requirements.txt
 ```
@@ -94,6 +99,7 @@ python installers/setup.py
 ```
 
 This will guide you through:
+
 - Creating config.json and .env files
 - Configuring Neo4j (use your own or install via Docker)
 - Configuring Weaviate (optional)
@@ -108,6 +114,7 @@ cp install/config/.env.example .env
 ```
 
 Edit `.env` with your keys:
+
 ```bash
 # Required: at least one LLM provider
 GOOGLE_API_KEY=your_key_here
@@ -172,13 +179,16 @@ Not everything requires full setup. Here's what each feature needs:
 | **WebUI dashboard** | Nothing extra (built-in) |
 
 ### Minimal Setup (just chat + code)
+
 ```bash
 # .env
 GOOGLE_API_KEY=your_key
 ```
+
 That's it. Memory uses local SQLite, no external services needed.
 
 ### Full Setup (everything)
+
 ```bash
 # .env
 GOOGLE_API_KEY=your_key
@@ -199,6 +209,7 @@ docker compose up -d
 ```
 
 This starts:
+
 - iTaK agent
 - WebUI dashboard on port 48920
 - Neo4j (if configured)
@@ -211,11 +222,13 @@ This starts:
 After setup, verify everything is working:
 
 ### Run the diagnostic tool
+
 ```bash
 python -m app.main --doctor
 ```
 
 This checks:
+
 - ✅ Python version (3.11+)
 - ✅ All required packages
 - ✅ Configuration files
@@ -224,6 +237,7 @@ This checks:
 - ✅ Tool availability
 
 Expected output (example):
+
 ```
 ========================================================
    iTaK Doctor - Full System Diagnostic
@@ -250,16 +264,19 @@ Expected output (example):
 Most failures are optional services (Neo4j, Weaviate, SearXNG) - these don't prevent basic operation.
 
 ### Run the test suite
+
 ```bash
 python -m pytest tests/ -q
 ```
 
 All tests should pass (example):
+
 ```
 N passed in X.XXs
 ```
 
 ### Test basic functionality
+
 ```bash
 # Start in CLI mode
 python -m app.main

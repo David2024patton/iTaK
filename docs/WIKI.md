@@ -1,22 +1,25 @@
 # iTaK Wiki
 
 ## At a Glance
+
 - Audience: Beginners, operators, and AI agents navigating iTaK documentation quickly.
 - Scope: Navigate the docs by role and jump quickly to setup, operations, and development paths.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Pick your role path first: operator, developer, or contributor.
 - Open foundational setup: [installation.md](installation.md).
 - Continue with architecture map: [AI_CONTEXT.md](AI_CONTEXT.md).
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Follow role-based paths first, then dive into module-specific deep references.
 - Keep links and commands current so both humans and automation can rely on them.
-
 
 > One place to navigate iTaK docs by role: beginner, operator, developer, and AI agent.
 

@@ -1,22 +1,25 @@
 # Security Module Reference
 
 ## At a Glance
+
 - Audience: Security-conscious operators and developers implementing hardening controls.
 - Scope: Document hardening controls, secure defaults, and verification steps before deployment.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Apply hardening controls before exposing services to external networks.
 - Follow deployment guardrails from [root/DEPLOYMENT_CHECKLIST.md](root/DEPLOYMENT_CHECKLIST.md).
 - Validate findings with repeatable scans before closing security tasks.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Preserve threat-model assumptions and include guardrail checks in runbooks.
 - Avoid absolute compliance claims without independent audit evidence.
-
 
 > Every security component in iTaK explained with examples.
 
@@ -130,6 +133,7 @@ Prompts: {{placeholder}}    --> Gets replaced at runtime
 ### Example
 
 **.env file:**
+
 ```bash
 OPENAI_API_KEY=sk-abc123...
 DISCORD_TOKEN=MTQ3MD...
@@ -137,6 +141,7 @@ NEO4J_PASSWORD=mypassword
 ```
 
 **config.json:**
+
 ```json
 {
     "models": {
@@ -148,11 +153,13 @@ NEO4J_PASSWORD=mypassword
 ```
 
 **Prompt template:**
+
 ```markdown
 Use the API key: {{OPENAI_API_KEY}} to connect.
 ```
 
 At runtime:
+
 ```python
 secrets = SecretManager(env_file=".env")
 
@@ -249,6 +256,7 @@ if not allowed:
 ```
 
 ### Configuration
+
 ```json
 {
     "security": {

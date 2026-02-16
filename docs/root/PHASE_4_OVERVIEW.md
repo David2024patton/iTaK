@@ -1,22 +1,25 @@
 # Phase 4 Overview - Mission-Critical Testing
 
 ## At a Glance
+
 - Audience: Developers and operators validating quality, readiness, and regression safety.
 - Scope: Define practical test flow, readiness criteria, and how to validate changes safely.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Run focused checks first (`pytest -q` or targeted smoke scripts).
 - Use [TESTING.md](TESTING.md) for canonical test commands and order.
 - Capture outputs alongside the environment context for reproducibility.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Prefer reproducible commands (`pytest`, smoke scripts) and capture exact outputs.
 - Treat numeric metrics as snapshots unless tied to current command output.
-
 
 **Target:** 80% Coverage  
 **Status:** ⏳ FUTURE (Optional)  
@@ -59,6 +62,7 @@ Phase 4 adds **~50 tests** across 4 critical areas:
 
 **Purpose:** Test Model Context Protocol integration  
 **Components:**
+
 - `core/mcp_client.py` - Client functionality
 - `core/mcp_server.py` - Server tool exposure
 - MCP protocol compliance
@@ -66,6 +70,7 @@ Phase 4 adds **~50 tests** across 4 critical areas:
 - Context sharing across services
 
 **Example Tests:**
+
 - MCP client connection and authentication
 - Tool registration via MCP
 - Remote tool invocation
@@ -75,6 +80,7 @@ Phase 4 adds **~50 tests** across 4 critical areas:
 - Multiple MCP server coordination
 
 **Why Critical:**
+
 - MCP enables multi-service orchestration
 - Incorrect implementation could expose tools to unauthorized services
 - Protocol errors could break integrations
@@ -85,6 +91,7 @@ Phase 4 adds **~50 tests** across 4 critical areas:
 
 **Purpose:** Test system resilience under failure conditions  
 **Scenarios:**
+
 - Network partitions (split-brain scenarios)
 - Database connection failures
 - Service degradation (slow responses)
@@ -93,6 +100,7 @@ Phase 4 adds **~50 tests** across 4 critical areas:
 - Race conditions under load
 
 **Example Tests:**
+
 - Network partition during agent conversation
 - Database failure mid-checkpoint save
 - Memory exhaustion during embedding generation
@@ -102,6 +110,7 @@ Phase 4 adds **~50 tests** across 4 critical areas:
 - Background task failures
 
 **Why Critical:**
+
 - Production environments experience failures
 - Need to verify graceful degradation
 - Ensure data integrity under stress
@@ -113,6 +122,7 @@ Phase 4 adds **~50 tests** across 4 critical areas:
 
 **Purpose:** Validate performance at extreme scale  
 **Test Scenarios:**
+
 - 10,000+ concurrent users
 - Multi-hour stability runs (8-24 hours)
 - Memory leak detection over time
@@ -122,6 +132,7 @@ Phase 4 adds **~50 tests** across 4 critical areas:
 - Database query performance degradation
 
 **Example Tests:**
+
 - 10,000 concurrent chat sessions
 - 24-hour continuous operation test
 - Gradual memory growth detection
@@ -131,6 +142,7 @@ Phase 4 adds **~50 tests** across 4 critical areas:
 - Database index performance validation
 
 **Why Critical:**
+
 - Scale reveals issues not visible in small tests
 - Memory leaks only appear over time
 - Performance degradation under sustained load
@@ -142,6 +154,7 @@ Phase 4 adds **~50 tests** across 4 critical areas:
 
 **Purpose:** Validate regulatory compliance requirements  
 **Regulations Covered:**
+
 - HIPAA (healthcare data protection)
 - PCI DSS (payment card security)
 - SOC2 (service organization controls)
@@ -150,6 +163,7 @@ Phase 4 adds **~50 tests** across 4 critical areas:
 **Example Tests:**
 
 **HIPAA:**
+
 - PHI encryption at rest and in transit
 - Audit logging of data access
 - User authentication and authorization
@@ -157,6 +171,7 @@ Phase 4 adds **~50 tests** across 4 critical areas:
 - Emergency access controls
 
 **PCI DSS:**
+
 - Cardholder data encryption
 - Secure key management
 - Network segmentation validation
@@ -164,6 +179,7 @@ Phase 4 adds **~50 tests** across 4 critical areas:
 - Access control enforcement
 
 **SOC2:**
+
 - Change management controls
 - Backup and recovery validation
 - Incident response procedures
@@ -171,6 +187,7 @@ Phase 4 adds **~50 tests** across 4 critical areas:
 - Data integrity verification
 
 **Why Critical:**
+
 - Regulatory compliance is mandatory for certain industries
 - Non-compliance can result in fines and legal issues
 - Demonstrates due diligence to auditors
@@ -240,12 +257,14 @@ Phase 4 adds **~50 tests** across 4 critical areas:
 ### Prerequisites
 
 **Infrastructure:**
+
 - Load testing infrastructure (K6, Locust, or JMeter)
 - Chaos engineering tools (Chaos Monkey, Gremlin)
 - MCP test servers
 - Compliance audit tools
 
 **Resources:**
+
 - Dedicated test environment
 - Performance monitoring (APM)
 - Log aggregation (ELK, Splunk)
@@ -288,21 +307,25 @@ Phase 4 adds **~50 tests** across 4 critical areas:
 ### Benefits of Phase 4
 
 ✅ **Reduced Risk**
+
 - Fewer production incidents
 - Better failure handling
 - Proven at scale
 
 ✅ **Compliance Assurance**
+
 - Regulatory approval
 - Audit readiness
 - Legal protection
 
 ✅ **Customer Confidence**
+
 - SLA guarantees
 - Enterprise sales
 - Trust building
 
 ✅ **Operational Excellence**
+
 - Better monitoring
 - Faster debugging
 - Improved reliability
@@ -310,16 +333,19 @@ Phase 4 adds **~50 tests** across 4 critical areas:
 ### Costs of Phase 4
 
 ⚠️ **Development Time**
+
 - 15-20 days additional effort
 - Specialized expertise needed
 - Infrastructure setup
 
 ⚠️ **Maintenance**
+
 - More tests to maintain
 - Infrastructure costs
 - Ongoing monitoring
 
 ⚠️ **Complexity**
+
 - More complex test suite
 - Additional dependencies
 - Longer CI/CD pipelines
@@ -327,11 +353,13 @@ Phase 4 adds **~50 tests** across 4 critical areas:
 ### ROI Calculation
 
 **For Mission-Critical Apps:**
+
 - Downtime cost: $10,000/hour
 - One prevented incident: $50,000+
 - ROI: 500%+ (pays for itself quickly)
 
 **For Standard Apps:**
+
 - Lower downtime costs
 - Fewer critical incidents
 - ROI: 50-100% (marginal benefit)
@@ -345,6 +373,7 @@ Phase 4 adds **~50 tests** across 4 critical areas:
 ### Step 1: Assess Need
 
 Ask yourself:
+
 - [ ] Do we handle sensitive/regulated data?
 - [ ] Do we require 99.9%+ uptime?
 - [ ] Do we serve 10,000+ concurrent users?
@@ -355,6 +384,7 @@ If you answered "yes" to 2+ questions, consider Phase 4.
 ### Step 2: Prioritize Tests
 
 Choose which category is most critical:
+
 1. **Compliance first** - If regulated
 2. **Chaos first** - If mission-critical
 3. **Load first** - If high-traffic
@@ -371,6 +401,7 @@ Choose which category is most critical:
 ### Step 4: Implement Incrementally
 
 Don't try to do all 50 tests at once:
+
 1. Week 1-2: MCP integration (15 tests)
 2. Week 3: Chaos engineering (10 tests)
 3. Week 4: Extended load (10 tests)
@@ -390,6 +421,7 @@ Don't try to do all 50 tests at once:
 If full Phase 4 is too much, consider **Phase 4 Lite**:
 
 **Minimal additions (~20 tests, +5% to reach 75%):**
+
 - 5 MCP basic tests
 - 5 basic chaos tests (network, DB)
 - 5 moderate load tests (1000 users)
@@ -406,12 +438,14 @@ If full Phase 4 is too much, consider **Phase 4 Lite**:
 **Phase 4 is optional** and designed for specific use cases requiring the highest levels of testing:
 
 ✅ **Pursue Phase 4 if:**
+
 - Mission-critical application
 - Regulated industry (healthcare, finance)
 - Ultra-high scale (>10,000 users)
 - Enterprise SLA requirements
 
 ❌ **Skip Phase 4 if:**
+
 - Standard production use
 - Non-regulated industry  
 - Moderate scale (<1000 concurrent users)

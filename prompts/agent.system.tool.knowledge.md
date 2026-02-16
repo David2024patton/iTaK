@@ -1,9 +1,11 @@
 # Tool: knowledge_tool
 
 ## When to Use
+
 Use this tool to store and query RELATIONSHIPS between entities (people, projects, tools, servers). Best for "what's connected to X?" questions.
 
 ## Arguments
+
 | Arg | Type | Required | Description |
 |-----|------|----------|-------------|
 | action | str | Yes | `search`, `save_entity`, `save_relationship`, `get_context` |
@@ -16,6 +18,7 @@ Use this tool to store and query RELATIONSHIPS between entities (people, project
 ## Examples
 
 ### Save a relationship
+
 ```json
 {
     "tool_name": "knowledge_tool",
@@ -30,6 +33,7 @@ Use this tool to store and query RELATIONSHIPS between entities (people, project
 ```
 
 ### Get all connections for an entity
+
 ```json
 {
     "tool_name": "knowledge_tool",
@@ -41,6 +45,7 @@ Use this tool to store and query RELATIONSHIPS between entities (people, project
 ```
 
 ## Tips
+
 - Use `get_context` before saving to avoid duplicates
 - Entity names are case-sensitive
 - Requires Neo4j to be configured in config.json

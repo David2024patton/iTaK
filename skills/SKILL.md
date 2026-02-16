@@ -28,17 +28,21 @@ docker compose logs -f
 ```
 
 ### Example 2: [scenario]
+>
 > User: "Check if the service is running"
+
 ```bash
 docker ps --filter name=myapp
 curl http://localhost:8080/health
 ```
 
 ## Common Errors
+
 | Error | Fix |
 |-------|-----|
 | Connection refused | Check if the service is running |
 | Permission denied | Run with sudo or fix file permissions |
+
 ```
 
 ## How It Works

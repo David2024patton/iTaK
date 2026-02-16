@@ -1,28 +1,32 @@
 # iTaK Installation Guide - New User Walkthrough
 
 ## At a Glance
+
 - Audience: New users, operators, and developers setting up iTaK environments.
 - Scope: Guide environment setup from prerequisites to first successful launch with validation checkpoints.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Verify prerequisites and environment variables before running setup scripts.
 - Execute installation steps in order from [INSTALL.md](INSTALL.md).
 - Confirm service readiness with [QUICK_START.md](QUICK_START.md).
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Use commands as ordered steps; verify prerequisites before launching services.
 - Re-validate service ports and env/config files after any setup change.
-
 
 > **Quick Summary:** Get iTaK running in minutes. Choose Docker (fastest) or Python (most control). This guide walks you through both methods and explains what iTaK does once running.
 
 ---
 
 ## 📋 Table of Contents
+
 1. [What is iTaK?](#what-is-itak)
 2. [Installation Methods](#installation-methods)
    - [Docker Quick Start (Recommended)](#docker-quick-start-recommended)
@@ -70,6 +74,7 @@ Choose your installation method:
 **Perfect for:** Quick testing, production deployments, users familiar with Docker
 
 ### Prerequisites
+
 - Docker Desktop installed ([Windows](https://docs.docker.com/desktop/install/windows-install/) \| [macOS](https://docs.docker.com/desktop/install/mac-install/) \| [Linux](https://docs.docker.com/desktop/install/linux-install/))
 - At least one AI API key (see [API Keys](#api-keys-setup) below)
 
@@ -91,6 +96,7 @@ docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 ### What This Starts
 
 The `install/docker/docker-compose.yml` starts a full stack:
+
 - **iTaK Agent** - Main AI agent (port 8000 for WebUI)
 - **Neo4j** - Knowledge graph database (port 47474)
 - **Weaviate** - Vector database (port 48080)
@@ -171,6 +177,7 @@ pip install -r install/requirements/requirements.txt
 ```
 
 **Tip:** Use a virtual environment to keep things clean:
+
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -227,6 +234,7 @@ pip install -r install/requirements/requirements.txt
 ```
 
 **Tip:** Use a virtual environment to keep things clean:
+
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -247,6 +255,7 @@ nano .env  # or use your favorite editor
 ```
 
 **Minimum Configuration (.env file):**
+
 ```bash
 # Add ONE of these (iTaK supports multiple LLM providers):
 
@@ -264,6 +273,7 @@ OLLAMA_BASE_URL=http://localhost:11434
 ```
 
 **Where to get API keys:**
+
 - **Gemini**: [aistudio.google.com](https://aistudio.google.com/) (Free tier available)
 - **OpenAI**: [platform.openai.com](https://platform.openai.com/)
 - **Anthropic**: [console.anthropic.com](https://console.anthropic.com/)
@@ -277,41 +287,51 @@ OLLAMA_BASE_URL=http://localhost:11434
 <summary><b>📘 Click here for detailed API key instructions</b></summary>
 
 #### Google Gemini (Recommended for Beginners)
+
 1. Go to [Google AI Studio](https://aistudio.google.com/)
 2. Sign in with Google account
 3. Click "Get API Key" → "Create API key"
 4. Copy the key and add to `.env`:
+
    ```
    GEMINI_API_KEY=AIza...
    ```
 
 #### OpenAI
+
 1. Go to [OpenAI Platform](https://platform.openai.com/)
 2. Create account and add payment method
 3. Navigate to API Keys section
 4. Create new key and copy to `.env`:
+
    ```
    OPENAI_API_KEY=sk-...
    ```
 
 #### Anthropic Claude
+
 1. Go to [Anthropic Console](https://console.anthropic.com/)
 2. Sign up for account
 3. Add payment method
 4. Generate API key in settings
 5. Add to `.env`:
+
    ```
    ANTHROPIC_API_KEY=sk-ant-...
    ```
 
 #### Ollama (Local, Free)
+
 1. Install Ollama from [ollama.com](https://ollama.com/)
 2. Pull a model: `ollama pull llama2`
 3. Add to `.env`:
+
    ```
    OLLAMA_BASE_URL=http://localhost:11434
    ```
+
 4. Set in `config.json`:
+
    ```json
    {
      "agent": {
@@ -327,14 +347,14 @@ OLLAMA_BASE_URL=http://localhost:11434
 ## ⚠️ Security Warning
 
 > **IMPORTANT:** iTaK can execute code on your computer by design. Always:
-> 
+>
 > - ✅ Run in an isolated environment (Docker recommended for production)
 > - ✅ Use a separate, limited-privilege user account
 > - ✅ Never give iTaK admin/root access in production
 > - ✅ Review code before allowing execution in sensitive environments
 > - ✅ Keep API keys secure (never commit `.env` to git)
 > - ✅ Enable output guards in production (redacts PII, secrets)
-> 
+>
 > **For production deployments**, see [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) for security hardening.
 
 ---
@@ -353,6 +373,7 @@ OLLAMA_BASE_URL=http://localhost:11434
 | **4. Restart** | Yes (to apply settings) | No (already configured) |
 
 **Agent-Zero's Approach (configure after):**
+
 ```bash
 docker run -p 50080:80 agent0ai/agent-zero
 # Visit http://localhost:50080
@@ -360,6 +381,7 @@ docker run -p 50080:80 agent0ai/agent-zero
 ```
 
 **iTaK's Approach (configure before):**
+
 ```bash
 cp install/config/.env.example .env
 nano .env  # Add API keys
@@ -367,11 +389,13 @@ python -m app.main --webui  # Runs with keys already configured
 ```
 
 **Which is better?**
+
 - **Agent-Zero's approach:** ✅ Faster to see the UI, better for first-time users
 - **iTaK's approach:** ✅ Clearer for production, prevents running without proper config
 
 **Can iTaK match Agent-Zero's UX?**  
 Yes! iTaK can run without API keys for testing. If you skip the API key configuration, iTaK will:
+
 - ✅ Start up successfully
 - ✅ Show the Web UI
 - ⚠️ Display friendly error messages suggesting you configure API keys
@@ -382,6 +406,7 @@ For the smoothest experience, we recommend configuring API keys before first run
 ---
 
 **Optional Settings (you can skip these for now):**
+
 - `DISCORD_TOKEN` - To use iTaK as a Discord bot
 - `TELEGRAM_TOKEN` - To use iTaK as a Telegram bot
 - `SLACK_TOKEN` - To use iTaK as a Slack bot
@@ -389,7 +414,7 @@ For the smoothest experience, we recommend configuring API keys before first run
 
 ---
 
-### Step 5: Run iTaK!
+### Step 5: Run iTaK
 
 ```bash
 # Option 1: Terminal Chat (simplest)
@@ -424,6 +449,7 @@ python -m app.main --doctor
 ```
 
 You can now start chatting! Try asking:
+
 - "Hello, what can you do?"
 - "Search the web for latest Python news"
 - "Create a Python script that generates fibonacci numbers"
@@ -436,6 +462,7 @@ You can now start chatting! Try asking:
 Once running, iTaK becomes your AI-powered assistant with these capabilities:
 
 ### 1. 💬 **Natural Conversation**
+
 ```
 You: Write me a Python script to sort a list
 iTaK: I'll create that for you. Let me write the code...
@@ -445,7 +472,9 @@ iTaK: I'll create that for you. Let me write the code...
 ```
 
 ### 2. 🔧 **Code Execution**
+
 iTaK can:
+
 - Write and run Python/Bash scripts
 - Install packages (`pip install requests`)
 - Read and edit files
@@ -453,6 +482,7 @@ iTaK can:
 - Deploy code
 
 **Example:**
+
 ```
 You: Install Flask and create a hello world web app
 iTaK: [Executes: pip install flask]
@@ -462,6 +492,7 @@ iTaK: [Executes: pip install flask]
 ```
 
 ### 3. 🧠 **4-Tier Memory System**
+
 iTaK remembers everything across sessions:
 
 **Tier 1 - Core Context**: Your name, preferences, active projects  
@@ -470,6 +501,7 @@ iTaK remembers everything across sessions:
 **Tier 4 - Knowledge Graph**: Entity relationships (if Neo4j configured)
 
 **Example:**
+
 ```
 Day 1:
 You: Remember that I'm working on a FastAPI project called "TaskMaster"
@@ -481,7 +513,9 @@ iTaK: You're working on a FastAPI project called "TaskMaster"
 ```
 
 ### 4. 🩹 **Self-Healing**
+
 When iTaK encounters errors, it automatically:
+
 1. Classifies the error type
 2. Checks memory for past fixes
 3. Reasons about the solution
@@ -489,6 +523,7 @@ When iTaK encounters errors, it automatically:
 5. Learns from the fix
 
 **Example:**
+
 ```
 iTaK: [Runs code with missing import]
      ❌ Error: ModuleNotFoundError: No module named 'requests'
@@ -501,6 +536,7 @@ iTaK: [Runs code with missing import]
 ```
 
 ### 5. 🌐 **Web Search & Interaction**
+
 ```
 You: What's the current Python version?
 iTaK: [Searches web]
@@ -513,6 +549,7 @@ iTaK: [Opens browser automation]
 ```
 
 ### 6. 📊 **Mission Control (Task Board)**
+
 iTaK automatically tracks tasks:
 
 ```
@@ -526,6 +563,7 @@ iTaK: [Creates task: "Build REST API" → inbox]
 View tasks in the web dashboard (`python -m app.main --webui`)
 
 ### 7. 🐝 **Multi-Agent Swarms**
+
 Delegate to specialist sub-agents:
 
 ```
@@ -544,35 +582,41 @@ iTaK: [Spawns 3 agents in parallel]
 Run iTaK on multiple channels simultaneously:
 
 **Terminal:**
+
 ```bash
 python -m app.main
 ```
 
 **Web Dashboard:**
+
 ```bash
 python -m app.main --webui
 # Open http://localhost:8080
 ```
 
 **Discord Bot:**
+
 ```bash
 # Add DISCORD_TOKEN to .env
 python -m app.main --adapter discord
 ```
 
 **Telegram Bot:**
+
 ```bash
 # Add TELEGRAM_TOKEN to .env
 python -m app.main --adapter telegram
 ```
 
 **All at once:**
+
 ```bash
 python -m app.main --adapter discord --webui
 # Discord bot + web dashboard running together
 ```
 
 ### 9. 🔒 **Security Features**
+
 - **Secret detection**: Automatically masks API keys in logs
 - **Output guard**: Redacts PII (emails, SSNs, credit cards)
 - **Rate limiting**: Prevents abuse
@@ -582,6 +626,7 @@ python -m app.main --adapter discord --webui
 ### 10. 🔗 **Integration Capabilities**
 
 **Webhooks (n8n/Zapier):**
+
 ```json
 POST /webhooks/inbound
 {
@@ -591,6 +636,7 @@ POST /webhooks/inbound
 ```
 
 **MCP (Model Context Protocol):**
+
 - iTaK can connect to MCP servers (GitHub, databases)
 - iTaK can BE an MCP server for other tools
 
@@ -689,12 +735,14 @@ iTaK: [Creates scheduled task]
 ## 🔧 Troubleshooting
 
 ### Problem: "config.json not found"
+
 ```bash
 # Solution:
 cp install/config/config.json.example config.json
 ```
 
 ### Problem: "No LLM API key configured"
+
 ```bash
 # Solution: Edit .env and add at least ONE key:
 GEMINI_API_KEY=your_key_here
@@ -703,12 +751,14 @@ OPENAI_API_KEY=your_key_here
 ```
 
 ### Problem: "ModuleNotFoundError: No module named 'X'"
+
 ```bash
 # Solution: Reinstall dependencies
 pip install -r install/requirements/requirements.txt
 ```
 
 ### Problem: "Permission denied" when running code
+
 ```bash
 # Solution: Enable code execution in config.json
 {
@@ -720,12 +770,14 @@ pip install -r install/requirements/requirements.txt
 ```
 
 ### Problem: Tests fail with import errors
+
 ```bash
 # Solution: Set PYTHONPATH
 PYTHONPATH=$(pwd) python3 -m pytest tests/
 ```
 
 ### Problem: iTaK responses are slow
+
 ```bash
 # Solution 1: Use faster models
 # Edit config.json:
@@ -743,6 +795,7 @@ ollama run llama2
 ```
 
 ### Problem: "WebUI won't start"
+
 ```bash
 # Check if port 8080 is in use:
 lsof -i :8080
@@ -756,6 +809,7 @@ lsof -i :8080
 ```
 
 ### Problem: Memory/database errors
+
 ```bash
 # Reset databases:
 rm -rf data/db/*.db
@@ -767,12 +821,14 @@ rm -rf data/db/*.db
 ## 🎓 Next Steps
 
 ### 1. **Explore the Web Dashboard**
+
 ```bash
 python -m app.main --webui
 # Open http://localhost:8080
 ```
 
 **Dashboard Features:**
+
 - 📊 Monitor tab: Real-time logs and stats
 - 🎯 Mission Control: Task board (Kanban)
 - 🔧 Tools: See all loaded tools
@@ -780,10 +836,13 @@ python -m app.main --webui
 - 👥 Users: Manage RBAC permissions
 
 ### 2. **Run System Diagnostics**
+
 ```bash
 python -m app.main --doctor
 ```
+
 This checks:
+
 - Python version
 - Dependencies
 - Configuration
@@ -794,6 +853,7 @@ This checks:
 ### 3. **Explore Advanced Features**
 
 **Neo4j Knowledge Graph:**
+
 ```bash
 # Install Neo4j (Docker):
 docker run -p 7687:7687 -p 7474:7474 neo4j:latest
@@ -806,6 +866,7 @@ NEO4J_PASSWORD=your_password
 ```
 
 **Discord Bot:**
+
 ```bash
 # 1. Create Discord bot at: https://discord.com/developers/applications
 # 2. Copy bot token
@@ -817,6 +878,7 @@ python -m app.main --adapter discord
 ```
 
 **MCP Integration:**
+
 ```bash
 # Connect to GitHub MCP server:
 # Edit config.json mcp.clients section
@@ -839,6 +901,7 @@ python -m app.main --adapter discord
 ### 6. **Customize iTaK**
 
 **Create custom tools:**
+
 ```python
 # tools/my_tool.py
 from tools.base import BaseTool
@@ -852,6 +915,7 @@ class MyTool(BaseTool):
 ```
 
 **Create agent profiles:**
+
 ```markdown
 # agents/profiles/expert.md
 You are an expert Python developer with 10 years experience.
@@ -859,6 +923,7 @@ You write clean, well-documented code following PEP 8.
 ```
 
 **Add extensions:**
+
 ```python
 # extensions/my_extension.py
 def on_message_loop_start(agent, message):
@@ -868,7 +933,7 @@ def on_message_loop_start(agent, message):
 
 ---
 
-## 🎉 You're Ready!
+## 🎉 You're Ready
 
 You now have iTaK installed and understand what it does. Start experimenting:
 
@@ -881,6 +946,7 @@ python -m app.main --webui
 ```
 
 **First Commands to Try:**
+
 1. `Hello! What can you do?`
 2. `Create a Python script that prints "Hello, World!"`
 3. `Search the web for today's top tech news`

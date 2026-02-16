@@ -1,22 +1,25 @@
 # iTaK Quick Start Guide
 
 ## At a Glance
+
 - Audience: New users, operators, and developers setting up iTaK environments.
 - Scope: Get iTaK running quickly with the minimum required steps and immediate verification checks.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Follow the commands in order without skipping prerequisite checks.
 - Confirm services are reachable on expected ports before moving to integrations.
 - Use this guide for first launch, then continue into deeper setup docs as needed.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Use commands as ordered steps; verify prerequisites before launching services.
 - Re-validate service ports and env/config files after any setup change.
-
 
 Get iTaK up and running in **2 minutes** with ONE Python script!
 
@@ -35,6 +38,7 @@ python install.py
 ```
 
 That's it! The installer will:
+
 - ✅ Auto-detect your OS (Linux, macOS, Windows, WSL)
 - ✅ Install prerequisites (Docker, Git) if needed
 - ✅ Ask you: Minimal or Full Stack?
@@ -42,6 +46,7 @@ That's it! The installer will:
 - ✅ Start iTaK
 
 **Installation Options:**
+
 ```bash
 python install.py              # Interactive (recommended)
 python install.py --full-stack # Full stack with databases
@@ -56,12 +61,14 @@ python install.py --help       # Show all options
 iTaK **automatically detects** your operating system and uses the right installation method.
 
 **Supported Platforms:**
+
 - ✅ **Linux** (Ubuntu, Debian, Fedora, RHEL, CentOS, Arch)
 - ✅ **macOS** (Intel and Apple Silicon)
 - ✅ **WSL** (Windows Subsystem for Linux - recommended for Windows)
 - ✅ **Windows** (via WSL - auto-installs if missing)
 
 **Universal Installer:**
+
 ```bash
 # Linux/macOS/WSL - One command detects your OS
 ./installers/install.sh
@@ -75,11 +82,13 @@ installers/install.bat
 ## ✅ Prerequisites
 
 Before you begin, you need **either**:
+
 - 🐳 **Docker** (recommended - easiest)  
   OR
 - 🐍 **Python 3.11+** (alternative)
 
 **Plus:**
+
 - 📦 **Git** (to clone the repository)
 - 💾 **4GB RAM** minimum (8GB+ recommended for full stack)
 - 💿 **5GB disk space** minimum (10GB+ for full stack)
@@ -95,6 +104,7 @@ git --version      # Should be 2.0+
 ### Don't have them?
 
 **Option 1: Auto-install (Recommended)**
+
 ```bash
 # Linux/macOS/WSL
 ./installers/install-prerequisites.sh
@@ -119,6 +129,7 @@ Choose the installation that fits your needs:
 **Best for:** Quick testing, demos, learning
 
 **What you get:**
+
 - ✅ iTaK agent (AI assistant)
 - ✅ Basic memory (SQLite-based)
 - ✅ Web search (via external APIs)
@@ -136,6 +147,7 @@ cd iTaK
 **Best for:** Production use, full features, knowledge graphs
 
 **What you get:**
+
 - ✅ iTaK agent (AI assistant)
 - ✅ **Neo4j** (knowledge graph database)
 - ✅ **SearXNG** (private web search engine)
@@ -150,12 +162,13 @@ cd iTaK
 ```
 
 Or use the quick installer and choose option 2:
+
 ```bash
 ./installers/quick-install.sh
 # Choose option 2 when prompted
 ```
 
-**That's it!** Visit http://localhost:8000 and start using iTaK.
+**That's it!** Visit <http://localhost:8000> and start using iTaK.
 
 ---
 
@@ -209,9 +222,10 @@ The Web UI will guide you through:
 - **Step 3:** Test connection
 - **Step 4:** Start using iTaK!
 
-### 3. You're Ready!
+### 3. You're Ready
 
 Once configured, you can:
+
 - Chat with iTaK in the Web UI
 - Ask it to execute code
 - Search the web
@@ -227,12 +241,13 @@ Once configured, you can:
 If you skip the setup wizard, you can add API keys anytime:
 
 1. **Via Web UI:**
-   - Go to http://localhost:8000
+   - Go to <http://localhost:8000>
    - Click "Settings" tab
    - Add your API keys
    - Save and restart
 
 2. **Via .env file (Advanced):**
+
    ```bash
    # Stop the container
    docker stop itak
@@ -250,11 +265,11 @@ If you skip the setup wizard, you can add API keys anytime:
 
 | Provider | API Key Variable | Get Key From |
 |----------|------------------|--------------|
-| Google Gemini | `GEMINI_API_KEY` | https://makersuite.google.com/app/apikey |
-| OpenAI | `OPENAI_API_KEY` | https://platform.openai.com/api-keys |
-| Anthropic | `ANTHROPIC_API_KEY` | https://console.anthropic.com/ |
-| OpenRouter | `OPENROUTER_API_KEY` | https://openrouter.ai/keys |
-| Local Ollama | `OLLAMA_BASE_URL` | http://localhost:11434 (install Ollama) |
+| Google Gemini | `GEMINI_API_KEY` | <https://makersuite.google.com/app/apikey> |
+| OpenAI | `OPENAI_API_KEY` | <https://platform.openai.com/api-keys> |
+| Anthropic | `ANTHROPIC_API_KEY` | <https://console.anthropic.com/> |
+| OpenRouter | `OPENROUTER_API_KEY` | <https://openrouter.ai/keys> |
+| Local Ollama | `OLLAMA_BASE_URL` | <http://localhost:11434> (install Ollama) |
 
 **Tip:** Start with Google Gemini — it has a free tier!
 
@@ -273,6 +288,7 @@ If you skip the setup wizard, you can add API keys anytime:
 ### When to Use Full Install?
 
 Upgrade to full install when you need:
+
 - **Neo4j knowledge graph** (advanced memory)
 - **Weaviate vector search** (semantic memory)
 - **SearXNG** (private web search)
@@ -287,26 +303,31 @@ See [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md) for full install instructions
 Once iTaK is running, try these:
 
 ### 1. Hello World
+
 ```
 User: Hello, what can you do?
 ```
 
 ### 2. Code Execution
+
 ```
 User: Create a Python script that prints "Hello, iTaK!"
 ```
 
 ### 3. Web Search
+
 ```
 User: Search the web for today's top tech news
 ```
 
 ### 4. Memory
+
 ```
 User: Remember that I'm learning Python
 ```
 
 ### 5. Task Management
+
 ```
 User: Create a task to learn Docker
 ```
@@ -341,12 +362,14 @@ docker run -p 8080:8000 david2024patton/itak
 ### Issue: "Cannot connect to Docker"
 
 Make sure Docker Desktop is running:
+
 - **Windows/Mac:** Start Docker Desktop
 - **Linux:** `sudo systemctl start docker`
 
 ### Issue: "Image not found"
 
 Build locally:
+
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
@@ -357,6 +380,7 @@ docker run -p 8000:8000 itak
 ### Issue: "LLM API errors"
 
 Check your API key:
+
 1. Go to Settings in Web UI
 2. Verify API key is correct
 3. Test connection
@@ -367,6 +391,7 @@ Check your API key:
 ## 📚 Next Steps
 
 ### Learn More
+
 - [Full Installation Guide](INSTALLATION_GUIDE.md) - Complete setup with all features
 - [iTaK vs Agent-Zero](iTAK_VS_AGENT_ZERO.md) - Detailed comparison
 - [Testing Documentation](TESTING.md) - Current test and smoke-test workflow
@@ -376,11 +401,14 @@ Check your API key:
 - [Production Deployment](PRODUCTION_TESTING_SUMMARY.md) - Enterprise ready
 
 ### Get Help
-- GitHub Issues: https://github.com/David2024patton/iTaK/issues
-- Documentation: https://github.com/David2024patton/iTaK/tree/main/docs
+
+- GitHub Issues: <https://github.com/David2024patton/iTaK/issues>
+- Documentation: <https://github.com/David2024patton/iTaK/tree/main/docs>
 
 ### Upgrade to Full Install
+
 When you're ready for production features:
+
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
 cd iTaK
@@ -390,6 +418,7 @@ docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 ```
 
 This gives you:
+
 - Neo4j knowledge graph
 - Weaviate semantic search
 - SearXNG private search
@@ -408,6 +437,7 @@ This gives you:
 - 🚀 **Production features** when you need them
 
 **Get started now:**
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/David2024patton/iTaK/main/installers/quick-install.sh | bash
 ```

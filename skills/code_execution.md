@@ -1,8 +1,10 @@
 # Skill: Code Execution Reference
+
 Category: tool
 Tags: code, python, nodejs, shell, docker
 
 ## Overview
+
 The `code_execution` tool runs code in Python, Node.js, or shell environments.
 
 ## Languages
@@ -24,6 +26,7 @@ The `code_execution` tool runs code in Python, Node.js, or shell environments.
 ## Common Patterns
 
 ### Run a Python script
+
 ```json
 {
   "tool_name": "code_execution",
@@ -35,6 +38,7 @@ The `code_execution` tool runs code in Python, Node.js, or shell environments.
 ```
 
 ### Run a shell command
+
 ```json
 {
   "tool_name": "code_execution",
@@ -46,6 +50,7 @@ The `code_execution` tool runs code in Python, Node.js, or shell environments.
 ```
 
 ### Install a package then use it
+
 ```json
 {
   "tool_name": "code_execution",
@@ -60,6 +65,7 @@ The `code_execution` tool runs code in Python, Node.js, or shell environments.
 
 When `sandbox_enabled` is true in config.json, code runs inside a Docker container.
 This provides:
+
 - **Isolation** - code can't access host filesystem
 - **Timeout enforcement** - containers are killed after timeout
 - **Clean environment** - each execution starts fresh

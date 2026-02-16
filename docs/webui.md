@@ -1,22 +1,25 @@
 # WebUI & API Reference
 
 ## At a Glance
+
 - Audience: Developers integrating channels, APIs, and system architecture components.
 - Scope: Explain component boundaries, integration points, and expected behavior across interfaces.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Identify the integration boundary first (adapter, API endpoint, or UI component).
 - Trace implementation details from [root/IMPLEMENTATION_SUMMARY.md](root/IMPLEMENTATION_SUMMARY.md).
 - Validate behavior with smoke checks after each configuration change.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Use explicit endpoint names, adapter flags, and file paths for automation tasks.
 - Note root endpoints vs `/api/*` endpoints to avoid integration mismatches.
-
 
 > The monitoring dashboard and REST API.
 
@@ -79,6 +82,7 @@ All endpoints return JSON.
 | GET | `/config` | Safe config (secrets masked) |
 
 **Example: GET /api/v1/stats**
+
 ```json
 {
     "iterations": 42,
@@ -98,6 +102,7 @@ All endpoints return JSON.
 | GET | `/logs?search=&limit=50&offset=0` | Query agent logs |
 
 **Example: GET /api/v1/logs?search=error&limit=10**
+
 ```json
 {
     "logs": [
@@ -131,6 +136,7 @@ All endpoints return JSON.
 | GET | `/tasks/board` | Kanban board view |
 
 **Example: POST /api/v1/tasks**
+
 ```json
 {
     "title": "Deploy v2",
@@ -152,10 +158,13 @@ All endpoints return JSON.
 | POST | `/security/scan` | Scan code for vulnerabilities |
 
 **Example: POST /api/v1/security/scan**
+
 ```json
 {"code": "import os\nos.system('rm -rf /')"}
 ```
+
 Response:
+
 ```json
 {"safe": false, "blocked": true, "findings": [...]}
 ```
@@ -167,6 +176,7 @@ Response:
 | POST | `/chat` | Send message to agent |
 
 **Example: POST /api/v1/chat**
+
 ```json
 {"message": "What's on my task board?"}
 ```
@@ -233,6 +243,7 @@ The External Settings tab exposes one-click smoke checks and matching CLI comman
 | POST | `/system_test_run` | Run allowlisted smoke test scripts (`resources`, `memory`, `chat`, `all`) |
 
 Backed scripts:
+
 - `tools/check_resource_endpoints.sh`
 - `tools/check_memory_smoke.sh`
 - `tools/check_chat_smoke.sh`
@@ -262,6 +273,7 @@ start_webui(agent, host="0.0.0.0", port=48920)
 ```
 
 Or via Docker:
+
 ```yaml
 services:
   itak:

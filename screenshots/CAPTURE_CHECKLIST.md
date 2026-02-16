@@ -3,6 +3,7 @@
 Use this checklist to recapture all UI images in a clean, repeatable way.
 
 ## Capture Standard
+
 - Resolution: `1920x1080`
 - Browser zoom: `100%`
 - Theme: default project theme
@@ -13,22 +14,26 @@ Use this checklist to recapture all UI images in a clean, repeatable way.
 ## Capture Order
 
 ### README-critical (capture first)
+
 - [ ] `dashboard-monitor.png` — Dashboard Monitor tab (used in README)
 - [ ] `dashboard-mission-control.png` — Mission Control view (used in README)
 
 ### Dashboard
+
 - [ ] `dashboard-home.png` — Dashboard landing state
 - [ ] `dashboard-fullpage.png` — Full-page dashboard context
 - [ ] `dashboard-scrolled.png` — Scrolled dashboard section state
 - [ ] `dashboard-api-health.png` — API health panel visible
 
 ### Agent Zero alignment views
+
 - [ ] `agentzero-dashboard-home.png` — Agent Zero styled home/dashboard
 - [ ] `agentzero-dashboard-settings.png` — Agent Zero settings panel
 - [ ] `agentzero-dashboard-sidebar-tasks.png` — Sidebar + tasks section
 - [ ] `agentzero-dashboard-clean-sync.png` — Clean sync/ready state
 
 ### UI flow set
+
 - [ ] `ui-01-chat-main.png` — Main chat view
 - [ ] `ui-02-memory-dashboard.png` — Memory dashboard
 - [ ] `ui-03-scheduler.png` — Scheduler section
@@ -46,6 +51,7 @@ Use this checklist to recapture all UI images in a clean, repeatable way.
 - [ ] `ui-15-projects.png` — Projects view
 
 ## Final QA Before Commit
+
 - [ ] All files are PNG format
 - [ ] Filenames match checklist exactly
 - [ ] No sensitive info visible
@@ -53,5 +59,6 @@ Use this checklist to recapture all UI images in a clean, repeatable way.
 - [ ] README images render correctly after push
 
 ## Automated Validation
+
 - Run exact-set validation: `tools/validate_screenshots.sh`
 - Allow extra PNGs temporarily: `tools/validate_screenshots.sh --allow-extra`

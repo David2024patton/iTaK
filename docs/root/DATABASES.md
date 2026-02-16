@@ -1,22 +1,25 @@
 # iTaK Database Architecture
 
 ## At a Glance
+
 - Audience: Operators and developers managing iTaK data stores and memory layers.
 - Scope: Explain each database layer, why it exists, and how to run, verify, and maintain it safely.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Confirm which storage layers are enabled in your environment before troubleshooting.
 - Use this page to map each service to its role, data type, and operational dependency.
 - Run the smallest relevant health check per datastore after any configuration change.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Preserve database role boundaries (SQLite/Neo4j/Weaviate/SearXNG) when suggesting architecture changes.
 - Verify storage and backup procedures against deployed environment constraints before rollout.
-
 
 Complete guide to all databases used in iTaK.
 
@@ -40,6 +43,7 @@ All databases **auto-install** via `./installers/install-full-stack.sh` in one c
 **Location:** `data/db/memory.db`
 
 **Features:**
+
 - No installation required (file-based)
 - Auto-created on first run
 - Stores recent conversations
@@ -47,6 +51,7 @@ All databases **auto-install** via `./installers/install-full-stack.sh` in one c
 - Persistent across restarts
 
 **Configuration:**
+
 ```json
 {
   "memory": {
@@ -56,6 +61,7 @@ All databases **auto-install** via `./installers/install-full-stack.sh` in one c
 ```
 
 **Access:**
+
 ```bash
 # View database
 sqlite3 data/db/memory.db
@@ -68,10 +74,12 @@ sqlite> SELECT * FROM memories LIMIT 10;
 **Purpose:** Knowledge graph for relationships and connected data
 
 **Ports:**
+
 - HTTP: 47474 (Browser UI)
 - Bolt: 47687 (Database protocol)
 
 **Features:**
+
 - Entity relationships
 - Graph queries (Cypher)
 - APOC procedures enabled
@@ -79,6 +87,7 @@ sqlite> SELECT * FROM memories LIMIT 10;
 - Health checks
 
 **Configuration:**
+
 ```bash
 # .env file
 NEO4J_URI=bolt://localhost:47687
@@ -86,6 +95,7 @@ NEO4J_PASSWORD=changeme
 ```
 
 **Access:**
+
 ```bash
 # Web Browser
 open http://localhost:47474
@@ -99,12 +109,14 @@ MATCH (n) RETURN n LIMIT 25;
 ```
 
 **Auto-Installation:**
+
 ```bash
 ./installers/install-full-stack.sh
 # Neo4j auto-installs via Docker
 ```
 
 **Health Check:**
+
 ```bash
 curl http://localhost:47474
 # Should return Neo4j browser HTML
@@ -117,6 +129,7 @@ curl http://localhost:47474
 **Port:** 48080
 
 **Features:**
+
 - Vector similarity search
 - Semantic queries
 - Anonymous access enabled
@@ -124,6 +137,7 @@ curl http://localhost:47474
 - RESTful API
 
 **Configuration:**
+
 ```bash
 # .env file
 WEAVIATE_URL=http://localhost:48080
@@ -131,6 +145,7 @@ WEAVIATE_API_KEY=  # Optional (anonymous enabled)
 ```
 
 **Access:**
+
 ```bash
 # Check status
 curl http://localhost:48080/v1/.well-known/ready
@@ -140,12 +155,14 @@ curl http://localhost:48080/v1/schema
 ```
 
 **Auto-Installation:**
+
 ```bash
 ./installers/install-full-stack.sh
 # Weaviate auto-installs via Docker
 ```
 
 **Health Check:**
+
 ```bash
 curl http://localhost:48080/v1/.well-known/ready
 # Should return {"status":"ok"}
@@ -158,6 +175,7 @@ curl http://localhost:48080/v1/.well-known/ready
 **Port:** 48888
 
 **Features:**
+
 - Privacy-focused meta-search
 - No tracking or logging
 - Aggregates results from multiple sources
@@ -165,12 +183,14 @@ curl http://localhost:48080/v1/.well-known/ready
 - No API keys required
 
 **Configuration:**
+
 ```bash
 # .env file
 SEARXNG_URL=http://localhost:48888
 ```
 
 **Access:**
+
 ```bash
 # Web interface
 open http://localhost:48888
@@ -180,12 +200,14 @@ curl "http://localhost:48888/search?q=artificial+intelligence&format=json"
 ```
 
 **Auto-Installation:**
+
 ```bash
 ./installers/install-full-stack.sh
 # SearXNG auto-installs via Docker
 ```
 
 **Health Check:**
+
 ```bash
 curl http://localhost:48888
 # Should return HTML page
@@ -196,11 +218,13 @@ curl http://localhost:48888
 ### Automatic (Recommended)
 
 **One Command - Installs Everything:**
+
 ```bash
 ./installers/install-full-stack.sh
 ```
 
 This automatically:
+
 1. ✅ Installs Docker (if missing)
 2. ✅ Creates .env configuration
 3. ✅ Pulls all database images
@@ -237,6 +261,7 @@ docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 ```
 
 **Output:**
+
 ```
 🔍 iTaK Database Status Checker
 ════════════════════════════════════════
@@ -257,6 +282,7 @@ docker ps | grep itak
 ```
 
 **Should show:**
+
 ```
 itak-neo4j      (healthy)
 itak-weaviate   (healthy)
@@ -270,6 +296,7 @@ docker compose --project-directory . -f install/docker/docker-compose.yml ps
 ```
 
 **Healthy services show:**
+
 - `State: Up (healthy)`
 - `Status: Up X seconds (healthy)`
 
@@ -289,12 +316,14 @@ itak_searxng-data
 ```
 
 **Data survives:**
+
 - ✅ Container restarts
 - ✅ System reboots
 - ✅ Docker updates
 - ✅ iTaK updates
 
 **Data is lost when:**
+
 - ❌ `docker compose --project-directory . -f install/docker/docker-compose.yml down -v` (volumes deleted)
 - ❌ Manual volume deletion
 
@@ -354,6 +383,7 @@ docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 ### Database Not Starting
 
 **Check logs:**
+
 ```bash
 docker compose --project-directory . -f install/docker/docker-compose.yml logs neo4j
 docker compose --project-directory . -f install/docker/docker-compose.yml logs weaviate
@@ -361,6 +391,7 @@ docker compose --project-directory . -f install/docker/docker-compose.yml logs s
 ```
 
 **Common issues:**
+
 - Port already in use → Change port in .env
 - Insufficient memory → Increase Docker memory limit
 - Permission denied → Check volume permissions
@@ -368,6 +399,7 @@ docker compose --project-directory . -f install/docker/docker-compose.yml logs s
 ### Database Not Responding
 
 **Restart specific service:**
+
 ```bash
 docker compose --project-directory . -f install/docker/docker-compose.yml restart neo4j
 docker compose --project-directory . -f install/docker/docker-compose.yml restart weaviate
@@ -375,6 +407,7 @@ docker compose --project-directory . -f install/docker/docker-compose.yml restar
 ```
 
 **Restart all:**
+
 ```bash
 docker compose --project-directory . -f install/docker/docker-compose.yml restart
 ```
@@ -410,6 +443,7 @@ SEARXNG_PORT=48888     # Change to 8888, 18888, etc.
 ```
 
 Then restart:
+
 ```bash
 docker compose --project-directory . -f install/docker/docker-compose.yml down
 docker compose --project-directory . -f install/docker/docker-compose.yml up -d
@@ -420,6 +454,7 @@ docker compose --project-directory . -f install/docker/docker-compose.yml up -d
 ### Neo4j
 
 **Increase memory:**
+
 ```yaml
 # install/docker/docker-compose.yml
 environment:
@@ -430,6 +465,7 @@ environment:
 ### Weaviate
 
 **Adjust for large datasets:**
+
 ```yaml
 # install/docker/docker-compose.yml
 environment:
@@ -439,6 +475,7 @@ environment:
 ### Docker Resources
 
 **Increase Docker limits:**
+
 ```bash
 # Docker Desktop → Settings → Resources
 # Recommended for full stack:
@@ -477,6 +514,7 @@ By default, databases are only accessible from localhost:
 - ❌ 0.0.0.0:47474 → Not accessible
 
 To allow external access (not recommended):
+
 ```yaml
 # install/docker/docker-compose.yml
 ports:
@@ -501,11 +539,13 @@ sudo ufw allow 8000
 ## Summary
 
 **All databases auto-install with one command:**
+
 ```bash
 ./installers/install-full-stack.sh
 ```
 
 **Verify everything is running:**
+
 ```bash
 ./install/check-databases.sh
 ```

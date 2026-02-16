@@ -1,7 +1,10 @@
 # iTaK - USER.md
-# User Profile - Preferences, Projects, Goals
-# Updated by the agent as it learns more about the user.
-# Each user deployment should customize this file.
+
+## User Profile - Preferences, Projects, Goals
+
+Updated by the agent as it learns more about the user.
+
+Each user deployment should customize this file.
 
 ## Identity
 

@@ -1,22 +1,25 @@
 # Tools Reference
 
 ## At a Glance
+
 - Audience: Developers extending iTaK behavior via tools, prompts, models, and core modules.
 - Scope: Describe module responsibilities, configuration surfaces, and extension patterns used in day-to-day work.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Locate the owning module and expected inputs before editing behavior.
 - Cross-check data flow with [root/DATABASES.md](root/DATABASES.md) when state is involved.
 - Re-run focused tests after updates to confirm no regression in tool contracts.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Keep argument names and defaults exact when generating tool/model calls.
 - Prefer evidence from code paths over assumptions when documenting behavior.
-
 
 > Every tool the agent can use, with arguments and examples.
 
@@ -63,6 +66,7 @@ class MyCustomTool(BaseTool):
 ```
 
 Drop this file in `tools/` and the agent can immediately use it. The LLM sees it in its tool list as:
+
 ```json
 {"tool_name": "my_tool", "tool_args": {"arg1": "hello", "arg2": 42}}
 ```
@@ -76,11 +80,13 @@ Drop this file in `tools/` and the agent can immediately use it. The LLM sees it
 **The most important tool.** This is the ONLY way to end the monologue loop and send a response to the user.
 
 ### Arguments
+
 | Arg | Type | Description |
 |-----|------|-------------|
 | `message` | str | The final response text |
 
 ### Example LLM Call
+
 ```json
 {
     "thoughts": ["I have all the information, time to respond."],
@@ -90,6 +96,7 @@ Drop this file in `tools/` and the agent can immediately use it. The LLM sees it
 ```
 
 ### What happens internally
+
 1. The message passes through the **Output Guard** (PII/secret scrubbing)
 2. Progress tracker marks the task as complete
 3. `ToolResult.break_loop = True` stops the monologue
@@ -104,6 +111,7 @@ Drop this file in `tools/` and the agent can immediately use it. The LLM sees it
 Execute Python, Node.js, or shell commands.
 
 ### Arguments
+
 | Arg | Type | Default | Description |
 |-----|------|---------|-------------|
 | `runtime` | str | `"terminal"` | `python`, `nodejs`, or `terminal` |
@@ -112,6 +120,7 @@ Execute Python, Node.js, or shell commands.
 | `workdir` | str | cwd | Working directory |
 
 ### Example: Python
+
 ```json
 {
     "tool_name": "code_execution",
@@ -123,6 +132,7 @@ Execute Python, Node.js, or shell commands.
 ```
 
 ### Example: Terminal (Shell)
+
 ```json
 {
     "tool_name": "code_execution",
@@ -134,13 +144,16 @@ Execute Python, Node.js, or shell commands.
 ```
 
 ### Sandbox Mode
+
 When `security.sandbox_enabled = true` in config, code runs inside a Docker container:
+
 - No network access (`--network=none`)
 - 512MB memory limit
 - 1 CPU limit
 - Automatic cleanup after execution
 
 ### Timeout Cascade
+
 ```python
 DEFAULT_TIMEOUT = 60   # Normal limit
 MAX_TIMEOUT = 300      # Hard cap (5 minutes)
@@ -156,6 +169,7 @@ NO_OUTPUT_TIMEOUT = 30 # Kill if no output for 30s
 Search the web using SearXNG (self-hosted search engine).
 
 ### Arguments
+
 | Arg | Type | Default | Description |
 |-----|------|---------|-------------|
 | `query` | str | (required) | Search query |
@@ -163,6 +177,7 @@ Search the web using SearXNG (self-hosted search engine).
 | `engines` | str | `""` | Specific engines (e.g., "google,duckduckgo") |
 
 ### Example
+
 ```json
 {
     "tool_name": "web_search",
@@ -174,6 +189,7 @@ Search the web using SearXNG (self-hosted search engine).
 ```
 
 ### Configuration
+
 ```json
 {
     "tools": {
@@ -194,6 +210,7 @@ Search the web using SearXNG (self-hosted search engine).
 Save information to the agent's memory for future recall.
 
 ### Arguments
+
 | Arg | Type | Default | Description |
 |-----|------|---------|-------------|
 | `content` | str | (required) | What to remember |
@@ -201,6 +218,7 @@ Save information to the agent's memory for future recall.
 | `metadata` | dict | `{}` | Extra context |
 
 ### Example
+
 ```json
 {
     "tool_name": "memory_save",
@@ -223,6 +241,7 @@ Saves to ALL configured layers (Markdown, SQLite, Neo4j, Weaviate).
 Search across all memory layers.
 
 ### Arguments
+
 | Arg | Type | Default | Description |
 |-----|------|---------|-------------|
 | `query` | str | (required) | Search query |
@@ -230,6 +249,7 @@ Search across all memory layers.
 | `limit` | int | 10 | Max results |
 
 ### Example
+
 ```json
 {
     "tool_name": "memory_load",
@@ -250,6 +270,7 @@ Search across all memory layers.
 Query and modify the Neo4j knowledge graph.
 
 ### Arguments
+
 | Arg | Type | Description |
 |-----|------|-------------|
 | `action` | str | `search`, `save_entity`, `save_relationship`, `get_context` |
@@ -260,6 +281,7 @@ Query and modify the Neo4j knowledge graph.
 | `properties` | dict | Extra properties |
 
 ### Example: Save a relationship
+
 ```json
 {
     "tool_name": "knowledge_tool",
@@ -274,6 +296,7 @@ Query and modify the Neo4j knowledge graph.
 ```
 
 ### Example: Get context for an entity
+
 ```json
 {
     "tool_name": "knowledge_tool",
@@ -283,6 +306,7 @@ Query and modify the Neo4j knowledge graph.
     }
 }
 ```
+
 Returns all connected nodes and relationships.
 
 ---
@@ -294,6 +318,7 @@ Returns all connected nodes and relationships.
 Browse the web with a vision-capable browser. Can take screenshots and read page content.
 
 ### Arguments
+
 | Arg | Type | Description |
 |-----|------|-------------|
 | `url` | str | URL to navigate to |
@@ -302,6 +327,7 @@ Browse the web with a vision-capable browser. Can take screenshots and read page
 | `text` | str | Text to type |
 
 ### Example
+
 ```json
 {
     "tool_name": "browser_agent",
@@ -323,6 +349,7 @@ The screenshot is processed by the vision model (browser model) to understand pa
 Spawn a specialized sub-agent for a specific task.
 
 ### Arguments
+
 | Arg | Type | Description |
 |-----|------|-------------|
 | `task` | str | Task description |
@@ -330,6 +357,7 @@ Spawn a specialized sub-agent for a specific task.
 | `tools` | list | Tools the sub-agent can use |
 
 ### Example
+
 ```json
 {
     "tool_name": "delegate_task",
@@ -350,6 +378,7 @@ Spawn a specialized sub-agent for a specific task.
 Execute `gog` (gogcli) commands from the agent in non-interactive mode.
 
 ### Arguments
+
 | Arg | Type | Default | Description |
 |-----|------|---------|-------------|
 | `action` | str | `"run"` | One of `run`, `help`, `version` |
@@ -361,6 +390,7 @@ Execute `gog` (gogcli) commands from the agent in non-interactive mode.
 | `timeout` | int | `60` | Max execution time in seconds |
 
 ### Example
+
 ```json
 {
     "tool_name": "gogcli_tool",
@@ -375,7 +405,9 @@ Execute `gog` (gogcli) commands from the agent in non-interactive mode.
 ```
 
 ### Config
+
 `settings.external.gogcli` controls binary and timeout defaults (UI-backed fields):
+
 - `gogcli_binary`
 - `gogcli_timeout_seconds`
 
@@ -393,11 +425,13 @@ These scripts are for operators/developers and are also callable via the WebUI s
 | `tools/check_system_smoke.sh` | Runs all smoke checks |
 
 Usage:
+
 ```bash
 bash tools/check_system_smoke.sh
 ```
 
 Optional target override:
+
 ```bash
 WEBUI_BASE_URL=http://127.0.0.1:43067 bash tools/check_system_smoke.sh
 ```

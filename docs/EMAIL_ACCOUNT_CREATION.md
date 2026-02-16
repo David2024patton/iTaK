@@ -1,22 +1,25 @@
 # Email Account Creation Feature
 
 ## At a Glance
+
 - Audience: Developers and operators configuring autonomous email account workflows.
 - Scope: Document autonomous email account workflows, supported actions, and operational constraints.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Confirm active email provider behavior before relying on automation in production.
 - Validate request payloads against current tool action schemas.
 - Test both account creation and inbox-check flows end-to-end.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Preserve exact tool action names and payload shapes when generating email automation calls.
 - Verify provider limitations (temporary inbox lifecycle, rate limits) before production use.
-
 
 ## Overview
 
@@ -40,6 +43,7 @@ Creates a free, temporary email account instantly:
 ```
 
 **Response:**
+
 ```
 ✅ Successfully created temporary email account!
 
@@ -72,6 +76,7 @@ Check the inbox of a created email account:
 ```
 
 **Response:**
+
 ```
 Found 2 email(s) for itak_a3k9x2m1@mail.tm:
 
@@ -100,7 +105,9 @@ Found 2 email(s) for itak_a3k9x2m1@mail.tm:
 ## Use Cases
 
 ### Automated Testing
+
 Create disposable email addresses for testing signup flows:
+
 ```json
 {
     "tool_name": "email_tool",
@@ -112,27 +119,33 @@ Create disposable email addresses for testing signup flows:
 ```
 
 ### Development & Debugging
+
 Get temporary emails for development without polluting your personal inbox.
 
 ### Anonymous Communication
+
 Receive emails without revealing your personal email address.
 
 ### Account Verification
+
 Use for services that require email verification but you don't want to use your main email.
 
 ## Limitations
 
 ⚠️ **Temporary Nature**
+
 - Emails and accounts may be deleted after inactivity
 - Not suitable for important or long-term communications
 - For testing and development only
 
 ⚠️ **Receive-Only**
+
 - Temporary accounts can only **receive** emails
 - Cannot send emails from temp accounts
 - For sending, use SMTP configuration with a real email account
 
 ⚠️ **No Privacy Guarantees**
+
 - These are public temporary email services
 - Don't use for sensitive information
 - Anyone with the email and password can access the account
@@ -140,19 +153,23 @@ Use for services that require email verification but you don't want to use your 
 ## Technical Details
 
 ### Service Used
-**Mail.tm** (https://mail.tm/)
+
+**Mail.tm** (<https://mail.tm/>)
+
 - Free, open-source temporary email service
 - REST API with no authentication required for basic operations
 - Rate limit: 8 requests per second per IP
 - Messages auto-expire after period of inactivity
 
 ### Implementation
+
 - Uses `httpx` async HTTP client (already in requirements.txt)
 - Generates cryptographically secure random passwords
 - Returns all credentials needed for future access
 - Handles authentication tokens automatically
 
 ### Error Handling
+
 - Network errors gracefully handled
 - HTTP status codes properly reported
 - Detailed error messages for debugging
@@ -161,6 +178,7 @@ Use for services that require email verification but you don't want to use your 
 ## Examples
 
 ### Example 1: Basic Account Creation
+
 ```python
 # Agent receives request: "Create an email address for me"
 
@@ -175,6 +193,7 @@ Use for services that require email verification but you don't want to use your 
 ```
 
 ### Example 2: Custom Username
+
 ```python
 # Agent receives: "Create email with username 'myproject2024'"
 
@@ -190,6 +209,7 @@ Use for services that require email verification but you don't want to use your 
 ```
 
 ### Example 3: Check for New Messages
+
 ```python
 # Agent: "Check if myproject2024@mail.tm has any new emails"
 
@@ -211,6 +231,7 @@ Use for services that require email verification but you don't want to use your 
 The email creation feature works seamlessly with other iTaK capabilities:
 
 ### With Browser Agent
+
 ```
 1. Create temporary email
 2. Use browser agent to sign up for service
@@ -219,6 +240,7 @@ The email creation feature works seamlessly with other iTaK capabilities:
 ```
 
 ### With Knowledge Graph
+
 ```
 1. Create email for project
 2. Store credentials in knowledge graph
@@ -227,6 +249,7 @@ The email creation feature works seamlessly with other iTaK capabilities:
 ```
 
 ### With Memory System
+
 ```
 1. Create email
 2. Save email/password to memory
@@ -237,12 +260,14 @@ The email creation feature works seamlessly with other iTaK capabilities:
 ## Comparison: Before vs After
 
 ### Before
+
 ❌ Required manual email account setup
 ❌ Needed to configure SMTP/IMAP
 ❌ Required sharing personal email credentials
 ❌ Limited to pre-existing accounts
 
 ### After
+
 ✅ Creates email accounts on demand
 ✅ No configuration needed
 ✅ No personal credentials required
@@ -259,16 +284,19 @@ The email creation feature works seamlessly with other iTaK capabilities:
 ## Troubleshooting
 
 ### "No available domains from Mail.tm service"
+
 - Service may be temporarily down
 - Try again in a few minutes
 - Check Mail.tm status page
 
 ### "Failed to authenticate with Mail.tm"
+
 - Double-check email address and password
 - Account may have expired due to inactivity
 - Create a new account if needed
 
 ### Network/Connection Errors
+
 - Check internet connectivity
 - Verify firewall isn't blocking api.mail.tm
 - Try again after a short delay

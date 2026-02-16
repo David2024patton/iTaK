@@ -1,22 +1,25 @@
 # iTaK Installation Guide
 
 ## At a Glance
+
 - Audience: New users, operators, and developers setting up iTaK environments.
 - Scope: Guide environment setup from prerequisites to first successful launch with validation checkpoints.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Verify prerequisites and environment variables before running setup scripts.
 - Execute installation steps in order from [root/INSTALL.md](root/INSTALL.md).
 - Confirm service readiness with [root/QUICK_START.md](root/QUICK_START.md).
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Use commands as ordered steps; verify prerequisites before launching services.
 - Re-validate service ports and env/config files after any setup change.
-
 
 This guide covers installation on all supported platforms: **macOS**, **Linux**, **Windows**, and **WSL** (Windows Subsystem for Linux).
 
@@ -36,6 +39,7 @@ bash installers/setup.sh
 ```
 
 Or directly with Python:
+
 ```bash
 python3 installers/setup.py
 ```
@@ -52,6 +56,7 @@ installers\setup.bat
 ```
 
 Or directly with Python:
+
 ```cmd
 python installers/setup.py
 ```
@@ -77,7 +82,7 @@ The automated setup script will:
 
 - **Python 3.11 or higher**
   - Check your version: `python --version` or `python3 --version`
-  - Download from: https://www.python.org/downloads/
+  - Download from: <https://www.python.org/downloads/>
 
 - **pip** (Python package installer)
   - Usually comes with Python
@@ -88,34 +93,37 @@ The automated setup script will:
 - **Git** (for cloning the repository and version control)
   - macOS: `brew install git`
   - Ubuntu/Debian: `sudo apt install git`
-  - Windows: https://git-scm.com/download/win
+  - Windows: <https://git-scm.com/download/win>
 
 - **Docker** (for sandboxed code execution)
-  - All platforms: https://docs.docker.com/get-docker/
+  - All platforms: <https://docs.docker.com/get-docker/>
 
 ### Optional
 
 - **At least one LLM API key** (or use local Ollama)
-  - OpenAI: https://platform.openai.com/api-keys
-  - Anthropic: https://console.anthropic.com/
-  - Google Gemini: https://makersuite.google.com/app/apikey
-  - Or use **Ollama** locally (no API key needed): https://ollama.ai
+  - OpenAI: <https://platform.openai.com/api-keys>
+  - Anthropic: <https://console.anthropic.com/>
+  - Google Gemini: <https://makersuite.google.com/app/apikey>
+  - Or use **Ollama** locally (no API key needed): <https://ollama.ai>
 
 ## Platform-Specific Installation
 
 ### macOS
 
 1. **Install Homebrew** (if not already installed):
+
    ```bash
    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
    ```
 
 2. **Install Python 3.11+**:
+
    ```bash
    brew install python@3.11
    ```
 
 3. **Clone and setup iTaK**:
+
    ```bash
    git clone https://github.com/David2024patton/iTaK.git
    cd iTaK
@@ -125,16 +133,19 @@ The automated setup script will:
 ### Ubuntu / Debian Linux
 
 1. **Update package list**:
+
    ```bash
    sudo apt update
    ```
 
 2. **Install Python 3.11+**:
+
    ```bash
    sudo apt install python3.11 python3.11-venv python3-pip git
    ```
 
 3. **Clone and setup iTaK**:
+
    ```bash
    git clone https://github.com/David2024patton/iTaK.git
    cd iTaK
@@ -144,11 +155,13 @@ The automated setup script will:
 ### Fedora / RHEL / CentOS
 
 1. **Install Python 3.11+**:
+
    ```bash
    sudo dnf install python3.11 python3-pip git
    ```
 
 2. **Clone and setup iTaK**:
+
    ```bash
    git clone https://github.com/David2024patton/iTaK.git
    cd iTaK
@@ -158,11 +171,13 @@ The automated setup script will:
 ### Arch Linux
 
 1. **Install Python**:
+
    ```bash
    sudo pacman -S python python-pip git
    ```
 
 2. **Clone and setup iTaK**:
+
    ```bash
    git clone https://github.com/David2024patton/iTaK.git
    cd iTaK
@@ -172,13 +187,14 @@ The automated setup script will:
 ### Windows
 
 1. **Install Python 3.11+**:
-   - Download from https://www.python.org/downloads/
+   - Download from <https://www.python.org/downloads/>
    - **Important**: Check "Add Python to PATH" during installation
 
 2. **Install Git** (optional but recommended):
-   - Download from https://git-scm.com/download/win
+   - Download from <https://git-scm.com/download/win>
 
 3. **Clone and setup iTaK**:
+
    ```cmd
    git clone https://github.com/David2024patton/iTaK.git
    cd iTaK
@@ -190,6 +206,7 @@ The automated setup script will:
 WSL users can follow the **Ubuntu/Debian** or **Fedora** instructions above, depending on your WSL distribution.
 
 To check your WSL distribution:
+
 ```bash
 lsb_release -a
 ```
@@ -208,12 +225,14 @@ cd iTaK
 ### 2. Create Virtual Environment
 
 **macOS / Linux / WSL:**
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
 
 **Windows:**
+
 ```cmd
 python -m venv venv
 venv\Scripts\activate
@@ -234,12 +253,14 @@ playwright install chromium
 ### 5. Copy Configuration Files
 
 **macOS / Linux / WSL:**
+
 ```bash
 cp install/config/.env.example .env
 cp install/config/config.json.example config.json
 ```
 
 **Windows:**
+
 ```cmd
 copy install\config\.env.example .env
 copy install\config\config.json.example config.json
@@ -274,6 +295,7 @@ OLLAMA_BASE_URL=http://localhost:11434
 ### 2. Configure iTaK Settings
 
 Edit `config.json` to customize:
+
 - **Model preferences** (which LLMs to use)
 - **Memory backends** (SQLite, Neo4j, Weaviate)
 - **Adapter settings** (Discord, Telegram, Slack)
@@ -290,6 +312,7 @@ python -m app.main --doctor
 ```
 
 This will check:
+
 - Python version and packages
 - Configuration files
 - API keys
@@ -302,32 +325,39 @@ This will check:
 Once setup is complete, you can run iTaK in various modes:
 
 ### CLI Mode (Terminal Chat)
+
 ```bash
 python -m app.main
 ```
 
 ### With WebUI Dashboard
+
 ```bash
 python -m app.main --webui
 ```
-Then open http://localhost:48920 in your browser.
+
+Then open <http://localhost:48920> in your browser.
 
 ### Discord Bot
+
 ```bash
 python -m app.main --adapter discord --webui
 ```
 
 ### Telegram Bot
+
 ```bash
 python -m app.main --adapter telegram --webui
 ```
 
 ### Slack Bot
+
 ```bash
 python -m app.main --adapter slack --webui
 ```
 
 ### WebUI Only (No Chat Adapter)
+
 ```bash
 python -m app.main --webui-only
 ```
@@ -361,15 +391,17 @@ docker run -d \
 **Problem**: "Python 3.11+ required"
 
 **Solution**:
+
 - macOS: `brew install python@3.11`
 - Ubuntu: `sudo apt install python3.11`
-- Windows: Download from https://www.python.org/downloads/
+- Windows: Download from <https://www.python.org/downloads/>
 
 ### Virtual Environment Activation
 
 **Problem**: Cannot activate virtual environment
 
 **Solution**:
+
 - Make sure you're in the iTaK directory
 - On Windows, try: `venv\Scripts\activate.bat` or `venv\Scripts\Activate.ps1`
 - On Mac/Linux, try: `source venv/bin/activate`
@@ -379,6 +411,7 @@ docker run -d \
 **Problem**: `playwright install chromium` fails
 
 **Solution**:
+
 ```bash
 # Install system dependencies (Linux only)
 sudo apt install libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 \
@@ -394,6 +427,7 @@ playwright install chromium
 **Problem**: `Permission denied` when running `setup.sh`
 
 **Solution**:
+
 ```bash
 chmod +x setup.sh
 bash setup.sh
@@ -404,6 +438,7 @@ bash setup.sh
 **Problem**: `ModuleNotFoundError` when running iTaK
 
 **Solution**:
+
 1. Make sure virtual environment is activated
 2. Reinstall dependencies: `pip install -r install/requirements/requirements.txt`
 3. Check Python version: `python --version`
@@ -413,6 +448,7 @@ bash setup.sh
 **Problem**: "No LLM API key found"
 
 **Solution**:
+
 1. Edit `.env` file and add your API key
 2. Make sure the key starts with the correct prefix (sk-, sk-ant-, AIza, etc.)
 3. Reload environment: Restart your terminal or re-source the .env file
@@ -420,8 +456,8 @@ bash setup.sh
 ## Getting Help
 
 - **Documentation**: Check the `docs/` directory
-- **Issues**: https://github.com/David2024patton/iTaK/issues
-- **Discussions**: https://github.com/David2024patton/iTaK/discussions
+- **Issues**: <https://github.com/David2024patton/iTaK/issues>
+- **Discussions**: <https://github.com/David2024patton/iTaK/discussions>
 
 ## Next Steps
 

@@ -76,8 +76,10 @@ User: "Process the data"
 ```
 
 ## Tips
+
 - Always validate input before processing
 - Return clear error messages on failure
+
 ```
 
 ## Key Rules

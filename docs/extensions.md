@@ -1,22 +1,25 @@
 # Extensions Reference
 
 ## At a Glance
+
 - Audience: Developers extending iTaK behavior via tools, prompts, models, and core modules.
 - Scope: Describe module responsibilities, configuration surfaces, and extension patterns used in day-to-day work.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Locate the owning module and expected inputs before editing behavior.
 - Cross-check data flow with [root/DATABASES.md](root/DATABASES.md) when state is involved.
 - Re-run focused tests after updates to confirm no regression in tool contracts.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Keep argument names and defaults exact when generating tool/model calls.
 - Prefer evidence from code paths over assumptions when documenting behavior.
-
 
 > The 24 hook points for extending iTaK behavior with full async/await support.
 
@@ -35,6 +38,7 @@ Extensions are the plugin system. iTaK has 24 hook points throughout its lifecyc
 Every extension file must have an `execute()` function:
 
 ### Synchronous Extension
+
 ```python
 # extensions/monologue_start/my_extension.py
 
@@ -45,6 +49,7 @@ def execute(agent, **kwargs):
 ```
 
 ### Asynchronous Extension
+
 ```python
 # extensions/monologue_start/my_async_extension.py
 
@@ -64,6 +69,7 @@ The `agent` parameter gives you access to the entire agent instance - memory, to
 ### ✅ DO
 
 1. **Use async for I/O operations**: Database queries, API calls, file operations
+
    ```python
    async def execute(agent, **kwargs):
        result = await agent.memory.search("query")
@@ -71,6 +77,7 @@ The `agent` parameter gives you access to the entire agent instance - memory, to
    ```
 
 2. **Handle errors gracefully**: Extension errors are logged but don't crash the agent
+
    ```python
    def execute(agent, **kwargs):
        try:
@@ -82,6 +89,7 @@ The `agent` parameter gives you access to the entire agent instance - memory, to
    ```
 
 3. **Check for subsystem availability**:
+
    ```python
    def execute(agent, **kwargs):
        if not hasattr(agent, "task_board") or agent.task_board is None:
@@ -90,6 +98,7 @@ The `agent` parameter gives you access to the entire agent instance - memory, to
    ```
 
 4. **Return meaningful values**: Extensions can return values that get collected
+
    ```python
    async def execute(agent, **kwargs):
        return {"status": "ok", "data": result}
@@ -114,6 +123,7 @@ The iTaK extension system has been enhanced with async-safe handling:
 - **Mixed execution**: Sync and async extensions can coexist in the same hook
 
 ### Example: Mixed Sync/Async Hook
+
 ```python
 # extensions/message_loop_start/tracker_sync.py
 def execute(agent, **kwargs):
@@ -201,21 +211,27 @@ Both extensions will execute correctly in order.
 ## Built-in Extensions
 
 ### Task Tracker (`message_loop_start/task_tracker.py`)
+
 Logs iteration count and monitors the monologue loop.
 
 ### Task Progress (`tool_execute_after/task_progress.py`)
+
 Sends progress updates after tool execution.
 
 ### Task Complete (`process_chain_end/task_complete.py`)
+
 Marks tasks as complete when the agent finishes.
 
 ### OS Detection (`agent_init/os_detect.py`)
+
 Detects the host OS and loads appropriate skill guides.
 
 ### Self-Heal Hook (`tool_execute_after/self_heal.py`)
+
 Triggers the self-healing engine when tools fail.
 
 ### Error Classifier (`error_format/error_classifier.py`)
+
 Classifies errors into categories for better LLM understanding.
 
 ---

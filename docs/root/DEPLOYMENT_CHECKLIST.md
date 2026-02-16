@@ -1,22 +1,25 @@
 # iTaK Deployment Checklist
 
 ## At a Glance
+
 - Audience: Security-conscious operators and developers implementing hardening controls.
 - Scope: Document hardening controls, secure defaults, and verification steps before deployment.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
+
 - Apply hardening controls before exposing services to external networks.
 - Follow deployment guardrails from [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md).
 - Validate findings with repeatable scans before closing security tasks.
 
 ## Deep Dive
+
 The detailed content for this topic starts below.
 
 ## AI Notes
+
 - Preserve threat-model assumptions and include guardrail checks in runbooks.
 - Avoid absolute compliance claims without independent audit evidence.
-
 
 Quick reference checklist for deploying iTaK to different environments.
 
@@ -28,6 +31,7 @@ Quick reference checklist for deploying iTaK to different environments.
 **Use Case:** Local testing, development, experimentation
 
 ### Prerequisites
+
 - [ ] Python 3.11+ installed (`python --version`)
 - [ ] pip installed (`pip --version`)
 - [ ] Git installed (`git --version`)
@@ -35,18 +39,21 @@ Quick reference checklist for deploying iTaK to different environments.
 ### Setup Steps
 
 1. **Install Dependencies**
+
    ```bash
    cd iTaK
    pip install -r install/requirements/requirements.txt
    ```
 
 2. **Configure**
+
    ```bash
    cp install/config/config.json.example config.json
    cp install/config/.env.example .env
    ```
 
 3. **Add API Key** (pick one)
+
    ```bash
    # Edit .env and add:
    GOOGLE_API_KEY=your_key_here
@@ -55,13 +62,16 @@ Quick reference checklist for deploying iTaK to different environments.
    ```
 
 4. **Verify Setup**
+
    ```bash
    python -m app.main --doctor
    ```
+
    - [ ] All critical checks pass (some warnings are OK)
    - [ ] At least one LLM provider configured
 
 5. **Test Run**
+
    ```bash
    # CLI only
    python -m app.main
@@ -69,9 +79,10 @@ Quick reference checklist for deploying iTaK to different environments.
    # With WebUI
    python -m app.main --webui
    ```
+
    - [ ] Application starts without errors
    - [ ] Can send messages and get responses
-   - [ ] WebUI accessible at http://localhost:48920 (if enabled)
+   - [ ] WebUI accessible at <http://localhost:48920> (if enabled)
 
 ---
 
@@ -81,6 +92,7 @@ Quick reference checklist for deploying iTaK to different environments.
 **Use Case:** Team collaboration, shared instance, staging environment
 
 ### Additional Prerequisites
+
 - [ ] Docker installed (`docker --version`)
 - [ ] docker compose installed (`docker compose version`)
 
@@ -89,6 +101,7 @@ Quick reference checklist for deploying iTaK to different environments.
 1. **Complete Development Setup** (above)
 
 2. **Security Hardening**
+
    ```bash
    # Generate strong auth token
    python -c "import secrets; print(secrets.token_urlsafe(32))"
@@ -100,10 +113,12 @@ Quick reference checklist for deploying iTaK to different environments.
      }
    }
    ```
+
    - [ ] WebUI auth token set
    - [ ] MCP auth token set (if using MCP server)
 
 3. **Configure Rate Limits**
+
    ```json
    // In config.json
    {
@@ -115,25 +130,30 @@ Quick reference checklist for deploying iTaK to different environments.
      }
    }
    ```
+
    - [ ] Rate limits reviewed and adjusted
    - [ ] Tool-specific limits configured
 
 4. **Set Up Optional Services** (as needed)
+
    ```bash
    # Start full stack with Docker
    docker compose --project-directory . -f install/docker/docker-compose.yml up -d
    ```
+
    - [ ] Neo4j running (if needed)
    - [ ] Weaviate running (if needed)
    - [ ] SearXNG running (if needed)
 
 5. **Configure Adapters** (optional)
+
    ```bash
    # Add to .env
    DISCORD_TOKEN=your_discord_bot_token
    TELEGRAM_TOKEN=your_telegram_bot_token
    SLACK_TOKEN=your_slack_bot_token
    ```
+
    - [ ] Discord adapter configured (if needed)
    - [ ] Telegram adapter configured (if needed)
    - [ ] Slack adapter configured (if needed)
@@ -156,12 +176,15 @@ Quick reference checklist for deploying iTaK to different environments.
 **Use Case:** Public deployment, production workloads
 
 ### ⚠️ WARNING
+
 iTaK executes arbitrary code by design. Only deploy to production if:
+
 - You understand the security implications
 - Access is restricted to trusted users
 - You have proper monitoring and incident response
 
 ### Additional Prerequisites
+
 - [ ] HTTPS/TLS certificate
 - [ ] Reverse proxy (nginx/caddy/traefik)
 - [ ] Monitoring system (Prometheus/Grafana/Datadog)
@@ -188,6 +211,7 @@ iTaK executes arbitrary code by design. Only deploy to production if:
    - [ ] Review and tighten rate limits
 
 4. **Production Configuration**
+
    ```json
    // config.json - production settings
    {
@@ -212,16 +236,19 @@ iTaK executes arbitrary code by design. Only deploy to production if:
      }
    }
    ```
+
    - [ ] Iteration limits set
    - [ ] Timeouts configured
    - [ ] Strict output guard enabled
    - [ ] Conservative rate limits
 
 5. **Database & Persistence**
+
    ```bash
    # Set up production databases
    docker compose -f docker-compose.prod.yml up -d
    ```
+
    - [ ] Neo4j configured with persistent volume
    - [ ] Weaviate configured with persistent volume
    - [ ] SQLite data directory backed up regularly
@@ -267,6 +294,7 @@ iTaK executes arbitrary code by design. Only deploy to production if:
 ## 🐳 Docker Deployment
 
 ### Quick Start
+
 ```bash
 # Development
 docker compose --project-directory . -f install/docker/docker-compose.yml up -d
@@ -276,6 +304,7 @@ docker compose -f docker-compose.prod.yml up -d
 ```
 
 ### Verification
+
 ```bash
 # Check container status
 docker compose --project-directory . -f install/docker/docker-compose.yml ps
@@ -297,6 +326,7 @@ docker compose --project-directory . -f install/docker/docker-compose.yml restar
 Run these regularly to ensure system health:
 
 ### Daily
+
 ```bash
 # Check service status
 python -m app.main --doctor
@@ -309,6 +339,7 @@ df -h data/
 ```
 
 ### Weekly
+
 ```bash
 # Run test suite
 pytest tests/ -v
@@ -321,6 +352,7 @@ sqlite3 data/db/logs.db "PRAGMA integrity_check;"
 ```
 
 ### Monthly
+
 ```bash
 # Rotate API keys
 # Update dependencies: pip install -r install/requirements/requirements.txt --upgrade
@@ -334,30 +366,35 @@ sqlite3 data/db/logs.db "PRAGMA integrity_check;"
 ## 🆘 Troubleshooting
 
 ### Application won't start
+
 1. Run `python -m app.main --doctor`
 2. Check for missing dependencies
 3. Verify API keys in `.env`
 4. Check config.json syntax
 
 ### WebUI not accessible
+
 1. Check if port 48920 is open
 2. Verify auth token is correct
 3. Check firewall rules
 4. Review webui logs
 
 ### Agent not responding
+
 1. Check LLM API key is valid
 2. Verify API rate limits not exceeded
 3. Check network connectivity
 4. Review agent logs for errors
 
 ### High API costs
+
 1. Review rate limits
 2. Check for infinite loops (max_iterations)
 3. Monitor token usage in logs
 4. Consider switching to cheaper models
 
 ### Memory issues
+
 1. Check SQLite database size
 2. Archive old logs
 3. Optimize Neo4j/Weaviate if used
@@ -368,7 +405,7 @@ sqlite3 data/db/logs.db "PRAGMA integrity_check;"
 ## 📞 Support
 
 - **Documentation:** `docs/` directory
-- **Issues:** https://github.com/David2024patton/iTaK/issues
+- **Issues:** <https://github.com/David2024patton/iTaK/issues>
 - **Diagnostics:** `python -m app.main --doctor`
 - **Tests:** `pytest tests/ -v --tb=short`
 
