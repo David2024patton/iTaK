@@ -82,9 +82,9 @@ Target files:
 
 ### PR-AZ2: File browser action parity
 
-- [ ] Verify rename/create/delete/edit flows against backend guards.
-- [ ] Add clear permission errors and path-bound enforcement messaging.
-- [ ] Add smoke tests for file browser CRUD actions.
+- [x] Verify rename/create/delete/edit flows against backend guards.
+- [x] Add clear permission errors and path-bound enforcement messaging.
+- [x] Add smoke tests for file browser CRUD actions.
 
 Target files:
 
@@ -192,3 +192,4 @@ Target files:
 
 - 2026-02-16: v0.9.8 release reviewed and parity plan drafted.
 - 2026-02-16: PR-AZ1 completed with queue idempotency and ordering hardening in `webui/server.py`, plus regression coverage in `tests/test_webui.py` for queue flush/order/retry and process-group transition contracts.
+- 2026-02-16: PR-AZ2 completed with guarded file-browser edit endpoints, root-safe rename/delete restrictions, clearer workdir error messages, and CRUD/path-bound regression coverage in `tests/test_webui.py`.

@@ -6,6 +6,7 @@ Provides REST API + WebSocket for real-time agent monitoring.
 import asyncio
 import json
 import logging
+import mimetypes
 import os
 import re
 import secrets
@@ -425,11 +426,7 @@ def create_app(agent: "Agent"):
                 suffix = value[len("$WORK_DIR"):].lstrip("/")
                 candidate = root / suffix
             elif value.startswith("/"):
-                absolute_candidate = Path(value)
-                if absolute_candidate.exists():
-                    candidate = absolute_candidate
-                else:
-                    candidate = root / value.lstrip("/")
+                candidate = Path(value)
             else:
                 candidate = root / value
 
@@ -439,6 +436,20 @@ def create_app(agent: "Agent"):
         except ValueError as exc:
             raise ValueError("Path is outside of workdir") from exc
         return resolved
+
+    def _workdir_error(action: str, error: Exception) -> dict:
+        message = str(error)
+        if isinstance(error, ValueError) and "outside of workdir" in message:
+            return {
+                "ok": False,
+                "error": f"{action} blocked: path is outside configured workdir",
+            }
+        if isinstance(error, PermissionError):
+            return {
+                "ok": False,
+                "error": f"{action} blocked: permission denied",
+            }
+        return {"ok": False, "error": f"{action} failed: {message}"}
 
     def _entry_payload(path: Path) -> dict:
         stat = path.stat()
@@ -830,6 +841,8 @@ def create_app(agent: "Agent"):
             source = _resolve_workdir_path(data.get("path"))
             if not source.exists():
                 return {"ok": False, "error": "File or folder not found"}
+            if source == _workdir_root():
+                return {"ok": False, "error": "Rename blocked: cannot rename workdir root"}
             destination = source.with_name(new_name)
             if destination.exists() and destination != source:
                 return {"ok": False, "error": f"An item named '{new_name}' already exists."}
@@ -837,7 +850,7 @@ def create_app(agent: "Agent"):
             current = _resolve_workdir_path(data.get("currentPath") or destination.parent)
             return {"ok": True, "data": _workdir_browser_payload(current)}
         except Exception as e:
-            return {"ok": False, "error": f"Rename failed: {e}"}
+            return _workdir_error("Rename", e)
 
     @app.post("/delete_work_dir_file")
     async def delete_work_dir_file(payload: dict | None = None):
@@ -846,6 +859,8 @@ def create_app(agent: "Agent"):
             target = _resolve_workdir_path(data.get("path"))
             if not target.exists():
                 return {"ok": False, "error": "File or folder not found"}
+            if target == _workdir_root():
+                return {"ok": False, "error": "Delete blocked: cannot delete workdir root"}
 
             if target.is_dir():
                 shutil.rmtree(target)
@@ -857,7 +872,54 @@ def create_app(agent: "Agent"):
                 current = _workdir_root()
             return {"ok": True, "data": _workdir_browser_payload(current)}
         except Exception as e:
-            return {"ok": False, "error": f"Delete failed: {e}"}
+            return _workdir_error("Delete", e)
+
+    @app.get("/edit_work_dir_file")
+    async def edit_work_dir_file_get(path: str):
+        try:
+            target = _resolve_workdir_path(path)
+            if not target.exists():
+                return {"ok": False, "error": "File not found"}
+            if target.is_dir():
+                return {"ok": False, "error": "Cannot edit a directory"}
+
+            content = target.read_text(encoding="utf-8", errors="replace")
+            mime_type = mimetypes.guess_type(target.name)[0] or "text/plain"
+            return {
+                "ok": True,
+                "data": {
+                    "name": target.name,
+                    "path": str(target),
+                    "content": content,
+                    "mime_type": mime_type,
+                },
+            }
+        except Exception as e:
+            return _workdir_error("Edit", e)
+
+    @app.post("/edit_work_dir_file")
+    async def edit_work_dir_file_set(payload: dict | None = None):
+        data = payload or {}
+        raw_path = data.get("path")
+        content = data.get("content", "")
+        if raw_path is None:
+            return {"ok": False, "error": "Path is required"}
+        if not isinstance(content, str):
+            return {"ok": False, "error": "Content must be a string"}
+
+        try:
+            target = _resolve_workdir_path(raw_path)
+            if target.exists() and target.is_dir():
+                return {"ok": False, "error": "Cannot edit a directory"}
+
+            parent = target.parent
+            if not parent.exists() or not parent.is_dir():
+                return {"ok": False, "error": "Parent directory not found"}
+
+            target.write_text(content, encoding="utf-8")
+            return {"ok": True, "data": {"path": str(target), "name": target.name}}
+        except Exception as e:
+            return _workdir_error("Save", e)
 
     @app.post("/upload_work_dir_files")
     async def upload_work_dir_files(request: Request):
@@ -889,7 +951,7 @@ def create_app(agent: "Agent"):
                 payload["failed"] = failed
             return payload
         except Exception as e:
-            return {"ok": False, "error": f"Upload failed: {e}"}
+            return _workdir_error("Upload", e)
 
     @app.get("/download_work_dir_file")
     async def download_work_dir_file(path: str):
@@ -899,7 +961,7 @@ def create_app(agent: "Agent"):
                 return JSONResponse(status_code=404, content={"ok": False, "error": "File not found"})
             return FileResponse(path=str(target), filename=target.name)
         except Exception as e:
-            return JSONResponse(status_code=400, content={"ok": False, "error": f"Download failed: {e}"})
+            return JSONResponse(status_code=400, content=_workdir_error("Download", e))
 
     @app.post("/file_info")
     async def file_info(payload: dict | None = None):

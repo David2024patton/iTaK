@@ -382,6 +382,100 @@ class TestQueueReliabilityRegression:
         assert [item.get("id") for item in second_items] == ["stable-id"]
 
 
+class TestFileBrowserCrudRegression:
+    """Regression coverage for AZ2 file browser CRUD and guard behavior."""
+
+    @staticmethod
+    def _set_workdir(client, workdir: Path):
+        res = client.post("/settings_set", json={"settings": {"workdir_path": str(workdir)}})
+        assert res.status_code == 200
+        assert res.json().get("ok") is True
+
+    def test_file_browser_crud_flow(self, client, tmp_path):
+        self._set_workdir(client, tmp_path)
+
+        create = client.post(
+            "/edit_work_dir_file",
+            json={"path": str(tmp_path / "alpha.txt"), "content": "hello alpha"},
+        )
+        assert create.status_code == 200
+        assert create.json().get("ok") is True
+
+        load = client.get(f"/edit_work_dir_file?path={str(tmp_path / 'alpha.txt')}")
+        assert load.status_code == 200
+        load_payload = load.json()
+        assert load_payload.get("ok") is True
+        assert load_payload.get("data", {}).get("content") == "hello alpha"
+
+        renamed = client.post(
+            "/rename_work_dir_file",
+            json={
+                "action": "rename",
+                "path": str(tmp_path / "alpha.txt"),
+                "currentPath": str(tmp_path),
+                "newName": "beta.txt",
+            },
+        )
+        assert renamed.status_code == 200
+        assert renamed.json().get("ok") is True
+
+        folder = client.post(
+            "/rename_work_dir_file",
+            json={
+                "action": "create-folder",
+                "parentPath": str(tmp_path),
+                "currentPath": str(tmp_path),
+                "newName": "docs",
+            },
+        )
+        assert folder.status_code == 200
+        assert folder.json().get("ok") is True
+
+        listing = client.get(f"/get_work_dir_files?path={str(tmp_path)}")
+        assert listing.status_code == 200
+        listing_payload = listing.json()
+        assert listing_payload.get("ok") is True
+        names = [entry.get("name") for entry in listing_payload.get("data", {}).get("entries", [])]
+        assert "beta.txt" in names
+        assert "docs" in names
+
+        delete = client.post(
+            "/delete_work_dir_file",
+            json={"path": str(tmp_path / "beta.txt"), "currentPath": str(tmp_path)},
+        )
+        assert delete.status_code == 200
+        assert delete.json().get("ok") is True
+
+    def test_path_outside_workdir_returns_clear_error(self, client, tmp_path):
+        self._set_workdir(client, tmp_path)
+
+        res = client.post(
+            "/rename_work_dir_file",
+            json={
+                "action": "rename",
+                "path": "/etc/passwd",
+                "currentPath": str(tmp_path),
+                "newName": "x.txt",
+            },
+        )
+        assert res.status_code == 200
+        payload = res.json()
+        assert payload.get("ok") is False
+        assert "outside configured workdir" in payload.get("error", "")
+
+    def test_delete_workdir_root_is_blocked(self, client, tmp_path):
+        self._set_workdir(client, tmp_path)
+
+        res = client.post(
+            "/delete_work_dir_file",
+            json={"path": str(tmp_path), "currentPath": str(tmp_path)},
+        )
+        assert res.status_code == 200
+        payload = res.json()
+        assert payload.get("ok") is False
+        assert "cannot delete workdir root" in payload.get("error", "").lower()
+
+
 class TestProcessGroupTransitionRegression:
     """Regression guardrails for process-group transition wiring in frontend messages."""
 
