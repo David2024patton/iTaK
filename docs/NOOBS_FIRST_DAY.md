@@ -6,9 +6,9 @@
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
-- Docs hub: [WIKI.md](WIKI.md)
-- Beginner path: [NOOBS_FIRST_DAY.md](NOOBS_FIRST_DAY.md)
-- AI-oriented project map: [AI_CONTEXT.md](AI_CONTEXT.md)
+- Complete installation first: [installation.md](installation.md).
+- Run your first launch path: [getting-started.md](getting-started.md).
+- Validate health checks from [root/QUICK_START.md](root/QUICK_START.md).
 
 ## Deep Dive
 The detailed content for this topic starts below.

@@ -6,9 +6,9 @@
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
-- Docs hub: [../WIKI.md](../WIKI.md)
-- Beginner path: [../NOOBS_FIRST_DAY.md](../NOOBS_FIRST_DAY.md)
-- AI-oriented project map: [../AI_CONTEXT.md](../AI_CONTEXT.md)
+- Run focused checks first (`pytest -q` or targeted smoke scripts).
+- Use [TESTING.md](TESTING.md) for canonical test commands and order.
+- Capture outputs alongside the environment context for reproducibility.
 
 ## Deep Dive
 The detailed content for this topic starts below.

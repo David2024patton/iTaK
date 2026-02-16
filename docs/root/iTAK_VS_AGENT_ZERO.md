@@ -6,9 +6,9 @@
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
-- Docs hub: [../WIKI.md](../WIKI.md)
-- Beginner path: [../NOOBS_FIRST_DAY.md](../NOOBS_FIRST_DAY.md)
-- AI-oriented project map: [../AI_CONTEXT.md](../AI_CONTEXT.md)
+- Read this as a comparison guide, not as an external certification record.
+- Cross-verify capability claims in [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md).
+- Treat scale/compliance statements as deployment-dependent unless independently audited.
 
 ## Deep Dive
 The detailed content for this topic starts below.

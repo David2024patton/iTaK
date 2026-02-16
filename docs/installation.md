@@ -6,9 +6,9 @@
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
-- Docs hub: [WIKI.md](WIKI.md)
-- Beginner path: [NOOBS_FIRST_DAY.md](NOOBS_FIRST_DAY.md)
-- AI-oriented project map: [AI_CONTEXT.md](AI_CONTEXT.md)
+- Verify prerequisites and environment variables before running setup scripts.
+- Execute installation steps in order from [root/INSTALL.md](root/INSTALL.md).
+- Confirm service readiness with [root/QUICK_START.md](root/QUICK_START.md).
 
 ## Deep Dive
 The detailed content for this topic starts below.

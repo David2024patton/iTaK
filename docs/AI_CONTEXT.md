@@ -6,9 +6,9 @@
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
-- Docs hub: [WIKI.md](WIKI.md)
-- Beginner path: [NOOBS_FIRST_DAY.md](NOOBS_FIRST_DAY.md)
-- AI-oriented project map: [AI_CONTEXT.md](AI_CONTEXT.md)
+- Start with architecture summary: [architecture.md](architecture.md).
+- Review execution surfaces: [tools.md](tools.md) and [webui.md](webui.md).
+- Use this page as the index before touching any subsystem doc.
 
 ## Deep Dive
 The detailed content for this topic starts below.

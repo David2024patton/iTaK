@@ -6,9 +6,9 @@
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
-- Docs hub: [WIKI.md](WIKI.md)
-- Beginner path: [NOOBS_FIRST_DAY.md](NOOBS_FIRST_DAY.md)
-- AI-oriented project map: [AI_CONTEXT.md](AI_CONTEXT.md)
+- Identify the integration boundary first (adapter, API endpoint, or UI component).
+- Trace implementation details from [root/IMPLEMENTATION_SUMMARY.md](root/IMPLEMENTATION_SUMMARY.md).
+- Validate behavior with smoke checks after each configuration change.
 
 ## Deep Dive
 The detailed content for this topic starts below.

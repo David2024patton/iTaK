@@ -6,9 +6,9 @@
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
-- Docs hub: [WIKI.md](WIKI.md)
-- Beginner path: [NOOBS_FIRST_DAY.md](NOOBS_FIRST_DAY.md)
-- AI-oriented project map: [AI_CONTEXT.md](AI_CONTEXT.md)
+- Pick your role path first: operator, developer, or contributor.
+- Open foundational setup: [installation.md](installation.md).
+- Continue with architecture map: [AI_CONTEXT.md](AI_CONTEXT.md).
 
 ## Deep Dive
 The detailed content for this topic starts below.
