@@ -68,14 +68,23 @@ python_functions = test_*
 iTaK/
 ├── tests/
 │   ├── __init__.py
-│   ├── test_core.py           # Core component tests
-│   ├── test_memory.py          # TODO: Memory tests
-│   ├── test_tools.py           # TODO: Tool tests
-│   ├── test_adapters.py        # TODO: Adapter tests
-│   ├── test_security.py        # TODO: Security tests
-│   ├── test_webui.py           # TODO: WebUI tests
-│   ├── test_mcp.py             # TODO: MCP tests
-│   └── fixtures/               # TODO: Test fixtures
+│   ├── test_core.py
+│   ├── test_agent.py
+│   ├── test_agent_safety.py
+│   ├── test_memory.py
+│   ├── test_tools.py
+│   ├── test_adapters.py
+│   ├── test_security.py
+│   ├── test_webui.py
+│   ├── test_integration.py
+│   ├── test_mcp_integration.py
+│   ├── test_load.py
+│   ├── test_compliance.py
+│   ├── test_chaos.py
+│   ├── test_performance.py
+│   ├── test_installer.py
+│   ├── test_memu.py
+│   └── test_advanced.py
 ├── tests/pytest.ini
 ├── install/requirements/requirements.txt
 └── install/requirements/requirements-ci.txt  # Minimal deps for CI
@@ -336,28 +345,40 @@ class TestWithFixtures:
 
 ## Test Coverage
 
-### Current Coverage
+### Current Snapshot
 
-As of v4.0 (Phase 4 Complete):
-- **Total Lines:** ~15,000
-- **Tested Lines:** ~12,750
-- **Coverage:** ~85% (estimated)
-- **Test Count:** 258 tests (up from 12)
+Repository snapshot (2026-02-16):
+- **Pytest collected tests:** 396 (`pytest tests --collect-only -q`)
+- **Test files:** 17 (`tests/test_*.py`)
+- **Coverage:** run `pytest --cov=. --cov-report=term-missing` to calculate for your environment
 
-**Tested Components:**
-- ✅ Logger (core/logger.py) - 4 tests
-- ✅ SQLite Memory Store (memory/sqlite_store.py) - 12 tests
-- ✅ Tool Result (tools/base.py) - 7 tests
-- ✅ Progress Tracker (core/progress.py) - 2 tests
-- ✅ Security modules (security/*.py) - 28 tests
-  - SecretManager, OutputGuard, PathGuard, SSRFGuard, RateLimiter, Scanner
-- ✅ Agent core (core/agent.py) - 19 tests
-  - ModelRouter, Checkpoint, SelfHeal, Agent integration
-- ✅ Tools (tools/*.py) - 28 tests
-  - Code execution, web search, memory tools, delegation, browser
-- ✅ Memory system (memory/*.py) - 19 tests
-  - SQLite, Neo4j (mocked), Weaviate (mocked), MemoryManager
-- ✅ Integration tests - 19 tests
+**Key suites in tree:**
+- ✅ Core / Agent: `test_core.py`, `test_agent.py`, `test_agent_safety.py`
+- ✅ Memory: `test_memory.py`, `test_memu.py`
+- ✅ Tools: `test_tools.py`
+- ✅ WebUI: `test_webui.py`
+- ✅ Security: `test_security.py`
+- ✅ Integration / MCP: `test_integration.py`, `test_mcp_integration.py`
+- ✅ Performance / Load / Chaos: `test_performance.py`, `test_load.py`, `test_chaos.py`
+- ✅ Compliance scenarios: `test_compliance.py`
+- ✅ Installer / advanced flows: `test_installer.py`, `test_advanced.py`
+
+### Smoke Testing (UI + CLI)
+
+After changing settings/options, run smoke checks either from the WebUI (**Settings → External Services → System Smoke Tests**) or via CLI:
+
+```bash
+bash tools/check_resource_endpoints.sh
+bash tools/check_memory_smoke.sh
+bash tools/check_chat_smoke.sh
+bash tools/check_system_smoke.sh
+```
+
+Optional dynamic target:
+
+```bash
+WEBUI_BASE_URL=http://127.0.0.1:43067 bash tools/check_system_smoke.sh
+```
   - Tool pipeline, secret lifecycle, crash recovery, multi-user
 - ✅ Adapters (adapters/*.py) - 20 tests
   - Discord, Telegram, Slack, CLI, base interface, performance

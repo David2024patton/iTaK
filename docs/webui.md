@@ -44,9 +44,12 @@ ws.onmessage = (event) => {
 
 ## REST API
 
-**File:** `webui/server.py` | **Lines:** 426
+**File:** `webui/server.py`
 
-All endpoints return JSON. Base URL: `http://localhost:48920/api/v1`
+All endpoints return JSON.
+
+- Compatibility/UI endpoints are primarily mounted at root (for example: `/poll`, `/chat_create`, `/launchpad_apps`, `/resource_hub`).
+- Auth-protected API endpoints are mounted under `/api/*` (for example memory stats/search and tool listing).
 
 ### Health & Status
 
@@ -192,6 +195,32 @@ Response:
 |--------|----------|-------------|
 | GET | `/presence` | Current agent status |
 | GET | `/media/stats` | Media pipeline stats |
+
+### Resource Hub & Launchpad
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/resource_hub` | Aggregate resource index (adapters, prompts, tools, skills, tasks, MCP summary) |
+| POST | `/resource_file` | Fetch preview content for a selected resource item |
+| POST | `/launchpad_apps` | List launchpad apps from catalog |
+| POST | `/catalog_refresh` | Refresh runtime catalog from local catalog file |
+| POST | `/catalog_sync_from_cherry` | Pull and sync catalog from configured Cherry source |
+
+### System Smoke Tests (Settings UI)
+
+The External Settings tab exposes one-click smoke checks and matching CLI commands.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/system_test_run` | Run allowlisted smoke test scripts (`resources`, `memory`, `chat`, `all`) |
+
+Backed scripts:
+- `tools/check_resource_endpoints.sh`
+- `tools/check_memory_smoke.sh`
+- `tools/check_chat_smoke.sh`
+- `tools/check_system_smoke.sh`
+
+`/system_test_run` sets `WEBUI_BASE_URL` automatically so tests run against the active WebUI port.
 
 ---
 

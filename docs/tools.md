@@ -323,4 +323,65 @@ Spawn a specialized sub-agent for a specific task.
 }
 ```
 
+---
+
+## gogcli_tool - Google Workspace CLI Integration
+
+**File:** `tools/gogcli_tool.py`
+
+Execute `gog` (gogcli) commands from the agent in non-interactive mode.
+
+### Arguments
+| Arg | Type | Default | Description |
+|-----|------|---------|-------------|
+| `action` | str | `"run"` | One of `run`, `help`, `version` |
+| `command` | str | `""` | gog subcommand string (required for `action=run`) |
+| `json_output` | bool | `true` | Appends `--json` when missing |
+| `no_input` | bool | `true` | Appends `--no-input` when missing |
+| `account` | str | `""` | Optional `GOG_ACCOUNT` override |
+| `client` | str | `""` | Optional `GOG_CLIENT` override |
+| `timeout` | int | `60` | Max execution time in seconds |
+
+### Example
+```json
+{
+    "tool_name": "gogcli_tool",
+    "tool_args": {
+        "action": "run",
+        "command": "users list",
+        "json_output": true,
+        "no_input": true,
+        "timeout": 60
+    }
+}
+```
+
+### Config
+`settings.external.gogcli` controls binary and timeout defaults (UI-backed fields):
+- `gogcli_binary`
+- `gogcli_timeout_seconds`
+
+---
+
+## Operator Smoke Scripts (CLI)
+
+These scripts are for operators/developers and are also callable via the WebUI settings smoke-test panel.
+
+| Script | Purpose |
+|--------|---------|
+| `tools/check_resource_endpoints.sh` | Validates key resource/catalog endpoints |
+| `tools/check_memory_smoke.sh` | Save/search/delete memory roundtrip |
+| `tools/check_chat_smoke.sh` | Chat context + response log roundtrip |
+| `tools/check_system_smoke.sh` | Runs all smoke checks |
+
+Usage:
+```bash
+bash tools/check_system_smoke.sh
+```
+
+Optional target override:
+```bash
+WEBUI_BASE_URL=http://127.0.0.1:43067 bash tools/check_system_smoke.sh
+```
+
 The sub-agent runs its own monologue loop and returns the result to the parent.
