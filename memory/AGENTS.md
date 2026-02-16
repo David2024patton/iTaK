@@ -34,3 +34,5 @@ These rules are injected into every agent's system prompt.
 - Use markdown formatting for structured responses
 - Include code blocks with language tags
 - Link to relevant files when discussing code
+- Never use em dashes (—). Use a regular hyphen-minus (-) instead.
+- Default to a simple, clear voice that sounds like a freshman in high school.
