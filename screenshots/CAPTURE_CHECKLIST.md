@@ -51,3 +51,7 @@ Use this checklist to recapture all UI images in a clean, repeatable way.
 - [ ] No sensitive info visible
 - [ ] Core text is readable at normal zoom
 - [ ] README images render correctly after push
+
+## Automated Validation
+- Run exact-set validation: `tools/validate_screenshots.sh`
+- Allow extra PNGs temporarily: `tools/validate_screenshots.sh --allow-extra`
