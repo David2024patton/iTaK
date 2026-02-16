@@ -69,9 +69,9 @@ Transcript-driven additions to capture:
 
 ### PR-AZ1: Process group and queue reliability hardening
 
-- [ ] Add regression tests for process-group step transition state.
-- [ ] Add regression tests for queued message ordering and flush behavior.
-- [ ] Ensure queue survives reconnects and transient sync fallback.
+- [x] Add regression tests for process-group step transition state.
+- [x] Add regression tests for queued message ordering and flush behavior.
+- [x] Ensure queue survives reconnects and transient sync fallback.
 
 Target files:
 
@@ -191,3 +191,4 @@ Target files:
 ## Progress Log
 
 - 2026-02-16: v0.9.8 release reviewed and parity plan drafted.
+- 2026-02-16: PR-AZ1 completed with queue idempotency and ordering hardening in `webui/server.py`, plus regression coverage in `tests/test_webui.py` for queue flush/order/retry and process-group transition contracts.

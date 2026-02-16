@@ -967,8 +967,13 @@ def create_app(agent: "Agent"):
     @app.post("/message_queue_add")
     async def message_queue_add(payload: dict):
         ctx = _ensure_context(payload.get("context"))
+        item_id = payload.get("item_id") or uuid.uuid4().hex
+        for existing in ctx["message_queue"]:
+            if existing.get("id") == item_id:
+                return {"ok": True, "item": existing, "deduplicated": True}
+
         item = {
-            "id": payload.get("item_id") or uuid.uuid4().hex,
+            "id": item_id,
             "text": payload.get("text", ""),
             "attachments": payload.get("attachments", []),
         }
@@ -995,10 +1000,11 @@ def create_app(agent: "Agent"):
             to_send = list(ctx["message_queue"])
             ctx["message_queue"] = []
         elif item_id:
-            for item in ctx["message_queue"]:
+            for idx, item in enumerate(ctx["message_queue"]):
                 if item.get("id") == item_id:
                     to_send = [item]
-            ctx["message_queue"] = [i for i in ctx["message_queue"] if i.get("id") != item_id]
+                    del ctx["message_queue"][idx]
+                    break
         for item in to_send:
             _push_log(ctx, "user", item.get("text", ""), kvps={"queued": True})
         return {"ok": True}

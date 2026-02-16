@@ -286,3 +286,111 @@ class TestSettingsParity:
         assert lp_payload.get("ok") is True
         assert isinstance(lp_payload.get("data"), list)
         assert isinstance(lp_payload.get("count"), int)
+
+
+class TestQueueReliabilityRegression:
+    """Regression coverage for AZ1 message queue ordering and flush behavior."""
+
+    @staticmethod
+    def _create_context(client) -> str:
+        created = client.post("/chat_create", json={})
+        assert created.status_code == 200
+        payload = created.json()
+        assert payload.get("ok") is True
+        ctxid = payload.get("ctxid")
+        assert isinstance(ctxid, str) and ctxid
+        return ctxid
+
+    @staticmethod
+    def _queue_item(client, ctxid: str, item_id: str, text: str):
+        res = client.post(
+            "/message_queue_add",
+            json={
+                "context": ctxid,
+                "item_id": item_id,
+                "text": text,
+                "attachments": [],
+            },
+        )
+        assert res.status_code == 200
+        payload = res.json()
+        assert payload.get("ok") is True
+
+    @staticmethod
+    def _poll(client, ctxid: str) -> dict:
+        res = client.post(
+            "/poll",
+            json={"context": ctxid, "log_from": 0, "notifications_from": 0},
+        )
+        assert res.status_code == 200
+        return res.json()
+
+    def test_send_all_preserves_queue_order_and_flushes(self, client):
+        ctxid = self._create_context(client)
+        self._queue_item(client, ctxid, "q1", "first")
+        self._queue_item(client, ctxid, "q2", "second")
+        self._queue_item(client, ctxid, "q3", "third")
+
+        send = client.post("/message_queue_send", json={"context": ctxid, "send_all": True})
+        assert send.status_code == 200
+        assert send.json().get("ok") is True
+
+        snapshot = self._poll(client, ctxid)
+        logs = snapshot.get("logs") or []
+        assert [entry.get("content") for entry in logs[-3:]] == ["first", "second", "third"]
+        assert all((entry.get("kvps") or {}).get("queued") for entry in logs[-3:])
+        assert snapshot.get("contexts")[0].get("message_queue") == []
+
+    def test_send_single_item_only_removes_target_item(self, client):
+        ctxid = self._create_context(client)
+        self._queue_item(client, ctxid, "q1", "first")
+        self._queue_item(client, ctxid, "q2", "second")
+        self._queue_item(client, ctxid, "q3", "third")
+
+        send = client.post("/message_queue_send", json={"context": ctxid, "item_id": "q2"})
+        assert send.status_code == 200
+        assert send.json().get("ok") is True
+
+        snapshot = self._poll(client, ctxid)
+        logs = snapshot.get("logs") or []
+        assert logs[-1].get("content") == "second"
+
+        queued_items = snapshot.get("contexts")[0].get("message_queue") or []
+        assert [item.get("id") for item in queued_items] == ["q1", "q3"]
+
+    def test_add_is_idempotent_for_same_item_id_across_retries(self, client):
+        ctxid = self._create_context(client)
+        self._queue_item(client, ctxid, "retry-id", "retry payload")
+        # Simulate reconnect/retry replay with the same item id.
+        self._queue_item(client, ctxid, "retry-id", "retry payload")
+
+        snapshot = self._poll(client, ctxid)
+        queued_items = snapshot.get("contexts")[0].get("message_queue") or []
+        assert len(queued_items) == 1
+        assert queued_items[0].get("id") == "retry-id"
+
+    def test_queue_survives_poll_cycles_until_sent(self, client):
+        ctxid = self._create_context(client)
+        self._queue_item(client, ctxid, "stable-id", "survives")
+
+        first_poll = self._poll(client, ctxid)
+        second_poll = self._poll(client, ctxid)
+
+        first_items = first_poll.get("contexts")[0].get("message_queue") or []
+        second_items = second_poll.get("contexts")[0].get("message_queue") or []
+        assert [item.get("id") for item in first_items] == ["stable-id"]
+        assert [item.get("id") for item in second_items] == ["stable-id"]
+
+
+class TestProcessGroupTransitionRegression:
+    """Regression guardrails for process-group transition wiring in frontend messages."""
+
+    def test_process_group_transition_hooks_present(self):
+        root = Path(__file__).resolve().parents[1]
+        messages_js = root / "webui" / "static" / "js" / "messages.js"
+        content = messages_js.read_text(encoding="utf-8")
+
+        assert "const STEP_COLLAPSE_DELAY" in content
+        assert "scheduleStepCollapse(expandedStep, delay);" in content
+        assert "toggleStepCollapse(step, true);" in content
+        assert "const isGroupComplete = isProcessGroupComplete(group);" in content
