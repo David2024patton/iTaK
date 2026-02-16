@@ -33,6 +33,11 @@ fi
 
 echo "Running markdownlint on staged markdown files..."
 echo "${staged_md_files}" | xargs -r npx -y markdownlint-cli
+
+if [[ -x "tools/check_no_emdash.sh" ]]; then
+  echo "Running no-em-dash check on staged markdown files..."
+  tools/check_no_emdash.sh --staged
+fi
 HOOK
 
 chmod +x "${PRE_COMMIT_HOOK}"

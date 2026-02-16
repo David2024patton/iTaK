@@ -21,6 +21,11 @@ jobs:
         run: |
           npx -y markdownlint-cli "**/*.md"
 
+      - name: Enforce no em-dashes in core prompt files
+        run: |
+          chmod +x tools/check_no_emdash.sh
+          tools/check_no_emdash.sh --paths prompts memory
+
   test:
     runs-on: ubuntu-latest
     strategy:

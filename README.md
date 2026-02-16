@@ -23,7 +23,7 @@
 
 ### ⚡ ONE-COMMAND INSTALL (All Platforms - 2 minutes)
 
-**One Python script works everywhere** — Linux, macOS, Windows (WSL), WSL directly
+**One Python script works everywhere** - Linux, macOS, Windows (WSL), WSL directly
 
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
@@ -57,7 +57,7 @@ python install.py --help       # Show all options
 | **Minimal** | ✅ | ❌ | ❌ | ❌ | 2 min |
 | **Full Stack** | ✅ | ✅ | ✅ | ✅ | 5 min |
 
-📚 **[QUICK START GUIDE](QUICK_START.md)** — Complete installation walkthrough  
+📚 **[QUICK START GUIDE](QUICK_START.md)** - Complete installation walkthrough  
 🆚 **Coming from Agent-Zero?** [iTAK vs Agent-Zero](docs/root/iTAK_VS_AGENT_ZERO.md)
 
 ---
@@ -223,6 +223,7 @@ python -m app.main --webui
 ## 🧹 Markdown Lint Enforcement
 
 - Run markdown lint manually: `tools/check_markdown_lint.sh`
+- Run no-em-dash check: `tools/check_no_emdash.sh --paths prompts memory`
 - Install local pre-commit enforcement: `tools/install_git_hooks.sh`
 - CI also enforces markdown lint on every push and pull request.
 
