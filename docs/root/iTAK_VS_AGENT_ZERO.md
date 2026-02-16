@@ -25,6 +25,8 @@ The detailed content for this topic starts below.
 
 > **Verification note (2026-02-16):** This comparison is based on repository contents (code, tests, docs). Statements about external audits/certifications should be treated as goals unless accompanied by third-party audit artifacts.
 
+> **Adoption plan:** Detailed iTaK parity and implementation plan for Agent Zero `v0.9.8` is tracked in [AGENT_ZERO_V0_9_8_ADOPTION_PLAN.md](AGENT_ZERO_V0_9_8_ADOPTION_PLAN.md).
+
 ---
 
 ## 📊 Quick Comparison Table

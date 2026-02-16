@@ -27,6 +27,12 @@ The detailed content for this topic starts below.
 - Adoption execution plan: [OPENCLAW_2026_2_14_ADOPTION_PLAN.md](OPENCLAW_2026_2_14_ADOPTION_PLAN.md)
 - Use that plan as the canonical checklist for security/stability parity work.
 
+## Agent Zero Parity Tracking
+
+- Agent Zero release reviewed: `v0.9.8`
+- Adoption execution plan: [AGENT_ZERO_V0_9_8_ADOPTION_PLAN.md](AGENT_ZERO_V0_9_8_ADOPTION_PLAN.md)
+- Use that plan as the canonical checklist for UI/skills/project parity work.
+
 **Date:** February 14, 2026  
 **Version:** 4.0  
 **Status:** ✅ **PRODUCTION-READY** (with conditions)

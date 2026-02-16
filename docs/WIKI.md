@@ -48,6 +48,7 @@ The detailed content for this topic starts below.
 3. [Testing Guide](root/TESTING.md)
 4. [Production Testing Summary](root/PRODUCTION_TESTING_SUMMARY.md)
 5. [OpenClaw Adoption Plan](root/OPENCLAW_2026_2_14_ADOPTION_PLAN.md)
+6. [Agent Zero v0.9.8 Adoption Plan](root/AGENT_ZERO_V0_9_8_ADOPTION_PLAN.md)
 
 ### 3) Developer Path
 
@@ -73,6 +74,7 @@ The detailed content for this topic starts below.
 - Testing: [root/TESTING.md](root/TESTING.md)
 - Integration patterns: [integration-design.md](integration-design.md)
 - Agent-Zero comparison: [root/iTAK_VS_AGENT_ZERO.md](root/iTAK_VS_AGENT_ZERO.md)
+- Agent-Zero v0.9.8 adoption: [root/AGENT_ZERO_V0_9_8_ADOPTION_PLAN.md](root/AGENT_ZERO_V0_9_8_ADOPTION_PLAN.md)
 - OpenClaw update adoption: [root/OPENCLAW_2026_2_14_ADOPTION_PLAN.md](root/OPENCLAW_2026_2_14_ADOPTION_PLAN.md)
 
 ---
