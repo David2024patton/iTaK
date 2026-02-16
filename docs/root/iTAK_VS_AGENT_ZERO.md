@@ -1,6 +1,8 @@
 # iTaK vs Agent-Zero: Feature Comparison
 
-> **TL;DR:** Both are powerful agentic frameworks. **Agent-Zero** is great for getting started quickly with Docker. **iTaK** is better for production deployments requiring compliance, security, multi-channel access, and advanced features.
+> **TL;DR:** Both are powerful agentic frameworks. **Agent-Zero** is great for getting started quickly with Docker. **iTaK** is stronger for deployments needing security controls, multi-channel access, and advanced orchestration.
+
+> **Verification note (2026-02-16):** This comparison is based on repository contents (code, tests, docs). Statements about external audits/certifications should be treated as goals unless accompanied by third-party audit artifacts.
 
 ---
 
@@ -11,8 +13,8 @@
 | **Installation** | Docker OR Python | Docker (primary) |
 | **API Key Setup** | ⚠️ **Before first run** (.env file) | ✅ **After first run** (Web UI Settings) |
 | **Memory System** | 4-tier (Recall/Archival/Episodic/Knowledge) | Basic persistent memory |
-| **Test Coverage** | ✅ **85% (258 tests)** | ⚠️ Unknown |
-| **Production Ready** | ✅ **Compliance certified** (HIPAA/PCI/SOC2/GDPR) | ⚠️ Use with caution |
+| **Testing Footprint** | ✅ **396 pytest-collected tests** (repo snapshot 2026-02-16) | ⚠️ Unknown |
+| **Compliance Posture** | ✅ Compliance-focused tests (HIPAA/PCI/SOC2/GDPR scenarios), external certification not shown in repo | ⚠️ Use with caution |
 | **Built-in Channels** | **5 channels:** CLI, Web, Discord, Telegram, Slack | 1 channel: Web UI |
 | **Knowledge Base** | **Neo4j knowledge graph** + vector DB | Skills system (SKILL.md) |
 | **Multi-Agent** | **Advanced swarms** (strategies, merge, parallel) | Basic multi-agent cooperation |
@@ -34,10 +36,10 @@
 Choose **iTaK** if you need:
 
 ### 1. **Production Deployments**
-- ✅ **85% test coverage** (258 tests) ensures reliability
-- ✅ **Compliance ready** (HIPAA, PCI DSS, SOC2, GDPR)
+- ✅ Large automated test suite (**396 collected tests** as of 2026-02-16)
+- ✅ Compliance-oriented test scenarios (HIPAA, PCI DSS, SOC2, GDPR)
 - ✅ **Security hardened** (RBAC, secret masking, PII redaction)
-- ✅ **Mission-critical** support (99.9%+ uptime requirements)
+- ⚠️ Uptime/SLA outcomes depend on deployment and infrastructure validation
 
 ### 2. **Multi-Channel Communication**
 - ✅ **5 built-in adapters:** Terminal, Web, Discord, Telegram, Slack
@@ -59,7 +61,7 @@ Choose **iTaK** if you need:
 - ✅ **Task board** (Kanban Mission Control)
 - ✅ **Real-time monitoring** (heartbeat system)
 - ✅ **Audit logging** and compliance reporting
-- ✅ **Load testing** (10,000+ concurrent users)
+- ✅ Load/performance tests are included (high-concurrency scenarios in test suite)
 
 ### 5. **Regulated Industries**
 - ✅ Healthcare (HIPAA compliance tests)
@@ -345,11 +347,11 @@ docker run -p 50001:80 agent0ai/agent-zero
 ### Testing & Quality
 
 **iTaK:**
-- ✅ **258 tests** across 13 test files
-- ✅ **85% code coverage**
+- ✅ **396 pytest-collected tests** (current repository snapshot)
+- ⚠️ Coverage percentage is not asserted in this document
 - ✅ **Security tests** (28 tests)
 - ✅ **Integration tests** (25 tests)
-- ✅ **Load tests** (15 tests, 10,000+ users)
+- ✅ **Load tests** (15 tests; includes 1000+ concurrency scenarios)
 - ✅ **Compliance tests** (22 tests, HIPAA/PCI/SOC2/GDPR)
 - ✅ **Chaos engineering** (15 tests)
 - ✅ **CI/CD pipeline** with automated testing
@@ -469,7 +471,7 @@ Want to combine strengths? Here's how:
 1. **Production deployment** (when quality matters)
 2. **Multi-channel** rollout (Discord, Telegram, Slack)
 3. **Enterprise features** (compliance, security, RBAC)
-4. **Scalability** (load-tested to 10,000+ users)
+4. **Scalability** (includes load/performance test suite; validate target scale in your environment)
 
 ---
 
@@ -516,8 +518,8 @@ Want to combine strengths? Here's how:
 ### iTaK
 - **GitHub:** [David2024patton/iTaK](https://github.com/David2024patton/iTaK)
 - **Documentation:** 13 comprehensive guides
-- **Testing:** 258 tests, 85% coverage
-- **Production:** HIPAA/PCI/SOC2/GDPR ready
+- **Testing:** 396 pytest-collected tests (2026-02-16 snapshot)
+- **Production:** Compliance-focused controls and tests; external certification evidence not shown in repo
 
 ---
 
@@ -528,7 +530,7 @@ Want to combine strengths? Here's how:
 | **Use Case** | Production, Enterprise, Compliance | Development, Personal, Experiments |
 | **Priority** | Quality, Security, Scale | Speed, Simplicity, Learning |
 | **Effort** | More setup, more power | Less setup, focused features |
-| **Support** | 13 docs, 258 tests | Video guides, active community |
+| **Support** | 13 docs, 396 collected tests | Video guides, active community |
 | **Cost** | Same (both free/open-source) | Same (both free/open-source) |
 
 **Both are excellent frameworks.** Agent-Zero gets you started faster. iTaK takes you to production safely.
@@ -538,7 +540,7 @@ Want to combine strengths? Here's how:
 ## 📚 Further Reading
 
 - **iTaK Installation Guide:** [INSTALLATION_GUIDE.md](docs/root/INSTALLATION_GUIDE.md)
-- **iTaK Testing:** [TESTING.md](docs/root/TESTING.md) (258 tests, 85% coverage)
+- **iTaK Testing:** [TESTING.md](docs/root/TESTING.md) (see current test counts via `pytest --collect-only`)
 - **iTaK Production:** [PRODUCTION_TESTING_SUMMARY.md](docs/root/PRODUCTION_TESTING_SUMMARY.md)
 - **Agent-Zero Docs:** [agent0ai/agent-zero/docs](https://github.com/agent0ai/agent-zero/tree/main/docs)
 
