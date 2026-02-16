@@ -32,7 +32,21 @@ def load_config() -> dict:
         sys.exit(1)
 
     with open(config_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        config = json.load(f)
+
+    try:
+        from core.models import apply_env_overrides
+        config, override_errors, override_applied = apply_env_overrides(config, prefix="ITAK_SET_")
+        if override_applied:
+            print(f"✅ Applied {len(override_applied)} ITAK_SET_ override(s)")
+        if override_errors:
+            print("⚠️  Ignored invalid ITAK_SET_ overrides:")
+            for item in override_errors:
+                print(f"   - {item}")
+    except Exception as exc:
+        print(f"⚠️  ITAK_SET_ override processing skipped: {exc}")
+
+    return config
 
 
 def load_env():

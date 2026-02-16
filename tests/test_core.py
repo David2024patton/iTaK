@@ -299,3 +299,36 @@ class TestFrameworkIntegration:
         allowed, reason = validate_path("data/test.txt")
         assert allowed
 
+
+class TestEnvOverrides:
+    """Test schema-safe ITAK_SET_ runtime overrides."""
+
+    def test_apply_env_overrides_with_valid_path(self, monkeypatch):
+        from core.models import apply_env_overrides
+
+        config = {
+            "webui": {"port": 48920, "enabled": True},
+            "models": {"chat": {"temperature": 0.7}},
+        }
+
+        monkeypatch.setenv("ITAK_SET_webui__port", "49000")
+        monkeypatch.setenv("ITAK_SET_models__chat__temperature", "0.2")
+        updated, errors, applied = apply_env_overrides(config)
+
+        assert errors == []
+        assert "ITAK_SET_webui__port" in applied
+        assert updated["webui"]["port"] == 49000
+        assert updated["models"]["chat"]["temperature"] == 0.2
+
+    def test_apply_env_overrides_rejects_unknown_path(self, monkeypatch):
+        from core.models import apply_env_overrides
+
+        config = {"webui": {"port": 48920}}
+        monkeypatch.setenv("ITAK_SET_webui__missing", "1")
+        updated, errors, applied = apply_env_overrides(config)
+
+        assert applied == []
+        assert len(errors) == 1
+        assert "path does not exist" in errors[0]
+        assert updated["webui"]["port"] == 48920
+

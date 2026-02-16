@@ -13,6 +13,8 @@ import shutil
 import argparse
 import json
 import secrets
+import tarfile
+import datetime
 from pathlib import Path
 from typing import Tuple, Optional
 
@@ -365,6 +367,80 @@ def display_next_steps(minimal: bool = False) -> None:
     print(f"   {Colors.CYAN}docs/config.md{Colors.RESET}          - Configuration reference\n")
 
 
+def _collect_path_stats(root: Path) -> dict:
+    """Collect basic file/size stats for migration reporting."""
+    if not root.exists():
+        return {"exists": False, "files": 0, "bytes": 0}
+
+    files = 0
+    total_bytes = 0
+    for path in root.rglob("*"):
+        if path.is_file():
+            files += 1
+            try:
+                total_bytes += path.stat().st_size
+            except Exception:
+                pass
+
+    return {"exists": True, "files": files, "bytes": total_bytes}
+
+
+def migration_status(source: Path, target: Path) -> dict:
+    """Return migration status report for source and target paths."""
+    return {
+        "source": str(source),
+        "target": str(target),
+        "source_stats": _collect_path_stats(source),
+        "target_stats": _collect_path_stats(target),
+    }
+
+
+def migrate_user_data(source: Path, target: Path, backup_dir: Path) -> tuple[bool, dict]:
+    """Migrate user/runtime data with backup + verification guidance.
+
+    Migration is copy-based for safety (non-destructive source retention).
+    """
+    report = {
+        "source": str(source),
+        "target": str(target),
+        "backup": "",
+        "copied": [],
+        "skipped": [],
+        "verify": {},
+        "rollback": "",
+    }
+
+    if not source.exists() or not source.is_dir():
+        return False, {**report, "error": f"Source path not found: {source}"}
+
+    target.mkdir(parents=True, exist_ok=True)
+    backup_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+    backup_file = backup_dir / f"user-data-backup-{timestamp}.tar.gz"
+
+    if any(target.iterdir()):
+        with tarfile.open(backup_file, "w:gz") as tar:
+            tar.add(target, arcname=target.name)
+        report["backup"] = str(backup_file)
+        report["rollback"] = f"tar -xzf {backup_file} -C {target.parent}"
+
+    for item in sorted(source.iterdir(), key=lambda p: p.name):
+        destination = target / item.name
+        if destination.exists():
+            report["skipped"].append(item.name)
+            continue
+
+        if item.is_dir():
+            shutil.copytree(item, destination)
+        else:
+            shutil.copy2(item, destination)
+        report["copied"].append(item.name)
+
+    report["verify"] = migration_status(source, target)
+    return True, report
+
+
 def main() -> int:
     """Main installation function"""
     parser = argparse.ArgumentParser(
@@ -395,8 +471,55 @@ Examples:
         action="version",
         version=f"iTaK Installer v{VERSION}"
     )
+
+    parser.add_argument(
+        "--migrate-user-data",
+        action="store_true",
+        help="Migrate user/runtime data from --migration-source to --migration-target with backup + report",
+    )
+
+    parser.add_argument(
+        "--migration-status",
+        action="store_true",
+        help="Show source/target migration status report and exit",
+    )
+
+    parser.add_argument(
+        "--migration-source",
+        type=str,
+        default="data",
+        help="Source directory for user data migration (default: data)",
+    )
+
+    parser.add_argument(
+        "--migration-target",
+        type=str,
+        default="runtime",
+        help="Target directory for user data migration (default: runtime)",
+    )
+
+    parser.add_argument(
+        "--migration-backup-dir",
+        type=str,
+        default="data/migration_backups",
+        help="Directory for migration backups (default: data/migration_backups)",
+    )
     
     args = parser.parse_args()
+
+    source = Path(args.migration_source)
+    target = Path(args.migration_target)
+    backup_dir = Path(args.migration_backup_dir)
+
+    if args.migration_status:
+        status = migration_status(source, target)
+        print(json.dumps(status, indent=2))
+        return 0
+
+    if args.migrate_user_data:
+        ok, report = migrate_user_data(source, target, backup_dir)
+        print(json.dumps(report, indent=2))
+        return 0 if ok else 1
     
     # Print welcome banner
     print_header(f"iTaK Universal Installer v{VERSION}")

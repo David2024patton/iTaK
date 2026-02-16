@@ -5,6 +5,10 @@ Verifies that the dashboard can reach all API endpoints when using the correct a
 
 import time
 import re
+import io
+import zipfile
+import subprocess
+import secrets
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
@@ -488,3 +492,174 @@ class TestProcessGroupTransitionRegression:
         assert "scheduleStepCollapse(expandedStep, delay);" in content
         assert "toggleStepCollapse(step, true);" in content
         assert "const isGroupComplete = isProcessGroupComplete(group);" in content
+
+
+class TestProjectsAndSkillsRegression:
+    """Regression coverage for AZ3/AZ4 project + skills parity features."""
+
+    @staticmethod
+    def _make_local_git_repo(tmp_path: Path) -> Path:
+        repo = tmp_path / "seed-repo"
+        repo.mkdir(parents=True, exist_ok=True)
+        (repo / "README.md").write_text("hello\n", encoding="utf-8")
+        subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+        subprocess.run(["git", "add", "README.md"], cwd=repo, check=True, capture_output=True, text=True)
+        subprocess.run(
+            [
+                "git",
+                "-c",
+                "user.name=Test",
+                "-c",
+                "user.email=test@example.com",
+                "commit",
+                "-m",
+                "init",
+            ],
+            cwd=repo,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return repo
+
+    def test_projects_clone_and_git_health(self, client, tmp_path):
+        repo = self._make_local_git_repo(tmp_path)
+        project_name = f"clone_{secrets.token_hex(4)}"
+
+        clone = client.post(
+            "/projects",
+            json={
+                "action": "clone",
+                "project": {
+                    "name": project_name,
+                    "title": "Clone Test",
+                    "color": "#123456",
+                    "git_url": str(repo),
+                },
+            },
+        )
+        assert clone.status_code == 200
+        payload = clone.json()
+        assert payload.get("ok") is True
+        git_status = payload.get("data", {}).get("git_status", {})
+        assert git_status.get("is_git_repo") is True
+        assert isinstance(git_status.get("current_branch"), str)
+
+        options = client.post("/projects", json={"action": "list_options"})
+        assert options.status_code == 200
+        assert any(opt.get("key") == project_name for opt in options.json().get("data", []))
+
+    def test_skills_import_export_create_flow(self, client):
+        project_name = f"skills_{secrets.token_hex(4)}"
+
+        create_project = client.post(
+            "/projects",
+            json={
+                "action": "create",
+                "project": {
+                    "name": project_name,
+                    "title": "Skills Project",
+                },
+            },
+        )
+        assert create_project.status_code == 200
+        assert create_project.json().get("ok") is True
+
+        skill_zip = io.BytesIO()
+        with zipfile.ZipFile(skill_zip, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr(
+                "pack/network/alpha/SKILL.md",
+                "# Skill: Alpha\n\n## When to Use\nUse alpha.\n\n## Steps\n1. Do one thing.\n",
+            )
+        skill_zip.seek(0)
+
+        preview = client.post(
+            "/skills_import_preview",
+            files={"skills_file": ("skills.zip", skill_zip.getvalue(), "application/zip")},
+            data={
+                "namespace": "pack",
+                "conflict": "skip",
+                "project_name": project_name,
+            },
+        )
+        assert preview.status_code == 200
+        preview_payload = preview.json()
+        assert preview_payload.get("success") is True
+        assert preview_payload.get("imported_count") == 1
+
+        missing_review = client.post(
+            "/skills_import",
+            files={"skills_file": ("skills.zip", skill_zip.getvalue(), "application/zip")},
+            data={
+                "namespace": "pack",
+                "conflict": "skip",
+                "project_name": project_name,
+            },
+        )
+        assert missing_review.status_code == 200
+        assert missing_review.json().get("success") is False
+        assert "Review summary" in missing_review.json().get("error", "")
+
+        imported = client.post(
+            "/skills_import",
+            files={"skills_file": ("skills.zip", skill_zip.getvalue(), "application/zip")},
+            data={
+                "namespace": "pack",
+                "conflict": "skip",
+                "project_name": project_name,
+                "review_summary": "Reviewed structure and source safety",
+            },
+        )
+        assert imported.status_code == 200
+        imported_payload = imported.json()
+        assert imported_payload.get("success") is True
+        assert imported_payload.get("imported_count") == 1
+
+        listed = client.post(
+            "/skills",
+            json={"action": "list", "project_name": project_name},
+        )
+        assert listed.status_code == 200
+        listed_payload = listed.json()
+        assert listed_payload.get("ok") is True
+        assert any("SKILL.md" in (item.get("path") or "") for item in listed_payload.get("data", []))
+
+        exported = client.post(
+            "/skills_export",
+            json={"project_name": project_name},
+        )
+        assert exported.status_code == 200
+        exported_payload = exported.json()
+        assert exported_payload.get("ok") is True
+        assert isinstance(exported_payload.get("archive_base64"), str)
+        archive = zipfile.ZipFile(io.BytesIO(__import__("base64").b64decode(exported_payload["archive_base64"])))
+        assert any(name.endswith("SKILL.md") for name in archive.namelist())
+
+        created_preview = client.post(
+            "/skills_create_from_text",
+            json={
+                "title": "Network Troubleshooting",
+                "source_text": "Check ping, then DNS, then route.",
+                "project_name": project_name,
+                "install": False,
+            },
+        )
+        assert created_preview.status_code == 200
+        created_preview_payload = created_preview.json()
+        assert created_preview_payload.get("ok") is True
+        assert "## When to Use" in created_preview_payload.get("preview", "")
+
+        created_install = client.post(
+            "/skills_create_from_text",
+            json={
+                "title": "Network Troubleshooting",
+                "source_text": "Check ping, then DNS, then route.",
+                "project_name": project_name,
+                "install": True,
+            },
+        )
+        assert created_install.status_code == 200
+        created_install_payload = created_install.json()
+        assert created_install_payload.get("ok") is True
+        installed_path = created_install_payload.get("path")
+        assert installed_path and Path(installed_path).exists()

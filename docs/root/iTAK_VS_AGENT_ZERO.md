@@ -27,6 +27,8 @@ The detailed content for this topic starts below.
 
 > **Adoption plan:** Detailed iTaK parity and implementation plan for Agent Zero `v0.9.8` is tracked in [AGENT_ZERO_V0_9_8_ADOPTION_PLAN.md](AGENT_ZERO_V0_9_8_ADOPTION_PLAN.md).
 
+> **Status update (2026-02-16):** The v0.9.8 parity slices for queue/file-browser reliability, project clone flow, skills import/export security, create-skill workflow, env overrides, and migration tooling are implemented in this repository and tracked in the adoption plan progress log.
+
 ---
 
 ## 📊 Quick Comparison Table

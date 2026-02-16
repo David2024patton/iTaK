@@ -271,3 +271,27 @@ if not allowed:
     }
 }
 ```
+
+---
+
+## Skills Import Security Policy
+
+iTaK applies security controls when importing third-party skill packs.
+
+Policy controls:
+
+- `skills_trusted_sources`: comma-separated allowlist prefixes
+- `skills_allow_untrusted_import`: allow or block unknown sources
+- `skills_require_review_summary`: require operator review notes before import
+
+Import-time safeguards:
+
+- Prompt-injection pattern scan on skill markdown content
+- `SKILL.md` schema validation for required sections
+- Rejection report for blocked/invalid skills with reasons
+
+Operational guidance:
+
+- Import only from trusted repositories and signed release channels when available
+- Require clear human review summaries for every imported pack
+- Keep import logs for audit and rollback workflows

@@ -4,6 +4,7 @@ Provides REST API + WebSocket for real-time agent monitoring.
 """
 
 import asyncio
+import base64
 import json
 import logging
 import mimetypes
@@ -12,10 +13,13 @@ import re
 import secrets
 import shutil
 import subprocess
+import tempfile
 import time
 import uuid
+import zipfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
+from urllib.parse import quote, urlsplit, urlunsplit
 from urllib.error import HTTPError, URLError
 from urllib.request import Request as UrlRequest, urlopen
 
@@ -573,6 +577,9 @@ def create_app(agent: "Agent"):
         "rfc_port_http": 80,
         "rfc_port_ssh": 22,
         "update_check_enabled": False,
+        "skills_trusted_sources": "",
+        "skills_allow_untrusted_import": True,
+        "skills_require_review_summary": True,
     }
 
     compat_additional = {
@@ -1285,10 +1292,298 @@ def create_app(agent: "Agent"):
 
     @app.post("/projects")
     async def projects(payload: dict):
+        from security.scanner import SecurityScanner
+
+        projects_root = Path(__file__).parent.parent / "data" / "projects"
+        projects_root.mkdir(parents=True, exist_ok=True)
+        state_file = projects_root / "projects.json"
+
+        def _load_state() -> list[dict]:
+            if not state_file.exists():
+                return []
+            try:
+                raw = json.loads(state_file.read_text(encoding="utf-8"))
+                if isinstance(raw, list):
+                    return raw
+            except Exception:
+                pass
+            return []
+
+        def _save_state(data: list[dict]) -> None:
+            state_file.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+
+        def _project_path(name: str) -> Path:
+            return (projects_root / name).resolve()
+
+        def _ensure_project_layout(path: Path) -> None:
+            (path / ".a0proj" / "instructions").mkdir(parents=True, exist_ok=True)
+            (path / ".a0proj" / "knowledge").mkdir(parents=True, exist_ok=True)
+            (path / ".a0proj" / "skills").mkdir(parents=True, exist_ok=True)
+            (path / ".a0proj" / "secrets").mkdir(parents=True, exist_ok=True)
+
+        def _get_project(name: str) -> tuple[dict | None, list[dict], int]:
+            state = _load_state()
+            for idx, item in enumerate(state):
+                if item.get("name") == name:
+                    return item, state, idx
+            return None, state, -1
+
+        def _git_status_for(path: Path) -> dict:
+            if not (path / ".git").exists():
+                return {
+                    "is_git_repo": False,
+                    "remote_url": "",
+                    "current_branch": "",
+                    "is_dirty": False,
+                    "untracked_count": 0,
+                    "last_commit": None,
+                }
+
+            def _run(args: list[str]) -> str:
+                try:
+                    result = subprocess.run(
+                        args,
+                        cwd=str(path),
+                        capture_output=True,
+                        text=True,
+                        timeout=8,
+                        check=False,
+                    )
+                    return (result.stdout or "").strip()
+                except Exception:
+                    return ""
+
+            remote_url = _run(["git", "config", "--get", "remote.origin.url"])
+            branch = _run(["git", "rev-parse", "--abbrev-ref", "HEAD"])
+            porcelain = _run(["git", "status", "--porcelain"]) or ""
+            lines = [line for line in porcelain.splitlines() if line.strip()]
+            untracked_count = sum(1 for line in lines if line.startswith("??"))
+            commit_hash = _run(["git", "log", "-1", "--pretty=%h"])
+            commit_message = _run(["git", "log", "-1", "--pretty=%s"])
+            commit_author = _run(["git", "log", "-1", "--pretty=%an"])
+            commit_date = _run(["git", "log", "-1", "--pretty=%ad", "--date=short"])
+            return {
+                "is_git_repo": True,
+                "remote_url": remote_url,
+                "current_branch": branch,
+                "is_dirty": bool(lines),
+                "untracked_count": untracked_count,
+                "last_commit": {
+                    "hash": commit_hash,
+                    "message": commit_message,
+                    "author": commit_author,
+                    "date": commit_date,
+                }
+                if commit_hash
+                else None,
+            }
+
+        def _project_counts(path: Path) -> tuple[int, int]:
+            instructions_count = len(list((path / ".a0proj" / "instructions").glob("*.md")))
+            knowledge_count = len(list((path / ".a0proj" / "knowledge").glob("**/*")))
+            return instructions_count, knowledge_count
+
+        def _normalize_project(data: dict) -> dict:
+            now = int(time.time())
+            name = str(data.get("name") or "").strip()
+            title = str(data.get("title") or name or "Project")
+            description = str(data.get("description") or "")
+            memory_mode = str(data.get("memory") or "own")
+            color = str(data.get("color") or "")
+            return {
+                "name": name,
+                "title": title,
+                "description": description,
+                "memory": memory_mode,
+                "color": color,
+                "file_structure": data.get("file_structure") or {},
+                "secrets": data.get("secrets") or {},
+                "git_url": str(data.get("git_url") or ""),
+                "created_at": int(data.get("created_at") or now),
+                "updated_at": now,
+            }
+
         action = payload.get("action", "list") if isinstance(payload, dict) else "list"
-        if action in {"list", "list_options"}:
-            return {"ok": True, "data": []}
-        return {"ok": True, "data": None}
+        if action == "list":
+            state = sorted(_load_state(), key=lambda p: (p.get("title") or p.get("name") or "").lower())
+            return {"ok": True, "data": state}
+
+        if action == "list_options":
+            options = [
+                {
+                    "key": str(project.get("name") or ""),
+                    "label": str(project.get("title") or project.get("name") or ""),
+                }
+                for project in _load_state()
+                if project.get("name")
+            ]
+            options.sort(key=lambda item: (item.get("label") or "").lower())
+            return {"ok": True, "data": options}
+
+        if action == "create":
+            project_in = payload.get("project") if isinstance(payload, dict) else {}
+            project = _normalize_project(project_in or {})
+            name = project.get("name", "")
+            if not name or not re.match(r"^[a-zA-Z0-9._-]+$", name):
+                return {"ok": False, "error": "Invalid project name"}
+
+            existing, state, _ = _get_project(name)
+            if existing:
+                return {"ok": False, "error": "Project already exists"}
+
+            path = _project_path(name)
+            path.mkdir(parents=True, exist_ok=False)
+            _ensure_project_layout(path)
+            instructions_count, knowledge_count = _project_counts(path)
+            project["instruction_files_count"] = instructions_count
+            project["knowledge_files_count"] = knowledge_count
+            state.append(project)
+            _save_state(state)
+            return {"ok": True, "data": project}
+
+        if action == "clone":
+            project_in = payload.get("project") if isinstance(payload, dict) else {}
+            project = _normalize_project(project_in or {})
+            name = project.get("name", "")
+            git_url = str((project_in or {}).get("git_url") or "").strip()
+            git_token = str((project_in or {}).get("git_token") or "").strip()
+
+            if not name or not re.match(r"^[a-zA-Z0-9._-]+$", name):
+                return {"ok": False, "error": "Invalid project name"}
+            if not git_url:
+                return {"ok": False, "error": "Git URL is required"}
+
+            existing, state, _ = _get_project(name)
+            if existing:
+                return {"ok": False, "error": "Project already exists"}
+
+            clone_url = git_url
+            if git_token and git_url.startswith("https://"):
+                parsed = urlsplit(git_url)
+                safe_netloc = f"{quote(git_token, safe='')}@{parsed.netloc}"
+                clone_url = urlunsplit((parsed.scheme, safe_netloc, parsed.path, parsed.query, parsed.fragment))
+
+            scanner = SecurityScanner()
+            scan = scanner.scan_code(clone_url, source="project_clone_url")
+            if scan.get("blocked"):
+                return {"ok": False, "error": "Clone blocked by security policy"}
+
+            path = _project_path(name)
+            try:
+                result = subprocess.run(
+                    ["git", "clone", clone_url, str(path)],
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                    check=False,
+                )
+                if result.returncode != 0:
+                    return {"ok": False, "error": (result.stderr or "Clone failed").strip()}
+            except Exception as exc:
+                return {"ok": False, "error": f"Clone failed: {exc}"}
+
+            _ensure_project_layout(path)
+            instructions_count, knowledge_count = _project_counts(path)
+            project["instruction_files_count"] = instructions_count
+            project["knowledge_files_count"] = knowledge_count
+            project["git_url"] = git_url
+            state.append(project)
+            _save_state(state)
+            loaded = dict(project)
+            loaded["git_status"] = _git_status_for(path)
+            return {"ok": True, "data": loaded}
+
+        if action == "load":
+            name = str(payload.get("name") or "")
+            project, _, _ = _get_project(name)
+            if not project:
+                return {"ok": False, "error": "Project not found"}
+
+            path = _project_path(name)
+            instructions_count, knowledge_count = _project_counts(path)
+            loaded = dict(project)
+            loaded["instruction_files_count"] = instructions_count
+            loaded["knowledge_files_count"] = knowledge_count
+            loaded["git_status"] = _git_status_for(path)
+            return {"ok": True, "data": loaded}
+
+        if action == "update":
+            project_in = payload.get("project") if isinstance(payload, dict) else {}
+            name = str((project_in or {}).get("name") or "")
+            current, state, idx = _get_project(name)
+            if not current:
+                return {"ok": False, "error": "Project not found"}
+
+            merged = dict(current)
+            merged.update(_normalize_project(project_in or {}))
+            merged["created_at"] = current.get("created_at", merged.get("created_at"))
+            path = _project_path(name)
+            instructions_count, knowledge_count = _project_counts(path)
+            merged["instruction_files_count"] = instructions_count
+            merged["knowledge_files_count"] = knowledge_count
+            state[idx] = merged
+            _save_state(state)
+            return {"ok": True, "data": merged}
+
+        if action == "delete":
+            name = str(payload.get("name") or "")
+            project, state, idx = _get_project(name)
+            if not project:
+                return {"ok": False, "error": "Project not found"}
+
+            path = _project_path(name)
+            if path.exists():
+                shutil.rmtree(path)
+            del state[idx]
+            _save_state(state)
+            return {"ok": True}
+
+        if action == "activate":
+            ctx = _ensure_context(payload.get("context_id"))
+            name = str(payload.get("name") or "")
+            project, _, _ = _get_project(name)
+            if not project:
+                return {"ok": False, "error": "Project not found"}
+            ctx["project"] = {
+                "name": project.get("name"),
+                "title": project.get("title"),
+                "color": project.get("color", ""),
+            }
+            return {"ok": True, "data": ctx["project"]}
+
+        if action == "deactivate":
+            ctx = _ensure_context(payload.get("context_id"))
+            ctx["project"] = None
+            return {"ok": True}
+
+        if action == "file_structure":
+            name = str(payload.get("name") or "")
+            path = _project_path(name)
+            if not path.exists():
+                return {"ok": False, "error": "Project not found"}
+            settings = payload.get("settings") if isinstance(payload, dict) else {}
+            max_depth = int((settings or {}).get("max_depth") or 2)
+            max_files = int((settings or {}).get("max_files") or 100)
+            lines: list[str] = []
+
+            def walk(folder: Path, depth: int, prefix: str = ""):
+                if depth > max_depth or len(lines) >= max_files:
+                    return
+                try:
+                    entries = sorted(folder.iterdir(), key=lambda item: (not item.is_dir(), item.name.lower()))
+                except Exception:
+                    return
+                for entry in entries:
+                    if len(lines) >= max_files:
+                        return
+                    lines.append(f"{prefix}{entry.name}{'/' if entry.is_dir() else ''}")
+                    if entry.is_dir():
+                        walk(entry, depth + 1, prefix + "  ")
+
+            walk(path, 0)
+            return {"ok": True, "data": "\n".join(lines)}
+
+        return {"ok": False, "error": f"Unsupported project action: {action}"}
 
     @app.post("/agents")
     async def agents(payload: dict):
@@ -1324,17 +1619,328 @@ def create_app(agent: "Agent"):
     @app.post("/skills")
     async def skills(payload: dict):
         action = payload.get("action", "list") if isinstance(payload, dict) else "list"
+
+        base_root = Path(__file__).parent.parent
+        projects_root = base_root / "data" / "projects"
+        profiles_root = base_root / "prompts" / "profiles"
+
+        def _collect_skill_files(project_name: str | None = None, agent_profile: str | None = None) -> list[dict]:
+            roots: list[tuple[Path, str]] = [(base_root / "skills", "global")]
+            if project_name:
+                roots.append((projects_root / project_name / ".a0proj" / "skills", "project"))
+            if agent_profile:
+                roots.append((profiles_root / agent_profile / "skills", "agent"))
+
+            output: list[dict] = []
+            seen: set[str] = set()
+            for root, scope in roots:
+                if not root.exists():
+                    continue
+
+                for md in root.glob("*.md"):
+                    if md.name == "SKILL.md":
+                        continue
+                    key = str(md.resolve())
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    try:
+                        text = md.read_text(encoding="utf-8", errors="replace")
+                    except Exception:
+                        text = ""
+                    description = ""
+                    for line in text.splitlines():
+                        line = line.strip()
+                        if line and not line.startswith("#"):
+                            description = line[:240]
+                            break
+                    output.append({
+                        "name": md.stem,
+                        "path": str(md),
+                        "description": description,
+                        "scope": scope,
+                    })
+
+                for marker in root.rglob("SKILL.md"):
+                    folder = marker.parent
+                    key = str(marker.resolve())
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    try:
+                        text = marker.read_text(encoding="utf-8", errors="replace")
+                    except Exception:
+                        text = ""
+                    description = ""
+                    for line in text.splitlines():
+                        line = line.strip()
+                        if line and not line.startswith("#"):
+                            description = line[:240]
+                            break
+                    output.append({
+                        "name": folder.name,
+                        "path": str(marker),
+                        "description": description,
+                        "scope": scope,
+                    })
+
+            output.sort(key=lambda item: ((item.get("name") or "").lower(), item.get("path") or ""))
+            return output
+
         if action == "list":
-            return {"ok": True, "data": []}
-        return {"ok": True}
+            return {
+                "ok": True,
+                "data": _collect_skill_files(
+                    project_name=payload.get("project_name"),
+                    agent_profile=payload.get("agent_profile"),
+                ),
+            }
+
+        if action == "delete":
+            raw = str(payload.get("skill_path") or "")
+            if not raw:
+                return {"ok": False, "error": "skill_path is required"}
+            path = Path(raw).resolve()
+            allowed_roots = [
+                (base_root / "skills").resolve(),
+                (projects_root).resolve(),
+                (profiles_root).resolve(),
+            ]
+            if not any(path == root or root in path.parents for root in allowed_roots):
+                return {"ok": False, "error": "Delete blocked: path not in skill roots"}
+            if path.name == "SKILL.md" and path.parent == (base_root / "skills"):
+                return {"ok": False, "error": "Cannot delete global SKILL.md template"}
+            if not path.exists():
+                return {"ok": False, "error": "Skill not found"}
+            path.unlink()
+            return {"ok": True}
+
+        return {"ok": False, "error": f"Unsupported skills action: {action}"}
 
     @app.post("/skills_import_preview")
     async def skills_import_preview(request: Request):
-        return {"ok": True, "data": {"items": []}}
+        return await _skills_import_impl(request, preview_only=True)
 
     @app.post("/skills_import")
     async def skills_import(request: Request):
-        return {"ok": True, "data": {"imported": 0}}
+        return await _skills_import_impl(request, preview_only=False)
+
+    async def _skills_import_impl(request: Request, preview_only: bool):
+        from security.scanner import SecurityScanner
+
+        form = await request.form()
+        upload = form.get("skills_file")
+        if not upload:
+            return {"success": False, "error": "skills_file is required"}
+
+        namespace = str(form.get("namespace") or "").strip()
+        namespace = re.sub(r"[^a-zA-Z0-9._-]+", "_", namespace).strip("_")
+        conflict = str(form.get("conflict") or "skip").strip().lower()
+        if conflict not in {"skip", "overwrite", "rename"}:
+            conflict = "skip"
+
+        project_name = str(form.get("project_name") or "").strip()
+        agent_profile = str(form.get("agent_profile") or "").strip()
+        source_url = str(form.get("source_url") or "").strip()
+        review_summary = str(form.get("review_summary") or "").strip()
+
+        trusted_csv = str(compat_settings.get("skills_trusted_sources") or "")
+        trusted_sources = [s.strip() for s in trusted_csv.split(",") if s.strip()]
+        allow_untrusted = bool(compat_settings.get("skills_allow_untrusted_import", True))
+        require_review = bool(compat_settings.get("skills_require_review_summary", True))
+
+        if source_url and trusted_sources and (not allow_untrusted):
+            if not any(source_url.startswith(prefix) for prefix in trusted_sources):
+                return {
+                    "success": False,
+                    "error": "Import blocked: source is not trusted by policy",
+                }
+
+        if not preview_only and require_review and not review_summary:
+            return {
+                "success": False,
+                "error": "Review summary is required before import",
+            }
+
+        base_root = Path(__file__).parent.parent
+        projects_root = base_root / "data" / "projects"
+        profile_root = base_root / "prompts" / "profiles"
+
+        if project_name:
+            target_root = projects_root / project_name / ".a0proj" / "skills"
+        elif agent_profile:
+            target_root = profile_root / agent_profile / "skills"
+        else:
+            target_root = base_root / "skills" / "imports"
+        target_root.mkdir(parents=True, exist_ok=True)
+
+        scanner = SecurityScanner()
+        installed: list[str] = []
+        skipped: list[str] = []
+        rejected: list[dict] = []
+
+        with tempfile.TemporaryDirectory(prefix="skills_import_") as tmpdir:
+            archive_path = Path(tmpdir) / "skills.zip"
+            content = await upload.read()
+            archive_path.write_bytes(content)
+
+            try:
+                with zipfile.ZipFile(archive_path, "r") as zf:
+                    zf.extractall(Path(tmpdir) / "unzipped")
+            except Exception as exc:
+                return {"success": False, "error": f"Invalid zip archive: {exc}"}
+
+            extracted_root = Path(tmpdir) / "unzipped"
+            candidates = list(extracted_root.rglob("SKILL.md"))
+            if not candidates:
+                return {
+                    "success": False,
+                    "error": "No SKILL.md files found in archive",
+                }
+
+            for skill_md in candidates:
+                source_dir = skill_md.parent
+                raw_name = source_dir.name
+                safe_name = re.sub(r"[^a-zA-Z0-9._-]+", "_", raw_name).strip("_") or "skill"
+                if namespace:
+                    safe_name = f"{namespace}_{safe_name}"
+
+                skill_text = skill_md.read_text(encoding="utf-8", errors="replace")
+                validation = scanner.validate_skill_markdown(skill_text)
+                if not validation.get("valid"):
+                    rejected.append({
+                        "name": raw_name,
+                        "reason": f"schema validation failed: {'; '.join(validation.get('errors', []))}",
+                    })
+                    continue
+
+                injection_scan = scanner.scan_skill_markdown(skill_text, source=str(skill_md))
+                if injection_scan.get("blocked"):
+                    rejected.append({
+                        "name": raw_name,
+                        "reason": "security scan blocked: potential prompt-injection patterns",
+                    })
+                    continue
+
+                destination = target_root / safe_name
+                selected_destination = destination
+                if destination.exists():
+                    if conflict == "skip":
+                        skipped.append(raw_name)
+                        continue
+                    if conflict == "overwrite":
+                        selected_destination = destination
+                    else:
+                        counter = 2
+                        while (target_root / f"{safe_name}_{counter}").exists():
+                            counter += 1
+                        selected_destination = target_root / f"{safe_name}_{counter}"
+
+                installed.append(str(selected_destination.relative_to(target_root)))
+                if preview_only:
+                    continue
+
+                if selected_destination.exists() and conflict == "overwrite":
+                    shutil.rmtree(selected_destination)
+                shutil.copytree(source_dir, selected_destination, dirs_exist_ok=False)
+
+        return {
+            "success": True,
+            "namespace": namespace,
+            "imported": installed,
+            "imported_count": len(installed),
+            "skipped": skipped,
+            "skipped_count": len(skipped),
+            "rejected": rejected,
+            "rejected_count": len(rejected),
+            "review_required": require_review,
+        }
+
+    @app.post("/skills_export")
+    async def skills_export(payload: dict | None = None):
+        payload = payload or {}
+        project_name = str(payload.get("project_name") or "").strip()
+        agent_profile = str(payload.get("agent_profile") or "").strip()
+
+        base_root = Path(__file__).parent.parent
+        if project_name:
+            source_root = base_root / "data" / "projects" / project_name / ".a0proj" / "skills"
+        elif agent_profile:
+            source_root = base_root / "prompts" / "profiles" / agent_profile / "skills"
+        else:
+            source_root = base_root / "skills"
+
+        if not source_root.exists():
+            return {"ok": False, "error": "No skills found for selected scope"}
+
+        with tempfile.TemporaryDirectory(prefix="skills_export_") as tmpdir:
+            zip_path = Path(tmpdir) / "skills_export.zip"
+            with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+                for marker in source_root.rglob("SKILL.md"):
+                    rel = marker.relative_to(source_root)
+                    zf.write(marker, arcname=str(rel))
+                    for extra in marker.parent.glob("*"):
+                        if extra.name == "SKILL.md" or extra.is_dir():
+                            continue
+                        zf.write(extra, arcname=str(rel.parent / extra.name))
+            encoded = base64.b64encode(zip_path.read_bytes()).decode("ascii")
+
+        return {
+            "ok": True,
+            "filename": f"skills_export_{int(time.time())}.zip",
+            "archive_base64": encoded,
+        }
+
+    @app.post("/skills_create_from_text")
+    async def skills_create_from_text(payload: dict | None = None):
+        payload = payload or {}
+        title = str(payload.get("title") or "").strip()
+        source_text = str(payload.get("source_text") or "").strip()
+        install = bool(payload.get("install"))
+        project_name = str(payload.get("project_name") or "").strip()
+        agent_profile = str(payload.get("agent_profile") or "").strip()
+
+        if not title:
+            return {"ok": False, "error": "title is required"}
+        if not source_text:
+            return {"ok": False, "error": "source_text is required"}
+
+        safe_name = re.sub(r"[^a-zA-Z0-9._-]+", "_", title.lower()).strip("_") or "new_skill"
+        preview = (
+            f"# Skill: {title}\n\n"
+            "Category: custom\n"
+            f"Tags: [{safe_name}]\n\n"
+            "## When to Use\n"
+            f"Use this skill when the task matches: {title}.\n\n"
+            "## Steps\n"
+            "1. Review the source notes below.\n"
+            "2. Apply the workflow safely and verify outputs.\n"
+            "3. Record key results and known limits.\n\n"
+            "## Source Notes\n"
+            f"{source_text.strip()}\n"
+        )
+
+        if not install:
+            return {"ok": True, "preview": preview, "name": safe_name}
+
+        base_root = Path(__file__).parent.parent
+        if project_name:
+            target_root = base_root / "data" / "projects" / project_name / ".a0proj" / "skills"
+        elif agent_profile:
+            target_root = base_root / "prompts" / "profiles" / agent_profile / "skills"
+        else:
+            target_root = base_root / "skills" / "imports"
+        target_root.mkdir(parents=True, exist_ok=True)
+
+        destination = target_root / safe_name
+        counter = 2
+        while destination.exists():
+            destination = target_root / f"{safe_name}_{counter}"
+            counter += 1
+        destination.mkdir(parents=True, exist_ok=False)
+        marker = destination / "SKILL.md"
+        marker.write_text(preview, encoding="utf-8")
+        return {"ok": True, "preview": preview, "name": destination.name, "path": str(marker)}
 
     @app.post("/memory_dashboard")
     async def memory_dashboard(payload: dict | None = None):

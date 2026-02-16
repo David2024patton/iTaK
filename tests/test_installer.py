@@ -64,6 +64,8 @@ def test_installer_help():
     assert "iTaK Universal Installer" in result.stdout, "Help text should mention iTaK"
     assert "--minimal" in result.stdout, "Help should show --minimal option"
     assert "--skip-deps" in result.stdout, "Help should show --skip-deps option"
+    assert "--migrate-user-data" in result.stdout, "Help should show --migrate-user-data option"
+    assert "--migration-status" in result.stdout, "Help should show --migration-status option"
 
 
 def test_installer_version():
@@ -160,6 +162,8 @@ def test_installer_has_required_functions():
         "setup_configuration",
         "create_data_directories",
         "display_next_steps",
+        "migration_status",
+        "migrate_user_data",
         "main",
     ]
     
@@ -179,6 +183,35 @@ assert hasattr(install, '{func}'), "install.py should define {func}() function"
         )
         
         assert result.returncode == 0, f"install.py should define {func}() function"
+
+
+def test_installer_migration_status_command(tmp_path):
+    """install.py --migration-status should output JSON and exit cleanly."""
+    install_py = Path(__file__).parent.parent / "install.py"
+
+    source = tmp_path / "source"
+    target = tmp_path / "target"
+    source.mkdir(parents=True, exist_ok=True)
+    (source / "file.txt").write_text("hello", encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(install_py),
+            "--migration-status",
+            "--migration-source",
+            str(source),
+            "--migration-target",
+            str(target),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+
+    assert result.returncode == 0, "migration-status should exit with code 0"
+    assert '"source"' in result.stdout
+    assert '"target"' in result.stdout
 
 
 if __name__ == "__main__":

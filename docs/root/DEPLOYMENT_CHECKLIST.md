@@ -2,33 +2,30 @@
 
 ## At a Glance
 
-- Audience: Security-conscious operators and developers implementing hardening controls.
-- Scope: Document hardening controls, secure defaults, and verification steps before deployment.
+- Audience: Operators deploying iTaK to development, staging, or production.
+- Scope: Validate prerequisites, security controls, runtime config, and migration readiness.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
 
-- Apply hardening controls before exposing services to external networks.
-- Follow deployment guardrails from [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md).
-- Validate findings with repeatable scans before closing security tasks.
+- Complete the Development checklist first, then Stage/Team, then Production.
+- Run doctor checks before and after major config or runtime changes.
+- Keep migration backup and rollback instructions with deployment records.
 
 ## Deep Dive
 
-The detailed content for this topic starts below.
+The detailed checklist starts below.
 
 ## AI Notes
 
-- Preserve threat-model assumptions and include guardrail checks in runbooks.
-- Avoid absolute compliance claims without independent audit evidence.
-
-Quick reference checklist for deploying iTaK to different environments.
+- Use this checklist as an execution runbook, not as marketing proof.
+- Mark each item only after command output is captured in deployment notes.
 
 ---
 
-## 🚀 Development/Testing Environment
+## Development or Testing Environment
 
-**Time Required:** 10-15 minutes  
-**Use Case:** Local testing, development, experimentation
+**Use case:** Local testing and feature validation.
 
 ### Prerequisites
 
@@ -38,378 +35,177 @@ Quick reference checklist for deploying iTaK to different environments.
 
 ### Setup Steps
 
-1. **Install Dependencies**
+1. Install dependencies
 
    ```bash
    cd iTaK
    pip install -r install/requirements/requirements.txt
    ```
 
-2. **Configure**
+2. Configure local files
 
    ```bash
    cp install/config/config.json.example config.json
    cp install/config/.env.example .env
    ```
 
-3. **Add API Key** (pick one)
+3. Add at least one LLM key in `.env`
 
    ```bash
-   # Edit .env and add:
    GOOGLE_API_KEY=your_key_here
-   # OR
+   # or
    OPENAI_API_KEY=your_key_here
    ```
 
-4. **Verify Setup**
+4. Validate setup
 
    ```bash
    python -m app.main --doctor
    ```
 
-   - [ ] All critical checks pass (some warnings are OK)
-   - [ ] At least one LLM provider configured
+- [ ] Doctor checks pass for required components
+- [ ] At least one LLM provider is available
 
-5. **Test Run**
+5. Smoke run
 
    ```bash
-   # CLI only
    python -m app.main
-   
-   # With WebUI
+   # optional
    python -m app.main --webui
    ```
 
-   - [ ] Application starts without errors
-   - [ ] Can send messages and get responses
-   - [ ] WebUI accessible at <http://localhost:48920> (if enabled)
+- [ ] Agent starts without critical errors
+- [ ] WebUI reachable at `http://localhost:48920` when enabled
 
 ---
 
-## 🏢 Team/Staging Environment
+## Team or Staging Environment
 
-**Time Required:** 30-60 minutes  
-**Use Case:** Team collaboration, shared instance, staging environment
+**Use case:** Shared internal environment before production.
 
 ### Additional Prerequisites
 
 - [ ] Docker installed (`docker --version`)
-- [ ] docker compose installed (`docker compose version`)
+- [ ] Compose available (`docker compose version`)
 
 ### Setup Steps
 
-1. **Complete Development Setup** (above)
-
-2. **Security Hardening**
+1. Complete Development checklist
+2. Set strong auth tokens in config
 
    ```bash
-   # Generate strong auth token
    python -c "import secrets; print(secrets.token_urlsafe(32))"
-   
-   # Add to config.json
-   {
-     "webui": {
-       "auth_token": "paste-generated-token-here"
-     }
-   }
    ```
 
-   - [ ] WebUI auth token set
-   - [ ] MCP auth token set (if using MCP server)
+- [ ] WebUI auth token set
+- [ ] MCP token set when MCP server is enabled
 
-3. **Configure Rate Limits**
-
-   ```json
-   // In config.json
-   {
-     "security": {
-       "rate_limit": {
-         "global_rpm": 60,
-         "per_user_rpm": 20
-       }
-     }
-   }
-   ```
-
-   - [ ] Rate limits reviewed and adjusted
-   - [ ] Tool-specific limits configured
-
-4. **Set Up Optional Services** (as needed)
+3. Configure limits and service stack
 
    ```bash
-   # Start full stack with Docker
    docker compose --project-directory . -f install/docker/docker-compose.yml up -d
    ```
 
-   - [ ] Neo4j running (if needed)
-   - [ ] Weaviate running (if needed)
-   - [ ] SearXNG running (if needed)
+- [ ] Rate limits reviewed for team usage
+- [ ] Optional services (Neo4j, Weaviate, SearXNG) validated
 
-5. **Configure Adapters** (optional)
+4. Optional adapter enablement
 
-   ```bash
-   # Add to .env
-   DISCORD_TOKEN=your_discord_bot_token
-   TELEGRAM_TOKEN=your_telegram_bot_token
-   SLACK_TOKEN=your_slack_bot_token
-   ```
+- [ ] Discord token set (if required)
+- [ ] Telegram token set (if required)
+- [ ] Slack token set (if required)
 
-   - [ ] Discord adapter configured (if needed)
-   - [ ] Telegram adapter configured (if needed)
-   - [ ] Slack adapter configured (if needed)
+5. Operational readiness
 
-6. **Test Multi-User Access**
-   - [ ] Create test users
-   - [ ] Verify RBAC permissions (owner/sudo/user)
-   - [ ] Test concurrent access
-
-7. **Set Up Monitoring**
-   - [ ] Review logs in `logs/` directory
-   - [ ] Set up log rotation
-   - [ ] Configure alerts for critical errors
+- [ ] Multi-user access validated
+- [ ] Logs reviewed and rotation configured
+- [ ] Alerting pipeline configured
 
 ---
 
-## 🌐 Production Environment
+## Production Environment
 
-**Time Required:** 4-8 hours  
-**Use Case:** Public deployment, production workloads
+**Use case:** Internet-facing or business-critical deployment.
 
-### ⚠️ WARNING
+### Critical Warning
 
-iTaK executes arbitrary code by design. Only deploy to production if:
+- [ ] Access restricted to trusted users only
+- [ ] Security monitoring and incident process documented
+- [ ] Backup and restore process tested
 
-- You understand the security implications
-- Access is restricted to trusted users
-- You have proper monitoring and incident response
+### Infrastructure and Security
 
-### Additional Prerequisites
+- [ ] HTTPS/TLS configured via reverse proxy
+- [ ] Firewall rules and host hardening applied
+- [ ] Output guard enabled and tested
+- [ ] SSRF and path-guard protections verified
+- [ ] Rate limits tightened for production traffic
 
-- [ ] HTTPS/TLS certificate
-- [ ] Reverse proxy (nginx/caddy/traefik)
-- [ ] Monitoring system (Prometheus/Grafana/Datadog)
-- [ ] Backup solution
-- [ ] Firewall configured
+### Runtime Configuration
 
-### Setup Steps
+Use conservative defaults and explicit override tracking.
 
-1. **Complete Team/Staging Setup** (above)
-
-2. **Infrastructure Security**
-   - [ ] Set up HTTPS with valid TLS certificate
-   - [ ] Configure reverse proxy
-   - [ ] Set up firewall rules
-   - [ ] Enable fail2ban or similar
-   - [ ] Configure DDoS protection
-
-3. **Application Security**
-   - [ ] Change all default passwords and tokens
-   - [ ] Review and minimize tool permissions
-   - [ ] Enable output guard for PII/secret redaction
-   - [ ] Test SSRF protection
-   - [ ] Test path traversal protection
-   - [ ] Review and tighten rate limits
-
-4. **Production Configuration**
-
-   ```json
-   // config.json - production settings
-   {
-     "agent": {
-       "max_iterations": 30,  // Limit loop iterations
-       "timeout_seconds": 300  // Prevent infinite loops
-     },
-     "security": {
-       "rate_limit": {
-         "global_rpm": 120,
-         "per_user_rpm": 10,
-         "per_tool": {
-           "code_execution": 5,
-           "web_search": 20
-         }
-       }
-     },
-     "output_guard": {
-       "enabled": true,
-       "strict_mode": true,
-       "log_redactions": true
-     }
-   }
-   ```
-
-   - [ ] Iteration limits set
-   - [ ] Timeouts configured
-   - [ ] Strict output guard enabled
-   - [ ] Conservative rate limits
-
-5. **Database & Persistence**
-
-   ```bash
-   # Set up production databases
-   docker compose -f docker-compose.prod.yml up -d
-   ```
-
-   - [ ] Neo4j configured with persistent volume
-   - [ ] Weaviate configured with persistent volume
-   - [ ] SQLite data directory backed up regularly
-   - [ ] Database credentials rotated from defaults
-
-6. **Monitoring & Alerting**
-   - [ ] CPU/memory monitoring
-   - [ ] Disk space alerts
-   - [ ] Error rate alerts
-   - [ ] API cost monitoring
-   - [ ] Log aggregation (ELK/Loki/CloudWatch)
-   - [ ] Uptime monitoring
-
-7. **Backup & Recovery**
-   - [ ] Daily backups of `data/` directory
-   - [ ] Database backup strategy
-   - [ ] Disaster recovery plan documented
-   - [ ] Recovery procedure tested
-
-8. **Testing**
-   - [ ] Full test suite passes: `pytest tests/ -v`
-   - [ ] Security scan clean: `python -m app.main --doctor`
-   - [ ] Load testing completed
-   - [ ] Failover testing completed
-   - [ ] Backup restore tested
-
-9. **Documentation**
-   - [ ] Runbook created
-   - [ ] Incident response plan
-   - [ ] User access procedures
-   - [ ] Maintenance procedures
-   - [ ] Contact information for on-call
-
-10. **Legal & Compliance**
-    - [ ] Terms of service reviewed
-    - [ ] Privacy policy updated
-    - [ ] GDPR compliance checked (if applicable)
-    - [ ] AI usage disclosures
-    - [ ] Liability reviewed with legal team
-
----
-
-## 🐳 Docker Deployment
-
-### Quick Start
-
-```bash
-# Development
-docker compose --project-directory . -f install/docker/docker-compose.yml up -d
-
-# Production
-docker compose -f docker-compose.prod.yml up -d
+```json
+{
+  "agent": {
+    "max_iterations": 30,
+    "timeout_seconds": 300
+  },
+  "security": {
+    "rate_limit": {
+      "global_rpm": 120,
+      "per_user_rpm": 10,
+      "per_tool": {
+        "code_execution": 5,
+        "web_search": 20
+      }
+    }
+  },
+  "output_guard": {
+    "enabled": true,
+    "strict_mode": true,
+    "log_redactions": true
+  }
+}
 ```
 
-### Verification
+- [ ] Iteration and timeout limits set
+- [ ] Strict output guard enabled
+- [ ] Conservative rate limits enabled
 
-```bash
-# Check container status
-docker compose --project-directory . -f install/docker/docker-compose.yml ps
+### Runtime Override and Migration Runbook
 
-# View logs
-docker compose --project-directory . -f install/docker/docker-compose.yml logs -f itak
+- [ ] Validate `ITAK_SET_*` overrides via doctor
 
-# Run diagnostics inside container
-docker compose --project-directory . -f install/docker/docker-compose.yml exec itak python -m app.main --doctor
+  ```bash
+  python -m app.main --doctor
+  ```
 
-# Restart services
-docker compose --project-directory . -f install/docker/docker-compose.yml restart
-```
+- [ ] Record approved override keys in release notes
+- [ ] Capture migration status before cutover
 
----
+  ```bash
+  python install.py --migration-status --migration-source data --migration-target runtime
+  ```
 
-## 📊 Health Checks
+- [ ] Run migration with backup and verification report
 
-Run these regularly to ensure system health:
+  ```bash
+  python install.py --migrate-user-data --migration-source data --migration-target runtime
+  ```
 
-### Daily
+- [ ] Store rollback archive path and restore command in incident notes
 
-```bash
-# Check service status
-python -m app.main --doctor
+### Data and Monitoring
 
-# Review error logs
-tail -n 100 logs/errors.log
+- [ ] Persistent database volumes configured
+- [ ] Daily backup job enabled
+- [ ] CPU, memory, disk, error-rate, and uptime monitoring enabled
+- [ ] API usage and cost monitoring enabled
 
-# Check disk space
-df -h data/
-```
+### Final Go-Live Validation
 
-### Weekly
-
-```bash
-# Run test suite
-pytest tests/ -v
-
-# Review API costs
-# Check logs for cost_usd entries
-
-# Database integrity
-sqlite3 data/db/logs.db "PRAGMA integrity_check;"
-```
-
-### Monthly
-
-```bash
-# Rotate API keys
-# Update dependencies: pip install -r install/requirements/requirements.txt --upgrade
-# Update dependencies: pip install -r install/requirements/requirements.txt --upgrade
-# Review and archive old logs
-# Test backup restore procedure
-```
-
----
-
-## 🆘 Troubleshooting
-
-### Application won't start
-
-1. Run `python -m app.main --doctor`
-2. Check for missing dependencies
-3. Verify API keys in `.env`
-4. Check config.json syntax
-
-### WebUI not accessible
-
-1. Check if port 48920 is open
-2. Verify auth token is correct
-3. Check firewall rules
-4. Review webui logs
-
-### Agent not responding
-
-1. Check LLM API key is valid
-2. Verify API rate limits not exceeded
-3. Check network connectivity
-4. Review agent logs for errors
-
-### High API costs
-
-1. Review rate limits
-2. Check for infinite loops (max_iterations)
-3. Monitor token usage in logs
-4. Consider switching to cheaper models
-
-### Memory issues
-
-1. Check SQLite database size
-2. Archive old logs
-3. Optimize Neo4j/Weaviate if used
-4. Review memory retention settings
-
----
-
-## 📞 Support
-
-- **Documentation:** `docs/` directory
-- **Issues:** <https://github.com/David2024patton/iTaK/issues>
-- **Diagnostics:** `python -m app.main --doctor`
-- **Tests:** `pytest tests/ -v --tb=short`
-
----
-
-**Last Updated:** 2026-02-14  
-**Version:** 4.0
+- [ ] Regression tests pass (`pytest tests/ -v`)
+- [ ] Adapter-specific smoke checks pass
+- [ ] Security checks pass (`python -m app.main --doctor`)
+- [ ] Rollback procedure reviewed with on-call owner

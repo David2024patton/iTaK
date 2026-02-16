@@ -98,9 +98,9 @@ Target files:
 
 ### PR-AZ3: Git project clone wizard in project init
 
-- [ ] Add UI form for Git URL + optional token/credentials.
-- [ ] Add trust warning step before clone.
-- [ ] Show clone status and post-clone health checks.
+- [x] Add UI form for Git URL + optional token/credentials.
+- [x] Add trust warning step before clone.
+- [x] Show clone status and post-clone health checks.
 
 Target files:
 
@@ -110,19 +110,19 @@ Target files:
 
 ### PR-AZ4: Skills import/export compatibility workflow
 
-- [ ] Add skills bundle import flow (zip) with validation.
-- [ ] Add export flow for shareable iTaK skills packs.
-- [ ] Keep `SKILL.md` compatibility in docs and tests.
-- [ ] Support recursive zip discovery for nested skill directories.
-- [ ] Prevent duplicate skill install collisions with clear conflict policy.
-- [ ] Add import report output (installed, skipped, rejected, reason).
+- [x] Add skills bundle import flow (zip) with validation.
+- [x] Add export flow for shareable iTaK skills packs.
+- [x] Keep `SKILL.md` compatibility in docs and tests.
+- [x] Support recursive zip discovery for nested skill directories.
+- [x] Prevent duplicate skill install collisions with clear conflict policy.
+- [x] Add import report output (installed, skipped, rejected, reason).
 
 ### PR-AZ4b: Skills trust and security policy
 
-- [ ] Add trusted-source policy config for skill imports (allowlist mode optional).
-- [ ] Add mandatory review summary before enabling newly imported skills.
-- [ ] Add prompt-injection warning banners in skills UI flows.
-- [ ] Add skill package integrity checks (manifest/schema validation).
+- [x] Add trusted-source policy config for skill imports (allowlist mode optional).
+- [x] Add mandatory review summary before enabling newly imported skills.
+- [x] Add prompt-injection warning banners in skills UI flows.
+- [x] Add skill package integrity checks (manifest/schema validation).
 
 Target files:
 
@@ -138,9 +138,9 @@ Tests:
 
 ### PR-AZ4c: Create-skill workflow parity
 
-- [ ] Add guided "create skill from docs/text" path in UI.
-- [ ] Enforce required `SKILL.md` fields before save.
-- [ ] Add generated-skill preview and one-click install.
+- [x] Add guided "create skill from docs/text" path in UI.
+- [x] Enforce required `SKILL.md` fields before save.
+- [x] Add generated-skill preview and one-click install.
 
 Target files:
 
@@ -154,9 +154,9 @@ Target files:
 
 ### PR-AZ5: Environment override layer
 
-- [ ] Define iTaK env override prefix (for example `ITAK_SET_*`).
-- [ ] Add parser with schema-safe key mapping and validation.
-- [ ] Add `doctor` checks for invalid overrides.
+- [x] Define iTaK env override prefix (for example `ITAK_SET_*`).
+- [x] Add parser with schema-safe key mapping and validation.
+- [x] Add `doctor` checks for invalid overrides.
 
 Target files:
 
@@ -166,9 +166,9 @@ Target files:
 
 ### PR-AZ6: User-data migration command
 
-- [ ] Add explicit migration helper for user/runtime data moves.
-- [ ] Add backup verification and rollback guidance.
-- [ ] Add one command migration status report.
+- [x] Add explicit migration helper for user/runtime data moves.
+- [x] Add backup verification and rollback guidance.
+- [x] Add one command migration status report.
 
 Target files:
 
@@ -181,10 +181,10 @@ Target files:
 
 ## Acceptance Criteria
 
-- [ ] Each PR has targeted tests and no regressions in smoke checks.
-- [ ] Markdown and no-em-dash checks pass.
-- [ ] Docs are updated per merged slice.
-- [ ] `docs/root/iTAK_VS_AGENT_ZERO.md` reflects shipped parity after each phase.
+- [x] Each PR has targeted tests and no regressions in smoke checks.
+- [x] Markdown and no-em-dash checks pass.
+- [x] Docs are updated per merged slice.
+- [x] `docs/root/iTAK_VS_AGENT_ZERO.md` reflects shipped parity after each phase.
 
 ---
 
@@ -193,3 +193,7 @@ Target files:
 - 2026-02-16: v0.9.8 release reviewed and parity plan drafted.
 - 2026-02-16: PR-AZ1 completed with queue idempotency and ordering hardening in `webui/server.py`, plus regression coverage in `tests/test_webui.py` for queue flush/order/retry and process-group transition contracts.
 - 2026-02-16: PR-AZ2 completed with guarded file-browser edit endpoints, root-safe rename/delete restrictions, clearer workdir error messages, and CRUD/path-bound regression coverage in `tests/test_webui.py`.
+- 2026-02-16: PR-AZ3 completed with production `/projects` clone/create/load/update/delete endpoints, trust-warning UX alignment, and git health status reporting for post-clone validation.
+- 2026-02-16: PR-AZ4 completed with zip import preview/import, recursive `SKILL.md` discovery, conflict policy handling, import report output, and `/skills_export` pack generation.
+- 2026-02-16: PR-AZ4b and PR-AZ4c completed with trusted-source policy support, required review summaries, prompt-injection warnings, `SKILL.md` schema checks, and guided create-skill preview/install workflow.
+- 2026-02-16: PR-AZ5 and PR-AZ6 completed with `ITAK_SET_*` schema-safe env overrides, doctor validation for invalid overrides, and install-time user-data migration + status/rollback reporting.

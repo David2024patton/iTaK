@@ -133,6 +133,39 @@ def check_config() -> tuple[list[str], int, int]:
     return lines, passed, failed
 
 
+def check_env_overrides() -> tuple[list[str], int, int]:
+    """Validate ITAK_SET_ environment overrides against existing config schema."""
+    lines: list[str] = []
+    passed = 0
+    failed = 0
+
+    config_path = Path("config.json")
+    if not config_path.exists():
+        lines.append(_warn("config.json not found, skipping ITAK_SET_ override validation"))
+        return lines, 1, 0
+
+    try:
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+        from core.models import apply_env_overrides
+        _, override_errors, override_applied = apply_env_overrides(config, prefix="ITAK_SET_")
+        if override_applied:
+            lines.append(_ok(f"ITAK_SET_ overrides applied: {len(override_applied)}"))
+            passed += 1
+        else:
+            lines.append(_ok("No ITAK_SET_ overrides detected"))
+            passed += 1
+
+        if override_errors:
+            for err in override_errors:
+                lines.append(_fail(f"Invalid ITAK_SET_ override: {err}"))
+                failed += 1
+    except Exception as exc:
+        lines.append(_fail(f"ITAK_SET_ override validation failed: {exc}"))
+        failed += 1
+
+    return lines, passed, failed
+
+
 def check_api_keys() -> tuple[list[str], int, int]:
     """Check that at least one LLM API key is available."""
     lines: list[str] = []
@@ -489,6 +522,7 @@ async def run_doctor() -> bool:
     checks = [
         ("Preflight (Python, packages, config)", check_preflight),
         ("Configuration", check_config),
+        ("Environment Overrides", check_env_overrides),
         ("API Keys & Tokens", check_api_keys),
         ("File Structure & Parity", check_file_structure),
         ("Tool Health", check_tool_health),

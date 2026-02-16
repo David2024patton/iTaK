@@ -12,6 +12,10 @@
 
                 <h3>Import Skills (SKILL.md)</h3>
 
+                <div class="warning-banner">
+                    Importing third-party skills can include prompt-injection instructions. Review source trust, inspect preview output, and confirm review summary before install.
+                </div>
+
                 <div class="upload-section">
                     <label for="skills-file" class="upload-label">
                         Select Skills Pack (.zip)
@@ -63,11 +67,27 @@
                         </select>
                     </label>
 
+                    <label class="policy-label">
+                        <span class="policy-label-text">Source URL (optional):</span>
+                        <input class="text-input" type="text" placeholder="https://trusted.example/skills-pack"
+                            x-model="$store.skillsImportStore.sourceUrl"
+                            @change="$store.skillsImportStore.previewImport()">
+                    </label>
+
+                    <label class="policy-label policy-label-stacked">
+                        <span class="policy-label-text">Review summary (required for import):</span>
+                        <textarea class="text-input" rows="3"
+                            placeholder="What you reviewed and why this pack is safe to enable"
+                            x-model="$store.skillsImportStore.reviewSummary"></textarea>
+                    </label>
+
                     <div class="buttons">
                         <button class="btn slim" @click="$store.skillsImportStore.previewImport()"
                             :disabled="$store.skillsImportStore.loading">Preview</button>
                         <button class="btn slim primary" @click="$store.skillsImportStore.performImport()"
                             :disabled="$store.skillsImportStore.loading">Import</button>
+                        <button class="btn slim" @click="$store.skillsImportStore.exportSkillsPack()"
+                            :disabled="$store.skillsImportStore.loading">Export</button>
                     </div>
                 </div>
 
@@ -96,9 +116,44 @@
                     <div class="preview-meta">
                         <div>Imported: <span x-text="$store.skillsImportStore.result?.imported_count || 0"></span></div>
                         <div>Skipped: <span x-text="$store.skillsImportStore.result?.skipped_count || 0"></span></div>
+                        <div>Rejected: <span x-text="$store.skillsImportStore.result?.rejected_count || 0"></span></div>
                     </div>
                     <div class="note">
                         Skills are indexed automatically. If you don’t see them immediately, use the Restart button in the left pane.
+                    </div>
+                </div>
+
+                <div class="create-skill-section">
+                    <h4>Create Skill from Notes</h4>
+                    <div class="section-description">
+                        Turn ad-hoc notes into a reusable SKILL.md with preview and one-click install.
+                    </div>
+
+                    <label class="policy-label">
+                        <span class="policy-label-text">Skill title:</span>
+                        <input class="text-input" type="text" placeholder="Incident response checklist"
+                            x-model="$store.skillsImportStore.createTitle">
+                    </label>
+
+                    <label class="policy-label policy-label-stacked">
+                        <span class="policy-label-text">Source notes:</span>
+                        <textarea class="text-input" rows="6" placeholder="Paste docs or notes here"
+                            x-model="$store.skillsImportStore.createSourceText"></textarea>
+                    </label>
+
+                    <div class="buttons">
+                        <button class="btn slim" @click="$store.skillsImportStore.previewCreateSkill()"
+                            :disabled="$store.skillsImportStore.loading">Preview Skill</button>
+                        <button class="btn slim primary" @click="$store.skillsImportStore.installCreatedSkill()"
+                            :disabled="$store.skillsImportStore.loading">Install Skill</button>
+                    </div>
+
+                    <textarea class="preview-list" readonly x-show="$store.skillsImportStore.createPreview"
+                        x-text="$store.skillsImportStore.createPreview"></textarea>
+
+                    <div class="note" x-show="$store.skillsImportStore.createResult">
+                        Installed as <code x-text="$store.skillsImportStore.createResult?.name"></code>
+                        at <code x-text="$store.skillsImportStore.createResult?.path"></code>
                     </div>
                 </div>
 
@@ -135,6 +190,15 @@
             border-radius: 4px;
         }
 
+        .warning-banner {
+            margin: 0.75rem 0;
+            padding: 0.75rem;
+            border: 1px solid var(--color-warning, #f5b800);
+            border-radius: 4px;
+            background: var(--color-warning-bg, rgba(245, 184, 0, 0.08));
+            font-size: 0.9rem;
+        }
+
         .policy-label {
             display: grid;
             grid-template-columns: minmax(10rem, 14rem) 1fr;
@@ -142,6 +206,10 @@
             column-gap: 0.75rem;
             row-gap: 0.25rem;
             margin: 0.5rem 0;
+        }
+
+        .policy-label-stacked {
+            grid-template-columns: 1fr;
         }
 
         .policy-label-text {
@@ -188,6 +256,14 @@
             background: var(--color-bg-primary);
             border: 1px solid var(--color-border);
             border-radius: 4px;
+        }
+
+        .create-skill-section {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            background: var(--color-bg-primary);
         }
 
         .preview-meta {

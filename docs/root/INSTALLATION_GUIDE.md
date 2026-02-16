@@ -163,6 +163,42 @@ cd iTaK
 
 ### Step 3: Install Dependencies
 
+---
+
+## Runtime Overrides and Migration Commands
+
+### `ITAK_SET_*` Runtime Overrides
+
+iTaK supports schema-safe runtime config overrides using environment variables.
+
+Examples:
+
+```bash
+ITAK_SET_webui__port=49000
+ITAK_SET_models__chat__temperature=0.2
+python -m app.main --webui
+```
+
+Rules:
+
+- Use `__` between nested config keys
+- Path must already exist in `config.json`
+- Value types are validated against current config schema
+
+### User Data Migration Commands
+
+Use installer migration helpers to move runtime/user data with backup reporting.
+
+```bash
+# Show source and target stats only
+python install.py --migration-status --migration-source data --migration-target runtime
+
+# Perform migration with backup and verification report
+python install.py --migrate-user-data --migration-source data --migration-target runtime
+```
+
+If target already has data, installer creates a rollback backup archive and prints restore command.
+
 ```bash
 # Install all required packages
 pip install -r install/requirements/requirements.txt

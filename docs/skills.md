@@ -112,3 +112,34 @@ Drop it in `skills/` and the agent finds it automatically.
 | Connect to an external API | **Tool** |
 | OS-specific commands | **Skill** |
 | New file format processing | **Tool** |
+
+---
+
+## Skills Pack Import and Export
+
+iTaK supports ZIP-based skill bundle workflows with `SKILL.md` compatibility.
+
+- Import preview endpoint: `/skills_import_preview`
+- Import endpoint: `/skills_import`
+- Export endpoint: `/skills_export`
+
+Import features:
+
+- Recursive `SKILL.md` discovery in nested zip folders
+- Conflict policy: `skip`, `rename`, or `overwrite`
+- Import report fields: `imported`, `skipped`, `rejected`, and reason details
+
+Export features:
+
+- Creates shareable ZIP archive with `SKILL.md` and sibling files
+- Supports global, project, and agent-profile scopes
+
+---
+
+## Create Skill Workflow
+
+The Settings UI includes a guided "Create Skill from Notes" flow.
+
+- Preview generated `SKILL.md` content before saving
+- Enforce required `SKILL.md` sections (`## When to Use`, `## Steps`)
+- One-click install to selected scope (global/project/agent profile)

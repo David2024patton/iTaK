@@ -6,9 +6,86 @@ Supports dynamic model switching and provider-aware API key injection.
 
 import asyncio
 import json
+import copy
+import os
 from typing import Any, Callable, Optional
 
 import litellm
+
+
+def apply_env_overrides(config: dict, prefix: str = "ITAK_SET_") -> tuple[dict, list[str], list[str]]:
+    """Apply schema-safe env overrides onto an existing config dictionary.
+
+    Env format:
+    - ITAK_SET_models__chat__temperature=0.2
+    - ITAK_SET_webui__port=48920
+
+    Rules:
+    - Path must already exist in config (schema-safe)
+    - Value is type-cast based on current value type
+    """
+    updated = copy.deepcopy(config)
+    errors: list[str] = []
+    applied: list[str] = []
+
+    def _parse_bool(value: str) -> bool:
+        lowered = value.strip().lower()
+        if lowered in {"1", "true", "yes", "on"}:
+            return True
+        if lowered in {"0", "false", "no", "off"}:
+            return False
+        raise ValueError("expected boolean")
+
+    for key, raw_value in os.environ.items():
+        if not key.startswith(prefix):
+            continue
+
+        raw_path = key[len(prefix):]
+        if not raw_path:
+            errors.append(f"{key}: missing path")
+            continue
+
+        path = [segment for segment in raw_path.split("__") if segment]
+        if not path:
+            errors.append(f"{key}: invalid path")
+            continue
+
+        node: Any = updated
+        missing = False
+        for segment in path[:-1]:
+            if not isinstance(node, dict) or segment not in node:
+                missing = True
+                break
+            node = node.get(segment)
+        leaf = path[-1]
+        if missing or not isinstance(node, dict) or leaf not in node:
+            errors.append(f"{key}: path does not exist in config")
+            continue
+
+        current = node[leaf]
+        try:
+            if isinstance(current, bool):
+                casted = _parse_bool(raw_value)
+            elif isinstance(current, int) and not isinstance(current, bool):
+                casted = int(raw_value)
+            elif isinstance(current, float):
+                casted = float(raw_value)
+            elif isinstance(current, (dict, list)):
+                casted = json.loads(raw_value)
+                if not isinstance(casted, type(current)):
+                    raise ValueError(f"expected {type(current).__name__}")
+            elif current is None:
+                casted = raw_value
+            else:
+                casted = raw_value
+        except Exception as exc:
+            errors.append(f"{key}: invalid value ({exc})")
+            continue
+
+        node[leaf] = casted
+        applied.append(key)
+
+    return updated, errors, applied
 
 
 class ModelRouter:

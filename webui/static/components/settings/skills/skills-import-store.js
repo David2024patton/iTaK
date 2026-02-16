@@ -17,6 +17,8 @@ const model = {
   skillsFile: null,
   namespace: "",
   conflict: "skip", // skip|overwrite|rename
+  sourceUrl: "",
+  reviewSummary: "",
   projectKey: "", // selected project key, empty means All
   agentProfileKey: "", // selected agent profile key, empty means All
   projects: [], // available projects options [{key,label}]
@@ -24,6 +26,11 @@ const model = {
 
   preview: null,
   result: null,
+
+  createTitle: "",
+  createSourceText: "",
+  createPreview: "",
+  createResult: null,
 
   init() {
     this.resetState();
@@ -46,6 +53,12 @@ const model = {
     this.conflict = "skip";
     this.projectKey = "";
     this.agentProfileKey = "";
+    this.sourceUrl = "";
+    this.reviewSummary = "";
+    this.createTitle = "";
+    this.createSourceText = "";
+    this.createPreview = "";
+    this.createResult = null;
   },
 
   async loadProjects() {
@@ -102,6 +115,9 @@ const model = {
     if (this.agentProfileKey) {
       formData.append("agent_profile", this.agentProfileKey);
     }
+
+    formData.append("source_url", this.sourceUrl || "");
+    formData.append("review_summary", this.reviewSummary || "");
     return formData;
   },
 
@@ -172,6 +188,122 @@ const model = {
       }
     } catch (e) {
       this.error = `Import error: ${e.message}`;
+    } finally {
+      this.loading = false;
+      this.loadingMessage = "";
+    }
+  },
+
+  async exportSkillsPack() {
+    try {
+      this.loading = true;
+      this.loadingMessage = "Exporting skills pack...";
+      this.error = "";
+
+      const response = await api.callJsonApi("/skills_export", {
+        project_name: this.projectKey || null,
+        agent_profile: this.agentProfileKey || null,
+      });
+
+      if (!response?.ok || !response?.archive_base64) {
+        this.error = response?.error || "Export failed";
+        return;
+      }
+
+      const byteCharacters = atob(response.archive_base64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i += 1) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const blob = new Blob([new Uint8Array(byteNumbers)], { type: "application/zip" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = response.filename || "skills_export.zip";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      if (window.toastFrontendSuccess) {
+        window.toastFrontendSuccess("Skills pack exported", "Skills Export");
+      }
+    } catch (e) {
+      this.error = `Export error: ${e.message}`;
+    } finally {
+      this.loading = false;
+      this.loadingMessage = "";
+    }
+  },
+
+  async previewCreateSkill() {
+    if (!this.createTitle.trim() || !this.createSourceText.trim()) {
+      this.error = "Create Skill requires title and source notes";
+      return;
+    }
+
+    try {
+      this.loading = true;
+      this.loadingMessage = "Generating skill preview...";
+      this.error = "";
+      this.createPreview = "";
+
+      const response = await api.callJsonApi("/skills_create_from_text", {
+        title: this.createTitle,
+        source_text: this.createSourceText,
+        install: false,
+        project_name: this.projectKey || null,
+        agent_profile: this.agentProfileKey || null,
+      });
+
+      if (!response?.ok) {
+        this.error = response?.error || "Create skill preview failed";
+        return;
+      }
+
+      this.createPreview = response.preview || "";
+    } catch (e) {
+      this.error = `Create preview error: ${e.message}`;
+    } finally {
+      this.loading = false;
+      this.loadingMessage = "";
+    }
+  },
+
+  async installCreatedSkill() {
+    if (!this.createTitle.trim() || !this.createSourceText.trim()) {
+      this.error = "Create Skill requires title and source notes";
+      return;
+    }
+
+    try {
+      this.loading = true;
+      this.loadingMessage = "Installing generated skill...";
+      this.error = "";
+      this.createResult = null;
+
+      const response = await api.callJsonApi("/skills_create_from_text", {
+        title: this.createTitle,
+        source_text: this.createSourceText,
+        install: true,
+        project_name: this.projectKey || null,
+        agent_profile: this.agentProfileKey || null,
+      });
+
+      if (!response?.ok) {
+        this.error = response?.error || "Create skill install failed";
+        return;
+      }
+
+      this.createPreview = response.preview || this.createPreview;
+      this.createResult = {
+        name: response.name,
+        path: response.path,
+      };
+
+      if (window.toastFrontendSuccess) {
+        window.toastFrontendSuccess("Generated skill installed", "Create Skill");
+      }
+    } catch (e) {
+      this.error = `Create install error: ${e.message}`;
     } finally {
       this.loading = false;
       this.loadingMessage = "";

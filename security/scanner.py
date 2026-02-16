@@ -63,6 +63,19 @@ class SecurityScanner:
         (r"(?:secret|token|key)\s*=\s*['\"][^'\"]{8,}", "Hardcoded secret"),
     ]
 
+    SKILL_INJECTION_PATTERNS: list[tuple[str, str, str]] = [
+        (r"ignore\s+all\s+previous\s+instructions", "CRITICAL", "Prompt-injection pattern: instruction override"),
+        (r"reveal\s+all\s+secrets", "CRITICAL", "Prompt-injection pattern: secret exfiltration"),
+        (r"send\s+credentials\s+to", "CRITICAL", "Prompt-injection pattern: credential exfiltration"),
+        (r"disable\s+security", "WARNING", "Security bypass language"),
+        (r"run\s+without\s+confirmation", "WARNING", "Unsafe execution guidance"),
+    ]
+
+    REQUIRED_SKILL_SECTIONS: list[str] = [
+        "## When to Use",
+        "## Steps",
+    ]
+
     def __init__(self, config: dict | None = None):
         self.config = config or {}
         self.strict_mode = self.config.get("strict_mode", True)
@@ -249,3 +262,48 @@ class SecurityScanner:
                 lines.append(f"- Line {f.get('line', '?')}: {f['pattern']}")
 
         return "\n".join(lines)
+
+    def validate_skill_markdown(self, content: str) -> dict:
+        """Validate SKILL.md structure for required sections."""
+        errors: list[str] = []
+        text = content or ""
+        if not text.strip():
+            errors.append("Skill file is empty")
+        if not text.lstrip().startswith("# Skill"):
+            errors.append("Missing '# Skill' heading")
+
+        for section in self.REQUIRED_SKILL_SECTIONS:
+            if section not in text:
+                errors.append(f"Missing required section: {section}")
+
+        return {
+            "valid": len(errors) == 0,
+            "errors": errors,
+        }
+
+    def scan_skill_markdown(self, content: str, source: str = "skill") -> dict:
+        """Scan skill markdown for prompt-injection and unsafe guidance patterns."""
+        findings: list[dict] = []
+        blocked = False
+        lines = (content or "").splitlines()
+
+        for pattern, severity, description in self.SKILL_INJECTION_PATTERNS:
+            regex = re.compile(pattern, re.IGNORECASE)
+            for idx, line in enumerate(lines, 1):
+                if regex.search(line):
+                    findings.append({
+                        "severity": severity,
+                        "pattern": description,
+                        "line": idx,
+                        "line_content": line.strip()[:120],
+                        "source": source,
+                    })
+                    if severity == "CRITICAL":
+                        blocked = True
+
+        return {
+            "safe": not blocked,
+            "blocked": blocked,
+            "findings": findings,
+            "source": source,
+        }
