@@ -2,80 +2,77 @@
 
 ## At a Glance
 
-- Audience: Operators deploying iTaK to development, staging, or production.
-- Scope: Validate prerequisites, security controls, runtime config, and migration readiness.
-- Last reviewed: 2026-02-16.
+1. Complete Development checklist
+2. Set strong auth tokens in config
 
-## Quick Start
+  ```bash
+  python -c "import secrets; print(secrets.token_urlsafe(32))"
+  ```
 
-- Complete the Development checklist first, then Stage/Team, then Production.
-- Run doctor checks before and after major config or runtime changes.
-- Keep migration backup and rollback instructions with deployment records.
+  - [ ] WebUI auth token set
+  - [ ] MCP token set when MCP server is enabled
 
-## Deep Dive
+3. Configure limits and service stack
 
-The detailed checklist starts below.
+  ```bash
+  docker compose up -d
+  ```
 
-## AI Notes
+  - [ ] Rate limits reviewed for team usage
+  - [ ] Optional services (Neo4j, Weaviate, SearXNG) validated
 
-- Use this checklist as an execution runbook, not as marketing proof.
-- Mark each item only after command output is captured in deployment notes.
+4. Optional adapter enablement
 
----
+  - [ ] Discord token set (if required)
+  - [ ] Telegram token set (if required)
+  - [ ] Slack token set (if required)
 
-## Development or Testing Environment
+5. Operational readiness
 
-**Use case:** Local testing and feature validation.
-
-### Prerequisites
-
-- [ ] Python 3.11+ installed (`python --version`)
-- [ ] pip installed (`pip --version`)
-- [ ] Git installed (`git --version`)
-
-### Setup Steps
-
+  - [ ] Multi-user access validated
+  - [ ] Logs reviewed and rotation configured
+  - [ ] Alerting pipeline configured
 1. Install dependencies
 
-   ```bash
-   cd iTaK
-   pip install -r install/requirements/requirements.txt
-   ```
+  ```bash
+  cd iTaK
+  pip install -r install/requirements/requirements.txt
+  ```
 
 2. Configure local files
 
-   ```bash
-   cp install/config/config.json.example config.json
+  ```bash
+  cp install/config/config.json.example config.json
   cp .env.example .env
-   ```
+  ```
 
 3. Add at least one LLM key in `.env`
 
-   ```bash
-   GOOGLE_API_KEY=your_key_here
-   # or
-   OPENAI_API_KEY=your_key_here
-   ```
+  ```bash
+  GOOGLE_API_KEY=your_key_here
+  # or
+  OPENAI_API_KEY=your_key_here
+  ```
 
 4. Validate setup
 
-   ```bash
-   python -m app.main --doctor
-   ```
+  ```bash
+  python -m app.main --doctor
+  ```
 
-- [ ] Doctor checks pass for required components
-- [ ] At least one LLM provider is available
+  - [ ] Doctor checks pass for required components
+  - [ ] At least one LLM provider is available
 
 5. Smoke run
 
-   ```bash
-   python -m app.main
-   # optional
-   python -m app.main --webui
-   ```
+  ```bash
+  python -m app.main
+  # optional
+  python -m app.main --webui
+  ```
 
-- [ ] Agent starts without critical errors
-- [ ] WebUI reachable at `http://localhost:48920` when enabled
+  - [ ] Agent starts without critical errors
+  - [ ] WebUI reachable at `http://localhost:48920` when enabled
 
 ---
 
@@ -97,29 +94,33 @@ The detailed checklist starts below.
    python -c "import secrets; print(secrets.token_urlsafe(32))"
    ```
 
-- [ ] WebUI auth token set
-- [ ] MCP token set when MCP server is enabled
+
+  - [ ] WebUI auth token set
+  - [ ] MCP token set when MCP server is enabled
+
 
 3. Configure limits and service stack
 
-   ```bash
+  ```bash
   docker compose up -d
-   ```
+  ```
 
-- [ ] Rate limits reviewed for team usage
-- [ ] Optional services (Neo4j, Weaviate, SearXNG) validated
+
+  - [ ] Rate limits reviewed for team usage
+  - [ ] Optional services (Neo4j, Weaviate, SearXNG) validated
 
 4. Optional adapter enablement
 
-- [ ] Discord token set (if required)
-- [ ] Telegram token set (if required)
-- [ ] Slack token set (if required)
+  - [ ] Discord token set (if required)
+  - [ ] Telegram token set (if required)
+  - [ ] Slack token set (if required)
 
 5. Operational readiness
 
-- [ ] Multi-user access validated
-- [ ] Logs reviewed and rotation configured
-- [ ] Alerting pipeline configured
+
+  - [ ] Multi-user access validated
+  - [ ] Logs reviewed and rotation configured
+  - [ ] Alerting pipeline configured
 
 ---
 
