@@ -9,17 +9,26 @@ function ensureBootstrapTooltip(element) {
   if (!bs?.Tooltip) return;
 
   const existing = bs.Tooltip.getInstance(element);
-  const title = element.getAttribute("title") || element.getAttribute("data-bs-original-title");
+  const title = (element.getAttribute("title") || element.getAttribute("data-bs-original-title") || "").trim();
 
   if (!title) return;
 
   if (existing) {
-    if (element.getAttribute("title")) {
-      element.setAttribute("data-bs-original-title", title);
-      element.removeAttribute("title");
+    try {
+      if (element.getAttribute("title")) {
+        element.setAttribute("data-bs-original-title", title);
+        element.removeAttribute("title");
+      }
+      existing.setContent({ ".tooltip-inner": title });
+      return;
+    } catch (_e) {
+      // Instance is stale/broken; dispose and recreate.
+      try {
+        existing.dispose();
+      } catch (_disposeError) {
+        // no-op
+      }
     }
-    existing.setContent({ ".tooltip-inner": title });
-    return;
   }
 
   if (element.getAttribute("title")) {
@@ -27,13 +36,20 @@ function ensureBootstrapTooltip(element) {
     element.removeAttribute("title");
   }
 
-  element.setAttribute("data-bs-toggle", "tooltip");
+  if (!element.hasAttribute("data-bs-toggle")) {
+    element.setAttribute("data-bs-toggle", "tooltip");
+  }
   element.setAttribute("data-bs-trigger", "hover");
   element.setAttribute("data-bs-tooltip-initialized", "true");
-  new bs.Tooltip(element, {
-    delay: { show: 0, hide: 0 },
-    trigger: "hover",
-  });
+  try {
+    new bs.Tooltip(element, {
+      delay: { show: 0, hide: 0 },
+      trigger: "hover",
+      template: '<div class="tooltip" role="tooltip"><div class="tooltip-arrow"></div><div class="tooltip-inner"></div></div>',
+    });
+  } catch (_e) {
+    element.removeAttribute("data-bs-tooltip-initialized");
+  }
 }
 
 function initBootstrapTooltips(root = document) {
@@ -52,7 +68,7 @@ function observeBootstrapTooltips() {
   
   bootstrapTooltipObserver = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
-      if (mutation.type === "attributes" && mutation.attributeName === "title") {
+      if (mutation.type === "attributes" && ["title", "data-bs-original-title"].includes(mutation.attributeName)) {
         ensureBootstrapTooltip(mutation.target);
         return;
       }
@@ -72,7 +88,10 @@ function observeBootstrapTooltips() {
         
         mutation.addedNodes.forEach((node) => {
           if (!(node instanceof Element)) return;
-          if (node.matches("[title]") || node.querySelector("[title]")) {
+          if (
+            node.matches("[title], [data-bs-original-title]") ||
+            node.querySelector("[title], [data-bs-original-title]")
+          ) {
             initBootstrapTooltips(node);
           }
         });
@@ -84,7 +103,7 @@ function observeBootstrapTooltips() {
     childList: true,
     subtree: true,
     attributes: true,
-    attributeFilter: ["title"],
+    attributeFilter: ["title", "data-bs-original-title"],
   });
 }
 

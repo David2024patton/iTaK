@@ -4,9 +4,13 @@ Searches markdown files, SQLite, Neo4j, and Weaviate.
 """
 
 import logging
+import asyncio
+import re
 import time
 from pathlib import Path
 from typing import Any, Optional
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 from memory.sqlite_store import SQLiteStore
 
@@ -84,6 +88,15 @@ class MemoryManager:
         self.max_results = config.get("max_results", 10)
         self.auto_memorize = config.get("auto_memorize", True)
 
+        # SkillBank settings (SkillRL-inspired distilled memory layer)
+        skillbank_cfg = config.get("skillbank", {}) if isinstance(config.get("skillbank", {}), dict) else {}
+        self.skillbank_enabled = skillbank_cfg.get("enabled", True)
+        self.skillbank_auto_extract = skillbank_cfg.get("auto_extract", True)
+        self.skillbank_min_chars = int(skillbank_cfg.get("min_content_chars", 40))
+        self.skillbank_max_extract = int(skillbank_cfg.get("max_skills_per_memory", 3))
+        self.skillbank_score_boost = float(skillbank_cfg.get("score_boost", 1.08))
+        self.skillbank_threshold = float(skillbank_cfg.get("threshold", 0.62))
+
     async def connect_stores(self):
         """Connect to Neo4j and Weaviate (call once at startup)."""
         if self.neo4j:
@@ -122,6 +135,18 @@ class MemoryManager:
             source=source,
             embedding=embedding,
         )
+
+        if self.skillbank_enabled and self.skillbank_auto_extract:
+            try:
+                await self._distill_and_save_skills(
+                    content=content,
+                    category=category,
+                    metadata=metadata or {},
+                    source_memory_id=memory_id,
+                    embedding=embedding,
+                )
+            except Exception as e:
+                logger.warning(f"SkillBank distillation failed: {e}")
 
         # Append to MEMORY.md (Layer 1) for important memories
         if category in ("decision", "lesson", "fact", "solution"):
@@ -184,6 +209,30 @@ class MemoryManager:
             threshold=threshold,
         )
         all_results.extend(sqlite_results)
+
+        if self.skillbank_enabled:
+            skill_results = await self.sqlite.search_skills(
+                query=query,
+                query_embedding=query_embedding,
+                limit=max(3, limit),
+                threshold=self.skillbank_threshold,
+            )
+            for skill in skill_results:
+                score = float(skill.get("score", 0.55)) * self.skillbank_score_boost
+                all_results.append({
+                    "id": f"skill:{skill.get('id')}",
+                    "content": skill.get("content", ""),
+                    "category": "skill",
+                    "score": min(1.0, score),
+                    "metadata": {
+                        "layer": "skill_bank",
+                        "skill_id": skill.get("id"),
+                        "skill_type": skill.get("skill_type", "general"),
+                        "domain": skill.get("domain", "general"),
+                        "title": skill.get("title", ""),
+                        "source_memory_id": skill.get("source_memory_id"),
+                    },
+                })
 
         # Search Layer 1: Markdown files (always check)
         md_results = await self._search_markdown(query)
@@ -326,6 +375,11 @@ class MemoryManager:
         stats = {
             "layer_1_files": len(list(self.memory_dir.glob("*.md"))),
             "layer_2_sqlite": sqlite_stats,
+            "skillbank": {
+                "enabled": self.skillbank_enabled,
+                "total_skills": sqlite_stats.get("total_skills", 0),
+                "domains": sqlite_stats.get("skill_domains", {}),
+            },
         }
 
         if self.neo4j:
@@ -346,3 +400,213 @@ class MemoryManager:
             await self.neo4j.close()
         if self.weaviate:
             await self.weaviate.close()
+
+    async def ingest_url(
+        self,
+        url: str,
+        category: str = "web",
+        source: str = "web_ingest",
+        timeout: int = 20,
+    ) -> dict:
+        """Fetch remote content (preferring markdown) and save it to memory."""
+        payload = await asyncio.to_thread(self._fetch_url_content, url, timeout)
+        text = payload.get("text", "").strip()
+        if not text:
+            raise ValueError("No content fetched from URL")
+
+        memory_id = await self.save(
+            content=text,
+            category=category,
+            source=source,
+            metadata={
+                "url": url,
+                "content_type": payload.get("content_type", ""),
+                "markdown_tokens": payload.get("markdown_tokens"),
+                "content_signal": payload.get("content_signal", ""),
+            },
+        )
+        return {
+            "memory_id": memory_id,
+            "url": url,
+            "content_type": payload.get("content_type", ""),
+            "markdown_tokens": payload.get("markdown_tokens"),
+            "content_signal": payload.get("content_signal", ""),
+            "chars": len(text),
+        }
+
+    async def search_skills(
+        self,
+        query: str,
+        limit: int = 10,
+        skill_type: str | None = None,
+        domain: str | None = None,
+    ) -> list[dict]:
+        """Search distilled skills directly from the SkillBank."""
+        if not self.skillbank_enabled:
+            return []
+
+        query_embedding = None
+        if self.model_router:
+            try:
+                embeddings = await self.model_router.embed([query])
+                query_embedding = embeddings[0] if embeddings else None
+            except Exception:
+                pass
+
+        return await self.sqlite.search_skills(
+            query=query,
+            query_embedding=query_embedding,
+            skill_type=skill_type,
+            domain=domain,
+            limit=limit,
+            threshold=self.skillbank_threshold,
+        )
+
+    async def save_skill(
+        self,
+        title: str,
+        content: str,
+        skill_type: str = "general",
+        domain: str = "general",
+        metadata: dict | None = None,
+        confidence: float = 0.8,
+    ) -> int:
+        """Save a manual distilled skill into the SkillBank."""
+        embedding = None
+        if self.model_router:
+            try:
+                embeddings = await self.model_router.embed([content])
+                embedding = embeddings[0] if embeddings else None
+            except Exception:
+                pass
+        return await self.sqlite.save_skill(
+            title=title,
+            content=content,
+            skill_type=skill_type,
+            domain=domain,
+            metadata=metadata or {},
+            confidence=confidence,
+            embedding=embedding,
+        )
+
+    async def _distill_and_save_skills(
+        self,
+        content: str,
+        category: str,
+        metadata: dict,
+        source_memory_id: int,
+        embedding: list[float] | None = None,
+    ):
+        """Extract compact reusable skills from a memory and persist to SkillBank."""
+        if not content or len(content.strip()) < self.skillbank_min_chars:
+            return
+
+        extracted = self._extract_skill_candidates(content, category)
+        if not extracted:
+            return
+
+        for skill in extracted[: self.skillbank_max_extract]:
+            await self.sqlite.save_skill(
+                title=skill["title"],
+                content=skill["content"],
+                skill_type=skill["skill_type"],
+                domain=skill["domain"],
+                metadata={
+                    "origin_category": category,
+                    "source": metadata.get("source", "memory_distillation"),
+                    "tags": metadata.get("tags", []),
+                },
+                source_memory_id=source_memory_id,
+                confidence=skill.get("confidence", 0.75),
+                embedding=embedding,
+            )
+
+    def _extract_skill_candidates(self, content: str, category: str) -> list[dict]:
+        """Heuristic skill extraction from free-form memory text."""
+        text = content.strip()
+        lines = [line.strip(" -\t") for line in text.splitlines() if line.strip()]
+        candidates: list[str] = []
+
+        # Prefer explicit list items first
+        for line in lines:
+            if line.startswith(("*", "-")):
+                continue
+            if re.match(r"^\d+[\).]\s+", line):
+                candidates.append(re.sub(r"^\d+[\).]\s+", "", line).strip())
+            elif len(line) >= self.skillbank_min_chars:
+                candidates.append(line)
+
+        if not candidates:
+            sentence_parts = re.split(r"(?<=[.!?])\s+", text)
+            candidates = [part.strip() for part in sentence_parts if len(part.strip()) >= self.skillbank_min_chars]
+
+        distilled: list[dict] = []
+        for candidate in candidates:
+            normalized = candidate.strip(" -•")
+            if len(normalized) < self.skillbank_min_chars:
+                continue
+
+            domain = self._infer_skill_domain(normalized)
+            skill_type = "task_specific" if domain != "general" else "general"
+            confidence = 0.82 if category in {"solution", "lesson", "decision"} else 0.74
+
+            distilled.append({
+                "title": normalized[:72],
+                "content": normalized,
+                "skill_type": skill_type,
+                "domain": domain,
+                "confidence": confidence,
+            })
+
+        # Deduplicate by normalized prefix
+        seen = set()
+        unique = []
+        for item in distilled:
+            key = item["content"].lower()[:80]
+            if key in seen:
+                continue
+            seen.add(key)
+            unique.append(item)
+        return unique
+
+    def _infer_skill_domain(self, text: str) -> str:
+        """Infer rough skill domain using keyword heuristics."""
+        lower = text.lower()
+        mapping = {
+            "python": ["python", "pytest", "pip", "pydantic", "fastapi"],
+            "web": ["http", "api", "endpoint", "json", "request", "response"],
+            "frontend": ["ui", "css", "html", "alpine", "component", "sidebar"],
+            "ops": ["docker", "kubernetes", "deploy", "ci", "workflow", "monitor"],
+            "data": ["sql", "sqlite", "query", "schema", "vector", "embedding"],
+            "security": ["auth", "token", "permission", "secret", "secure", "sandbox"],
+        }
+        for domain, tokens in mapping.items():
+            if any(token in lower for token in tokens):
+                return domain
+        return "general"
+
+    def _fetch_url_content(self, url: str, timeout: int = 20) -> dict:
+        """Fetch remote content with markdown preference using HTTP content negotiation."""
+        req = Request(
+            url,
+            headers={
+                "User-Agent": "iTaK/1.0 (+memory-ingest)",
+                "Accept": "text/markdown, text/plain;q=0.9, text/html;q=0.8, */*;q=0.1",
+            },
+        )
+
+        try:
+            with urlopen(req, timeout=timeout) as response:
+                raw = response.read()
+                text = raw.decode("utf-8", errors="replace")
+                content_type = response.headers.get("Content-Type", "")
+                markdown_tokens = response.headers.get("x-markdown-tokens")
+                content_signal = response.headers.get("content-signal", "")
+                return {
+                    "text": text,
+                    "content_type": content_type,
+                    "markdown_tokens": int(markdown_tokens) if str(markdown_tokens or "").isdigit() else None,
+                    "content_signal": content_signal,
+                }
+        except (HTTPError, URLError) as e:
+            raise RuntimeError(f"URL fetch failed: {e}") from e

@@ -224,3 +224,82 @@ class TestSocialMediaTool:
         )
         assert result.error is True
         assert "not configured" in result.output.lower()
+
+
+# ============================================================
+# GogCLI Tool Tests
+# ============================================================
+class TestGogcliTool:
+    """Test the gogcli tool."""
+
+    @pytest.fixture
+    def gogcli_tool(self):
+        from tools.gogcli_tool import GogcliTool
+
+        agent = MagicMock()
+        agent.config = {"gogcli": {"binary": "gog", "timeout_seconds": 60}}
+        agent.logger = MagicMock()
+        return GogcliTool(agent)
+
+    @pytest.mark.asyncio
+    async def test_run_requires_command(self, gogcli_tool):
+        result = await gogcli_tool.execute(action="run", command="")
+        assert result.error is True
+        assert "command" in result.output.lower()
+
+    @pytest.mark.asyncio
+    async def test_unknown_action(self, gogcli_tool):
+        result = await gogcli_tool.execute(action="bad_action")
+        assert result.error is True
+        assert "supported" in result.output.lower()
+
+    @pytest.mark.asyncio
+    async def test_file_not_found(self, gogcli_tool):
+        with patch("asyncio.create_subprocess_exec", side_effect=FileNotFoundError):
+            result = await gogcli_tool.execute(action="version")
+        assert result.error is True
+        assert "not found" in result.output.lower()
+
+    @pytest.mark.asyncio
+    async def test_timeout(self, gogcli_tool):
+        process = MagicMock()
+        process.communicate = AsyncMock(side_effect=asyncio.TimeoutError)
+
+        with patch("asyncio.create_subprocess_exec", new=AsyncMock(return_value=process)):
+            result = await gogcli_tool.execute(action="run", command="tasks lists", timeout=1)
+
+        assert result.error is True
+        assert "timed out" in result.output.lower()
+
+    @pytest.mark.asyncio
+    async def test_run_appends_json_and_no_input(self, gogcli_tool):
+        process = MagicMock()
+        process.communicate = AsyncMock(return_value=(b'{"ok":true}', b""))
+        process.returncode = 0
+
+        with patch("asyncio.create_subprocess_exec", new=AsyncMock(return_value=process)) as mock_exec:
+            result = await gogcli_tool.execute(action="run", command="tasks lists")
+
+        assert result.error is False
+        assert '{"ok":true}' in result.output
+
+        args = mock_exec.await_args.args
+        assert args[0] == "gog"
+        assert "tasks" in args
+        assert "lists" in args
+        assert "--json" in args
+        assert "--no-input" in args
+
+    @pytest.mark.asyncio
+    async def test_version_action(self, gogcli_tool):
+        process = MagicMock()
+        process.communicate = AsyncMock(return_value=(b"0.1.0", b""))
+        process.returncode = 0
+
+        with patch("asyncio.create_subprocess_exec", new=AsyncMock(return_value=process)) as mock_exec:
+            result = await gogcli_tool.execute(action="version")
+
+        assert result.error is False
+        assert "0.1.0" in result.output
+        args = mock_exec.await_args.args
+        assert args == ("gog", "version")

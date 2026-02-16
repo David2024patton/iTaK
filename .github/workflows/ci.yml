@@ -48,6 +48,12 @@ jobs:
         env:
           PYTHONPATH: .
 
+      - name: Enforce settings parity regression guard
+        run: |
+          pytest -c tests/pytest.ini tests/test_webui.py -v --tb=short -k "settings_get_includes_all_frontend_used_keys or mcp_compat_endpoints_have_agent_zero_shape"
+        env:
+          PYTHONPATH: .
+
   security:
     runs-on: ubuntu-latest
     steps:

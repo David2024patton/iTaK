@@ -5,6 +5,8 @@
     import { store as chatsStore } from "/components/sidebar/chats/chats-store.js";
     import { store as projectsStore } from "/components/projects/projects-store.js";
     import { store as sidebarStore } from "/components/sidebar/sidebar-store.js";
+    import { store as settingsStore } from "/components/settings/settings-store.js";
+    import { store as resourceHubStore } from "/components/modals/resource-hub/resource-hub-store.js";
   </script>
 </head>
 
@@ -68,6 +70,36 @@
         <span class="material-symbols-outlined">settings</span>
         <span>Settings</span>
       </button>
+
+      <button class="dropdown-item" @click="$store.settings.open('skills'); dropdownOpen = false">
+        <span class="material-symbols-outlined">extension</span>
+        <span>Skills</span>
+      </button>
+
+      <button class="dropdown-item" @click="$store.settings.open('mcp'); dropdownOpen = false">
+        <span class="material-symbols-outlined">hub</span>
+        <span>MCP / A2A</span>
+      </button>
+
+      <button class="dropdown-item" @click="$store.resourceHubStore.open('adapters'); dropdownOpen = false">
+        <span class="material-symbols-outlined">swap_horiz</span>
+        <span>Adapters</span>
+      </button>
+
+      <button class="dropdown-item" @click="$store.resourceHubStore.open('prompts'); dropdownOpen = false">
+        <span class="material-symbols-outlined">article</span>
+        <span>Prompts</span>
+      </button>
+
+      <button class="dropdown-item" @click="$store.resourceHubStore.open('tools'); dropdownOpen = false">
+        <span class="material-symbols-outlined">build</span>
+        <span>Tools</span>
+      </button>
+
+      <button class="dropdown-item" @click="$store.resourceHubStore.open('overview'); dropdownOpen = false">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span>Resource Hub</span>
+      </button>
       
       <div class="dropdown-separator"></div>
       <div class="dropdown-header">Chat Actions</div>
@@ -101,7 +133,7 @@
 
       <button class="dropdown-item" @click="$confirmClick($event, () => { $store.chats.restart(); dropdownOpen = false })">
         <span class="material-symbols-outlined">restart_alt</span>
-        <span>Restart A0</span>
+        <span>Restart iTaK</span>
       </button>
 
     </div>

@@ -1,0 +1,42 @@
+<html>
+  <head>
+    <title>GogCLI</title>
+  </head>
+
+  <body>
+    <div x-data="{ get settings() { return $store.settings.settings } }">
+      <template x-if="settings">
+        <div>
+          <div class="section-title">GogCLI Integration</div>
+          <div class="section-description">
+            Configure the gogcli executable used by <code>gogcli_tool</code>.
+          </div>
+
+          <div class="field">
+            <div class="field-label">
+              <div class="field-title">GogCLI binary</div>
+              <div class="field-description">
+                Executable name or full path. Default is <code>gog</code>.
+              </div>
+            </div>
+            <div class="field-control">
+              <input type="text" x-model="settings.gogcli_binary" placeholder="gog" />
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="field-label">
+              <div class="field-title">Default timeout (seconds)</div>
+              <div class="field-description">
+                Default command timeout for <code>gogcli_tool</code> calls.
+              </div>
+            </div>
+            <div class="field-control">
+              <input type="number" min="1" x-model.number="settings.gogcli_timeout_seconds" />
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+  </body>
+</html>

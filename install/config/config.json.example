@@ -55,6 +55,14 @@
         "max_results": 10,
         "auto_memorize": true,
         "consolidation_threshold": 0.85,
+        "skillbank": {
+            "enabled": true,
+            "auto_extract": true,
+            "min_content_chars": 40,
+            "max_skills_per_memory": 3,
+            "score_boost": 1.08,
+            "threshold": 0.62
+        },
         "memu": {
             "enabled": false,
             "mode": "self-hosted",

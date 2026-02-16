@@ -1,0 +1,204 @@
+<html>
+<head>
+  <script type="module">
+    import { store } from "/components/sidebar/launchpad/launchpad-store.js";
+  </script>
+</head>
+<body>
+  <div class="launchpad-list-root">
+    <template x-if="$store.launchpad">
+      <div class="launchpad-list-inner" x-data x-init="$store.launchpad.ensureLoaded()">
+        <div class="section-header-row launchpad-header-row">
+          <h3 class="section-header section-header-collapsible"
+              data-bs-toggle="collapse"
+              @click="$store.sidebar.toggleSection('launchpad')"
+              x-effect="!$store.sidebar.isSectionOpen('launchpad') ? $el.classList.add('collapsed') : $el.classList.remove('collapsed')">
+            Launchpad
+            <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <path d="M8 4l8 8-8 8" />
+            </svg>
+          </h3>
+
+          <div class="launchpad-header-actions">
+            <button
+              class="btn-icon-action"
+              title="Refresh catalog"
+              @click.stop="$store.launchpad.refreshCatalog()"
+              :disabled="$store.launchpad.refreshing || $store.launchpad.syncing">
+              <span class="material-symbols-outlined">refresh</span>
+            </button>
+            <button
+              class="btn-icon-action"
+              title="Sync from Cherry"
+              @click.stop="$store.launchpad.syncCatalog()"
+              :disabled="$store.launchpad.refreshing || $store.launchpad.syncing">
+              <span class="material-symbols-outlined">sync</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="collapse" id="launchpad-collapse"
+             x-effect="(() => { const c = bootstrap.Collapse.getOrCreateInstance($el, { toggle: false }); $store.sidebar.isSectionOpen('launchpad') ? c.show() : c.hide(); })()"
+             x-init="$watch(() => $store.sidebar.isSectionOpen('launchpad'), async (open) => { if (open) await $store.launchpad.ensureLoaded(); })">
+          <div class="launchpad-body">
+            <div class="launchpad-search-row">
+              <input type="text" placeholder="Search apps" x-model="$store.launchpad.query" class="launchpad-search-input" />
+            </div>
+
+            <div class="launchpad-status" x-show="$store.launchpad.statusMessage" x-text="$store.launchpad.statusMessage"></div>
+
+            <div class="empty-list-message" x-show="$store.launchpad.loading">
+              <p><i>Loading apps...</i></p>
+            </div>
+
+            <ul class="config-list launchpad-config-list no-scrollbar" x-show="!$store.launchpad.loading && $store.launchpad.filteredApps.length > 0">
+              <template x-for="app in $store.launchpad.filteredApps" :key="app.id">
+                <li>
+                  <div class="launchpad-item" @click="$store.launchpad.openApp(app.url)">
+                    <div class="launchpad-main">
+                      <div class="launchpad-title" x-text="app.name"></div>
+                      <div class="launchpad-sub" x-text="app.id"></div>
+                    </div>
+                    <div class="launchpad-item-actions">
+                      <button class="btn-icon-action" title="Copy link" @click.stop="$store.launchpad.copyAppUrl(app.url)">
+                        <span class="material-symbols-outlined">content_copy</span>
+                      </button>
+                      <button class="btn-icon-action" title="Open app" @click.stop="$store.launchpad.openApp(app.url)">
+                        <span class="material-symbols-outlined">open_in_new</span>
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              </template>
+            </ul>
+
+            <div class="empty-list-message" x-show="!$store.launchpad.loading && $store.launchpad.filteredApps.length === 0">
+              <p><i>No apps found.</i></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <style>
+    .launchpad-list-root,
+    .launchpad-list-inner {
+      display: contents;
+    }
+
+    .launchpad-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .launchpad-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 8px;
+    }
+
+    .launchpad-body {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      max-height: 28vh;
+    }
+
+    .launchpad-search-row {
+      margin-bottom: 8px;
+    }
+
+    .launchpad-search-input {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--color-border);
+      background: var(--color-background);
+      color: var(--color-text);
+      font-size: var(--font-size-small);
+    }
+
+    .launchpad-status {
+      font-size: 11px;
+      opacity: 0.8;
+      margin-bottom: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .launchpad-config-list {
+      overflow-y: auto;
+      min-height: 0;
+      max-height: 100%;
+      flex: 1;
+    }
+
+    .launchpad-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .launchpad-item:hover {
+      background-color: var(--color-background-hover);
+    }
+
+    .launchpad-main {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .launchpad-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .device-pointer .launchpad-item .launchpad-item-actions {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0s;
+    }
+
+    .device-pointer .launchpad-item:hover .launchpad-item-actions {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .device-touch .launchpad-item .launchpad-item-actions {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .launchpad-title {
+      font-size: var(--font-size-small);
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .launchpad-sub {
+      font-size: 11px;
+      opacity: 0.75;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  </style>
+</body>
+</html>

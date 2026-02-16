@@ -1,0 +1,107 @@
+<html>
+  <head>
+    <title>Cherry Catalog</title>
+  </head>
+
+  <body>
+    <div x-data="{ get additional() { return $store.settings.additional || {} } }" x-init="$store.settings.loadMinapps()">
+      <div>
+        <div class="section-title">Cherry Catalog Sync</div>
+        <div class="section-description">
+          Sync providers and models from your Cherry Studio repository into iTaK.
+        </div>
+
+        <div class="field">
+          <div class="field-label">
+            <div class="field-title">Current Catalog Source</div>
+            <div class="field-description" x-text="additional.catalog_source || 'Not available'"></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">
+            <div class="field-title">Provider Count</div>
+            <div class="field-description" x-text="String(additional.catalog_provider_count || 0)"></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">
+            <div class="field-title">Model Count</div>
+            <div class="field-description" x-text="String(additional.catalog_model_count || 0)"></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">
+            <div class="field-title">Minapp Count</div>
+            <div class="field-description" x-text="String(additional.catalog_minapp_count || 0)"></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">
+            <div class="field-title">Sync Cherry Catalog</div>
+            <div class="field-description">Pull latest providers/models from Cherry Studio and refresh iTaK.</div>
+          </div>
+          <div class="field-control">
+            <button
+              class="btn btn-field"
+              :disabled="$store.settings.catalogSyncing"
+              @click="$store.settings.syncCherryCatalog()"
+              x-text="$store.settings.catalogSyncing ? 'Syncing...' : 'Sync Now'"
+            ></button>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">
+            <div class="field-title">Reload From Local Catalog</div>
+            <div class="field-description">Refresh runtime lists from the current local catalog file.</div>
+          </div>
+          <div class="field-control">
+            <button class="btn btn-field" @click="$store.settings.refreshCatalog()">Refresh Runtime</button>
+          </div>
+        </div>
+
+        <div class="field" x-show="$store.settings.catalogSyncMessage">
+          <div class="field-label">
+            <div class="field-title">Last Sync Status</div>
+            <div class="field-description" x-text="$store.settings.catalogSyncMessage"></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">
+            <div class="field-title">Launchpad Apps</div>
+            <div class="field-description">Search and browse imported Cherry launchpad apps.</div>
+          </div>
+          <div class="field-control">
+            <input type="text" placeholder="Search apps by name, id, or URL" x-model="$store.settings.minappsQuery" />
+          </div>
+        </div>
+
+        <div class="field" x-show="$store.settings.minappsLoading">
+          <div class="field-label">
+            <div class="field-description">Loading launchpad apps...</div>
+          </div>
+        </div>
+
+        <div class="field" x-show="!$store.settings.minappsLoading">
+          <div class="field-label" style="width:100%">
+            <div class="field-description" x-text="`Showing ${$store.settings.filteredMinapps.length} apps`"></div>
+            <div style="max-height: 320px; overflow-y: auto; margin-top: 8px; border: 1px solid var(--border-color, #333); border-radius: 8px;">
+              <template x-for="app in $store.settings.filteredMinapps" :key="app.id">
+                <div style="padding: 8px 10px; border-bottom: 1px solid var(--border-color, #333);">
+                  <div style="font-weight: 600;" x-text="app.name"></div>
+                  <div style="font-size: 12px; opacity: 0.8;" x-text="app.id"></div>
+                  <a :href="app.url" target="_blank" rel="noopener noreferrer" style="font-size: 12px; word-break: break-all;" x-text="app.url"></a>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

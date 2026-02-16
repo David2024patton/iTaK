@@ -1,0 +1,85 @@
+<html>
+  <head>
+    <title>System Smoke Tests</title>
+  </head>
+
+  <body>
+    <div x-data>
+      <div>
+        <div class="section-title">System Smoke Tests</div>
+        <div class="section-description">
+          Run built-in smoke checks from the UI or copy the CLI commands.
+        </div>
+
+        <div class="field">
+          <div class="field-label">
+            <div class="field-title">Resource Endpoints</div>
+            <div class="field-description">Checks Resource Hub, Launchpad, and catalog endpoints.</div>
+          </div>
+          <div class="field-control" style="display:flex; gap:8px;">
+            <button class="btn btn-field" :disabled="$store.settings.systemTestRunning" @click="$store.settings.runSystemTest('resources')">
+              Run
+            </button>
+            <button class="btn btn-field" @click="$store.settings.copySystemTestCommand('resources')">Copy CLI</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">
+            <div class="field-title">Memory Smoke Test</div>
+            <div class="field-description">Performs memory write/search/delete verification.</div>
+          </div>
+          <div class="field-control" style="display:flex; gap:8px;">
+            <button class="btn btn-field" :disabled="$store.settings.systemTestRunning" @click="$store.settings.runSystemTest('memory')">
+              Run
+            </button>
+            <button class="btn btn-field" @click="$store.settings.copySystemTestCommand('memory')">Copy CLI</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">
+            <div class="field-title">Chat Smoke Test</div>
+            <div class="field-description">Creates context, sends message, and verifies response logs.</div>
+          </div>
+          <div class="field-control" style="display:flex; gap:8px;">
+            <button class="btn btn-field" :disabled="$store.settings.systemTestRunning" @click="$store.settings.runSystemTest('chat')">
+              Run
+            </button>
+            <button class="btn btn-field" @click="$store.settings.copySystemTestCommand('chat')">Copy CLI</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">
+            <div class="field-title">Run All Smoke Tests</div>
+            <div class="field-description">Runs resource, memory, and chat checks sequentially.</div>
+          </div>
+          <div class="field-control" style="display:flex; gap:8px;">
+            <button class="btn btn-field" :disabled="$store.settings.systemTestRunning" @click="$store.settings.runSystemTest('all')">
+              Run All
+            </button>
+            <button class="btn btn-field" @click="$store.settings.copySystemTestCommand('all')">Copy CLI</button>
+          </div>
+        </div>
+
+        <div class="field" x-show="$store.settings.systemTestCommand">
+          <div class="field-label" style="width:100%">
+            <div class="field-title">Last Command</div>
+            <div class="field-description" x-text="$store.settings.systemTestCommand"></div>
+          </div>
+        </div>
+
+        <div class="field" x-show="$store.settings.systemTestOutput">
+          <div class="field-label" style="width:100%">
+            <div class="field-title">
+              Last Output
+              <span x-show="$store.settings.systemTestExitCode !== null" x-text="`(exit ${$store.settings.systemTestExitCode})`"></span>
+            </div>
+            <pre style="margin-top:8px; max-height:260px; overflow:auto; padding:10px; border:1px solid var(--border-color, #333); border-radius:8px; white-space:pre-wrap;" x-text="$store.settings.systemTestOutput"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

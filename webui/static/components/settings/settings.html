@@ -87,6 +87,11 @@
             :disabled="$store.settings?.isLoading">
         Save
         </button>
+        <button class="btn btn-ok"
+                @click="$store.settings.saveAndRunTests()"
+                :disabled="$store.settings?.isLoading || $store.settings?.systemTestRunning">
+          Save + Run Tests
+        </button>
         <button class="btn btn-cancel" 
                 @click="$store.settings.closeSettings()">
           Cancel

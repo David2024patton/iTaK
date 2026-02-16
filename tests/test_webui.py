@@ -4,6 +4,8 @@ Verifies that the dashboard can reach all API endpoints when using the correct a
 """
 
 import time
+import re
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -151,3 +153,136 @@ class TestWebUIEndpoints:
         res = client.get("/")
         assert res.status_code == 200
         assert "iTaK" in res.text
+
+
+class TestSettingsParity:
+    """Guard against frontend/backend settings drift."""
+
+    @staticmethod
+    def _collect_frontend_settings_keys() -> tuple[set[str], set[str]]:
+        root = Path(__file__).resolve().parents[1]
+        settings_dir = root / "webui" / "static" / "components" / "settings"
+
+        used_settings_keys: set[str] = set()
+        used_additional_keys: set[str] = set()
+
+        settings_patterns = [
+            re.compile(r"\$store\.settings\.settings\.([a-zA-Z_][a-zA-Z0-9_]*)"),
+            re.compile(r"settingsStore\.settings\?\.([a-zA-Z_][a-zA-Z0-9_]*)"),
+            re.compile(r"settingsStore\.settings\.([a-zA-Z_][a-zA-Z0-9_]*)"),
+        ]
+        settings_alias_attr_pattern = re.compile(
+            r"(?:x-[a-zA-Z:-]+|:[a-zA-Z_-]+)\s*=\s*\"[^\"]*\b(?<!\$store\.)settings\.([a-zA-Z_][a-zA-Z0-9_]*)"
+        )
+        additional_patterns = [
+            re.compile(r"(?:\$store\.settings\.additional|additional)\?*\.([a-zA-Z_][a-zA-Z0-9_]*)"),
+            re.compile(r"\$store\.settings\.additional\?\.([a-zA-Z_][a-zA-Z0-9_]*)"),
+        ]
+
+        for file_path in settings_dir.rglob("*.html"):
+            content = file_path.read_text(encoding="utf-8")
+            for pattern in settings_patterns:
+                used_settings_keys.update(pattern.findall(content))
+            used_settings_keys.update(settings_alias_attr_pattern.findall(content))
+            for pattern in additional_patterns:
+                used_additional_keys.update(pattern.findall(content))
+
+        for file_path in settings_dir.rglob("*.js"):
+            content = file_path.read_text(encoding="utf-8")
+            for pattern in settings_patterns:
+                used_settings_keys.update(pattern.findall(content))
+            for pattern in additional_patterns:
+                used_additional_keys.update(pattern.findall(content))
+
+        used_settings_keys.discard("settings")
+        used_additional_keys.discard("additional")
+
+        # Dynamic key access used in UI stores
+        used_settings_keys.add("api_keys")
+
+        # MCP editor compatibility keys used in mcp-servers-store.js
+        used_settings_keys.update({"mcp_servers", "mcpServers"})
+
+        return used_settings_keys, used_additional_keys
+
+    def test_settings_get_includes_all_frontend_used_keys(self, client):
+        used_settings_keys, used_additional_keys = self._collect_frontend_settings_keys()
+
+        res = client.post("/settings_get", json={})
+        assert res.status_code == 200
+        payload = res.json()
+        assert payload.get("ok") is True
+
+        settings = payload.get("settings", {})
+        additional = payload.get("additional", {})
+        assert isinstance(settings, dict)
+        assert isinstance(additional, dict)
+
+        missing_settings = sorted(k for k in used_settings_keys if k not in settings)
+        missing_additional = sorted(k for k in used_additional_keys if k not in additional)
+
+        assert not missing_settings, f"Missing settings keys: {missing_settings}"
+        assert not missing_additional, f"Missing additional keys: {missing_additional}"
+
+    def test_mcp_compat_endpoints_have_agent_zero_shape(self, client):
+        status = client.post("/mcp_servers_status", json={})
+        assert status.status_code == 200
+        status_payload = status.json()
+        assert status_payload.get("success") is True
+        assert "status" in status_payload
+
+        apply_resp = client.post("/mcp_servers_apply", json={"mcp_servers": "{\n  \"mcpServers\": {}\n}"})
+        assert apply_resp.status_code == 200
+        apply_payload = apply_resp.json()
+        assert apply_payload.get("success") is True
+        assert "status" in apply_payload
+
+        detail = client.post("/mcp_server_get_detail", json={"server_name": "example"})
+        assert detail.status_code == 200
+        detail_payload = detail.json()
+        assert detail_payload.get("success") is True
+        assert "detail" in detail_payload
+
+        log_resp = client.post("/mcp_server_get_log", json={"server_name": "example"})
+        assert log_resp.status_code == 200
+        log_payload = log_resp.json()
+        assert log_payload.get("success") is True
+        assert isinstance(log_payload.get("log"), str)
+
+    def test_catalog_refresh_returns_counts(self, client):
+        res = client.post("/catalog_refresh", json={})
+        assert res.status_code == 200
+        payload = res.json()
+        assert payload.get("ok") is True
+        counts = payload.get("counts", {})
+        assert isinstance(counts.get("chat_providers"), int)
+        assert isinstance(counts.get("embedding_providers"), int)
+        assert isinstance(counts.get("agents"), int)
+        assert isinstance(payload.get("additional"), dict)
+
+    def test_catalog_status_returns_summary(self, client):
+        res = client.post("/catalog_status", json={})
+        assert res.status_code == 200
+        payload = res.json()
+        assert payload.get("ok") is True
+        summary = payload.get("summary", {})
+        assert isinstance(summary.get("source"), str)
+        assert isinstance(summary.get("provider_count"), int)
+        assert isinstance(summary.get("model_count"), int)
+        counts = payload.get("counts", {})
+        assert isinstance(counts.get("minapps"), int)
+
+    def test_minapps_endpoints_return_list(self, client):
+        minapps = client.post("/minapps", json={})
+        assert minapps.status_code == 200
+        payload = minapps.json()
+        assert payload.get("ok") is True
+        assert isinstance(payload.get("data"), list)
+        assert isinstance(payload.get("count"), int)
+
+        launchpad = client.post("/launchpad_apps", json={})
+        assert launchpad.status_code == 200
+        lp_payload = launchpad.json()
+        assert lp_payload.get("ok") is True
+        assert isinstance(lp_payload.get("data"), list)
+        assert isinstance(lp_payload.get("count"), int)

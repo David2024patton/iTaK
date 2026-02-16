@@ -144,6 +144,23 @@ class TestSQLiteStore:
         results = await store.search(query="Entry", limit=20)
         assert len(results) >= 10
 
+    @pytest.mark.asyncio
+    async def test_skillbank_save_and_search(self, store):
+        """Should save and retrieve distilled skills."""
+        skill_id = await store.save_skill(
+            title="FastAPI endpoint troubleshooting",
+            content="When endpoint responses mismatch, inspect response schema and payload keys first.",
+            skill_type="task_specific",
+            domain="web",
+            confidence=0.9,
+        )
+
+        assert isinstance(skill_id, int)
+        results = await store.search_skills(query="response schema", limit=5)
+        assert len(results) >= 1
+        assert any(r.get("id") == skill_id for r in results)
+        assert results[0].get("skill_type") in {"task_specific", "general"}
+
 
 # ============================================================
 # MemoryManager Tests
@@ -245,6 +262,85 @@ class TestMemoryManager:
         # Compaction should work without errors
         if hasattr(manager, "compact"):
             await manager.compact()
+
+    @pytest.mark.asyncio
+    async def test_skillbank_auto_distillation(self, tmp_path):
+        """Saving lessons should auto-distill reusable skills."""
+        from memory.manager import MemoryManager
+
+        config = {
+            "sqlite_path": str(tmp_path / "memory.db"),
+            "skillbank": {
+                "enabled": True,
+                "auto_extract": True,
+                "min_content_chars": 20,
+                "max_skills_per_memory": 2,
+            },
+        }
+
+        manager = MemoryManager(config)
+        await manager.initialize()
+
+        await manager.save(
+            content="If API calls fail, validate auth token format and verify endpoint payload schema before retries.",
+            category="general",
+        )
+
+        skills = await manager.search_skills("auth token payload schema", limit=5)
+        assert len(skills) >= 1
+        assert any("token" in s.get("content", "").lower() for s in skills)
+
+    @pytest.mark.asyncio
+    async def test_skillbank_influences_search_ranking(self, tmp_path):
+        """SkillBank results should participate in unified memory search."""
+        from memory.manager import MemoryManager
+
+        config = {
+            "sqlite_path": str(tmp_path / "memory.db"),
+            "skillbank": {
+                "enabled": True,
+                "auto_extract": False,
+            },
+        }
+
+        manager = MemoryManager(config)
+        await manager.initialize()
+
+        await manager.save_skill(
+            title="Debug pytest import issues",
+            content="Set PYTHONPATH to project root when module imports fail in pytest runs.",
+            domain="python",
+            skill_type="task_specific",
+            confidence=0.9,
+        )
+
+        results = await manager.search("PYTHONPATH module imports pytest", limit=5)
+        assert len(results) >= 1
+        assert any(r.get("metadata", {}).get("layer") == "skill_bank" for r in results)
+
+    @pytest.mark.asyncio
+    async def test_ingest_url_persists_markdown_metadata(self, tmp_path):
+        """URL ingestion should save content and capture markdown headers metadata."""
+        from memory.manager import MemoryManager
+
+        config = {"sqlite_path": str(tmp_path / "memory.db")}
+        manager = MemoryManager(config)
+        await manager.initialize()
+
+        manager._fetch_url_content = MagicMock(return_value={
+            "text": "# Example\n\nThis is markdown body.",
+            "content_type": "text/markdown; charset=utf-8",
+            "markdown_tokens": 123,
+            "content_signal": "ai-train=yes, ai-input=yes",
+        })
+
+        saved = await manager.ingest_url("https://example.com/docs")
+        assert isinstance(saved.get("memory_id"), int)
+        assert saved.get("markdown_tokens") == 123
+
+        results = await manager.search("markdown body", limit=3)
+        assert len(results) >= 1
+        assert any((r.get("metadata") or {}).get("url") == "https://example.com/docs" for r in results)
 
 
 # ============================================================

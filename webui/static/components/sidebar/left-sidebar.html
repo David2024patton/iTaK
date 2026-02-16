@@ -20,6 +20,11 @@
             <x-component path="sidebar/chats/chats-list.html"></x-component>
           </div>
 
+          <!-- Launchpad Apps -->
+          <div class="config-section" id="launchpad-section">
+            <x-component path="sidebar/launchpad/launchpad-list.html"></x-component>
+          </div>
+
           <!-- Tasks List -->
           <div class="config-section" id="tasks-section">
             <x-component path="sidebar/tasks/tasks-list.html"></x-component>
@@ -107,6 +112,7 @@
     }
 
     /* Tasks section container inside sidebar */
+    #launchpad-section,
     #tasks-section {
       display: -webkit-flex;
       display: flex;
@@ -124,6 +130,8 @@
     /* Flatten wrapper elements to maintain flex chain for inner scroll containers */
     #chats-section>x-component,
     #chats-section>x-component>div[x-data],
+    #launchpad-section>x-component,
+    #launchpad-section>x-component>div[x-data],
     #tasks-section>x-component,
     #tasks-section>x-component>div[x-data],
     #tasks-section>x-component>div[x-data]>div[x-data] {

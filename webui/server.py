@@ -6,11 +6,17 @@ Provides REST API + WebSocket for real-time agent monitoring.
 import asyncio
 import json
 import logging
+import os
+import re
 import secrets
+import shutil
+import subprocess
 import time
 import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
+from urllib.error import HTTPError, URLError
+from urllib.request import Request as UrlRequest, urlopen
 
 if TYPE_CHECKING:
     from core.agent import Agent
@@ -22,7 +28,7 @@ def create_app(agent: "Agent"):
     """Create the FastAPI application."""
     from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
     from fastapi.staticfiles import StaticFiles
-    from fastapi.responses import HTMLResponse, JSONResponse
+    from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
     from fastapi.middleware.cors import CORSMiddleware
 
     app = FastAPI(title="iTaK Dashboard", version="1.0.0")
@@ -121,6 +127,354 @@ def create_app(agent: "Agent"):
     sio_sequence = 0
     sio_sid_seqbase: dict[str, int] = {}
 
+    def _to_title(value: str) -> str:
+        return str(value or "").replace("_", " ").replace("-", " ").strip().title()
+
+    def _read_catalog_payload() -> dict:
+        root = Path(__file__).parent.parent
+        catalog_path = root / "data" / "catalog" / "cherry_catalog.json"
+
+        if not catalog_path.exists():
+            return {}
+
+        try:
+            payload = json.loads(catalog_path.read_text(encoding="utf-8"))
+            return payload if isinstance(payload, dict) else {}
+        except Exception as e:
+            logger.warning(f"Failed to read catalog payload: {e}")
+            return {}
+
+    def _catalog_summary(payload: dict | None) -> dict:
+        data = payload or {}
+        provider_count = int(data.get("provider_count") or len(data.get("providers") or []))
+        model_count = int(data.get("model_count") or len(data.get("all_model_ids") or []))
+        return {
+            "source": str(data.get("source") or ""),
+            "provider_count": provider_count,
+            "model_count": model_count,
+        }
+
+    def _load_catalog(payload: dict | None = None) -> tuple[list[dict], list[dict], list[dict]]:
+
+        default_chat = [
+            {"value": "openai", "label": "OpenAI"},
+            {"value": "google", "label": "Google"},
+        ]
+        default_embed = [{"value": "openai", "label": "OpenAI"}]
+        default_agents = [{"key": "default", "label": "Default", "name": "default"}]
+
+        if payload is None:
+            payload = _read_catalog_payload()
+        if not payload:
+            return default_chat, default_embed, default_agents
+
+        try:
+            providers_raw = payload.get("providers") or []
+            models_raw = payload.get("all_model_ids") or []
+            minapps_raw = payload.get("minapps") or []
+
+            providers = [str(p).strip() for p in providers_raw if str(p).strip()]
+            models = [str(m).strip() for m in models_raw if str(m).strip()]
+            minapps = [m for m in minapps_raw if isinstance(m, dict) and str(m.get("id") or "").strip()]
+
+            chat_providers = [{"value": p, "label": _to_title(p)} for p in sorted(set(providers), key=str.lower)]
+            embedding_providers = list(chat_providers) if chat_providers else default_embed
+
+            agents: list[dict] = [{"key": "default", "label": "Default", "name": "default"}]
+            for provider in sorted(set(providers), key=str.lower):
+                key = f"provider__{provider}"
+                agents.append({
+                    "key": key,
+                    "label": f"{_to_title(provider)} Specialist",
+                    "name": key,
+                })
+            for model_id in sorted(set(models), key=str.lower):
+                key = f"model__{model_id}"
+                agents.append({
+                    "key": key,
+                    "label": f"{model_id} Assistant",
+                    "name": key,
+                })
+            for minapp in sorted(minapps, key=lambda x: str(x.get("name") or "").lower()):
+                minapp_id = str(minapp.get("id") or "").strip()
+                minapp_name = str(minapp.get("name") or minapp_id).strip()
+                if not minapp_id:
+                    continue
+                key = f"minapp__{minapp_id}"
+                agents.append({
+                    "key": key,
+                    "label": f"{minapp_name} Agent",
+                    "name": key,
+                })
+
+            return (
+                chat_providers or default_chat,
+                embedding_providers or default_embed,
+                agents or default_agents,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to load provider/assistant catalog: {e}")
+            return default_chat, default_embed, default_agents
+
+    def _fetch_text(url: str, timeout: int = 30) -> str:
+        req = UrlRequest(url, headers={"User-Agent": "iTaK/1.0 (+catalog-sync)"})
+        with urlopen(req, timeout=timeout) as response:
+            return response.read().decode("utf-8", errors="replace")
+
+    def _extract_provider_ids(providers_source: str) -> list[str]:
+        providers: set[str] = set()
+        key_pattern = re.compile(r"^\s*['\"]?([A-Za-z0-9_-]+)['\"]?\s*:\s*\{\s*$")
+        lines = providers_source.splitlines()
+        for idx, line in enumerate(lines):
+            match = key_pattern.match(line)
+            if not match:
+                continue
+            key = match.group(1)
+            window = "\n".join(lines[idx + 1: idx + 24])
+            if "api:" in window and "websites:" in window:
+                providers.add(key)
+        return sorted(providers, key=str.lower)
+
+    def _extract_models_by_provider(models_source: str) -> dict[str, list[str]]:
+        provider_pattern = re.compile(r"^\s*['\"]?([A-Za-z0-9_-]+)['\"]?\s*:\s*\[\s*$")
+        model_pattern = re.compile(r"\bid\s*:\s*['\"]([^'\"]+)['\"]")
+
+        models_by_provider: dict[str, set[str]] = {}
+        current_provider: str | None = None
+        bracket_depth = 0
+
+        for line in models_source.splitlines():
+            if current_provider is None:
+                provider_match = provider_pattern.match(line)
+                if provider_match:
+                    current_provider = provider_match.group(1)
+                    models_by_provider.setdefault(current_provider, set())
+                    bracket_depth = line.count("[") - line.count("]")
+                continue
+
+            bracket_depth += line.count("[") - line.count("]")
+            model_match = model_pattern.search(line)
+            if model_match:
+                models_by_provider[current_provider].add(model_match.group(1))
+
+            if bracket_depth <= 0:
+                current_provider = None
+                bracket_depth = 0
+
+        return {
+            provider: sorted(values, key=str.lower)
+            for provider, values in models_by_provider.items()
+            if values
+        }
+
+    def _extract_minapps(minapps_source: str) -> list[dict]:
+        start_idx = -1
+        for marker in ["ORIGIN_DEFAULT_MIN_APPS", "DEFAULT_MIN_APPS", "minApps"]:
+            start_idx = minapps_source.find(marker)
+            if start_idx >= 0:
+                break
+        if start_idx < 0:
+            return []
+
+        assign_idx = minapps_source.find("=", start_idx)
+        block_start = minapps_source.find("[", assign_idx if assign_idx >= 0 else start_idx)
+        if block_start < 0:
+            return []
+
+        depth = 0
+        block_end = -1
+        for idx in range(block_start, len(minapps_source)):
+            char = minapps_source[idx]
+            if char == "[":
+                depth += 1
+            elif char == "]":
+                depth -= 1
+                if depth == 0:
+                    block_end = idx
+                    break
+        if block_end < 0:
+            return []
+
+        window = minapps_source[block_start:block_end + 1]
+        id_pattern = re.compile(r"\bid\s*:\s*['\"]([^'\"]+)['\"]")
+        name_pattern = re.compile(r"\bname\s*:\s*['\"]([^'\"]+)['\"]")
+        url_pattern = re.compile(r"\burl\s*:\s*['\"]([^'\"]+)['\"]")
+
+        minapps: list[dict] = []
+        current_lines: list[str] = []
+        brace_depth = 0
+        for line in window.splitlines():
+            opens = line.count("{")
+            closes = line.count("}")
+
+            if opens > 0 and brace_depth == 0:
+                current_lines = []
+
+            if brace_depth > 0 or opens > 0:
+                current_lines.append(line)
+
+            brace_depth += opens - closes
+            if brace_depth != 0:
+                continue
+            if not current_lines:
+                continue
+
+            object_block = "\n".join(current_lines)
+            id_match = id_pattern.search(object_block)
+            name_match = name_pattern.search(object_block)
+            url_match = url_pattern.search(object_block)
+            if not (id_match and name_match and url_match):
+                current_lines = []
+                continue
+            minapps.append({
+                "id": id_match.group(1),
+                "name": name_match.group(1),
+                "url": url_match.group(1),
+            })
+            current_lines = []
+
+        by_id: dict[str, dict] = {}
+        for item in minapps:
+            by_id[item["id"]] = item
+        return sorted(by_id.values(), key=lambda x: x.get("name", "").lower())
+
+    def _build_catalog_from_cherry(owner: str, repo: str, branch: str) -> dict:
+        base = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}"
+        providers_url = f"{base}/src/renderer/src/config/providers.ts"
+        models_url = f"{base}/src/renderer/src/config/models/default.ts"
+        minapps_url = f"{base}/src/renderer/src/config/minapps.ts"
+
+        providers_source = _fetch_text(providers_url)
+        models_source = _fetch_text(models_url)
+        minapps_source = _fetch_text(minapps_url)
+
+        providers = _extract_provider_ids(providers_source)
+        models_by_provider = _extract_models_by_provider(models_source)
+        minapps = _extract_minapps(minapps_source)
+        model_ids = sorted({m for models in models_by_provider.values() for m in models}, key=str.lower)
+
+        provider_union = sorted(set(providers) | set(models_by_provider.keys()), key=str.lower)
+        return {
+            "source": f"Cherry Studio upstream: {owner}/{repo}@{branch}",
+            "provider_count": len(provider_union),
+            "model_count": len(model_ids),
+            "providers": provider_union,
+            "models_by_provider": {
+                provider: models_by_provider.get(provider, [])
+                for provider in provider_union
+            },
+            "all_model_ids": model_ids,
+            "minapp_count": len(minapps),
+            "minapps": minapps,
+        }
+
+    def _sync_catalog_from_cherry(owner: str = "David2024patton", repo: str = "cherry-studio", branch: str = "main") -> dict:
+        payload = _build_catalog_from_cherry(owner=owner, repo=repo, branch=branch)
+        root = Path(__file__).parent.parent
+        catalog_dir = root / "data" / "catalog"
+        catalog_dir.mkdir(parents=True, exist_ok=True)
+        catalog_path = catalog_dir / "cherry_catalog.json"
+        catalog_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        return payload
+
+    catalog_payload = _read_catalog_payload()
+    catalog_minapps = catalog_payload.get("minapps", []) if isinstance(catalog_payload.get("minapps"), list) else []
+    catalog_chat_providers, catalog_embedding_providers, catalog_agents = _load_catalog(catalog_payload)
+    catalog_summary = _catalog_summary(catalog_payload)
+
+    def _refresh_catalog() -> dict:
+        nonlocal catalog_payload, catalog_summary, catalog_minapps, catalog_chat_providers, catalog_embedding_providers, catalog_agents
+        catalog_payload = _read_catalog_payload()
+        catalog_minapps = catalog_payload.get("minapps", []) if isinstance(catalog_payload.get("minapps"), list) else []
+        catalog_summary = _catalog_summary(catalog_payload)
+        catalog_chat_providers, catalog_embedding_providers, catalog_agents = _load_catalog(catalog_payload)
+        compat_additional["chat_providers"] = catalog_chat_providers
+        compat_additional["embedding_providers"] = catalog_embedding_providers
+        compat_additional["catalog_source"] = catalog_summary.get("source", "")
+        compat_additional["catalog_provider_count"] = catalog_summary.get("provider_count", 0)
+        compat_additional["catalog_model_count"] = catalog_summary.get("model_count", 0)
+        compat_additional["catalog_models_by_provider"] = catalog_payload.get("models_by_provider", {})
+        compat_additional["catalog_minapp_count"] = len(catalog_minapps)
+        return {
+            "chat_providers": len(catalog_chat_providers),
+            "embedding_providers": len(catalog_embedding_providers),
+            "agents": len(catalog_agents),
+            "minapps": len(catalog_minapps),
+        }
+
+    def _workdir_root() -> Path:
+        raw = str(compat_settings.get("workdir_path") or Path.cwd())
+        try:
+            return Path(raw).expanduser().resolve()
+        except Exception:
+            return Path.cwd().resolve()
+
+    def _resolve_workdir_path(raw_path: str | None) -> Path:
+        root = _workdir_root()
+        value = str(raw_path or "").strip()
+
+        if value in {"", "$WORK_DIR", "/$WORK_DIR"}:
+            candidate = root
+        else:
+            if value.startswith("file://"):
+                value = value[7:]
+
+            # Preserve compatibility with paths rooted at $WORK_DIR while
+            # allowing absolute paths produced by the browser flow.
+            if value.startswith("$WORK_DIR"):
+                suffix = value[len("$WORK_DIR"):].lstrip("/")
+                candidate = root / suffix
+            elif value.startswith("/"):
+                absolute_candidate = Path(value)
+                if absolute_candidate.exists():
+                    candidate = absolute_candidate
+                else:
+                    candidate = root / value.lstrip("/")
+            else:
+                candidate = root / value
+
+        resolved = candidate.expanduser().resolve(strict=False)
+        try:
+            resolved.relative_to(root)
+        except ValueError as exc:
+            raise ValueError("Path is outside of workdir") from exc
+        return resolved
+
+    def _entry_payload(path: Path) -> dict:
+        stat = path.stat()
+        return {
+            "name": path.name,
+            "path": str(path),
+            "is_dir": path.is_dir(),
+            "size": 0 if path.is_dir() else int(stat.st_size),
+            "modified": int(stat.st_mtime),
+        }
+
+    def _list_workdir_entries(path: Path) -> list[dict]:
+        entries: list[dict] = []
+        try:
+            children = sorted(path.iterdir(), key=lambda item: (not item.is_dir(), item.name.lower()))
+        except Exception:
+            return entries
+
+        for child in children:
+            if child.name.startswith("."):
+                continue
+            try:
+                entries.append(_entry_payload(child))
+            except Exception:
+                continue
+        return entries
+
+    def _workdir_browser_payload(path: Path) -> dict:
+        root = _workdir_root()
+        parent_path = str(path.parent) if path != root else ""
+        return {
+            "entries": _list_workdir_entries(path),
+            "current_path": str(path),
+            "parent_path": parent_path,
+        }
+
     compat_settings = {
         "chat_model_provider": "openai",
         "chat_model_name": "gpt-4o-mini",
@@ -196,8 +550,12 @@ def create_app(agent: "Agent"):
         "secrets": "",
         "mcp_server_enabled": bool(getattr(agent, "mcp_server", None)),
         "mcp_server_token": agent.config.get("mcp_server", {}).get("token", ""),
+        "mcp_servers": "{\n  \"mcpServers\": {}\n}",
+        "mcpServers": "{\n  \"mcpServers\": {}\n}",
         "mcp_client_init_timeout": 15,
         "mcp_client_tool_timeout": 90,
+        "gogcli_binary": agent.config.get("gogcli", {}).get("binary", "gog"),
+        "gogcli_timeout_seconds": int(agent.config.get("gogcli", {}).get("timeout_seconds", 60)),
         "a2a_server_enabled": False,
         "rfc_url": "",
         "rfc_password": "",
@@ -207,8 +565,13 @@ def create_app(agent: "Agent"):
     }
 
     compat_additional = {
-        "chat_providers": [{"value": "openai", "label": "OpenAI"}, {"value": "google", "label": "Google"}],
-        "embedding_providers": [{"value": "openai", "label": "OpenAI"}],
+        "chat_providers": catalog_chat_providers,
+        "embedding_providers": catalog_embedding_providers,
+        "catalog_source": catalog_summary.get("source", ""),
+        "catalog_provider_count": catalog_summary.get("provider_count", 0),
+        "catalog_model_count": catalog_summary.get("model_count", 0),
+        "catalog_models_by_provider": catalog_payload.get("models_by_provider", {}),
+        "catalog_minapp_count": len(catalog_minapps),
         "agent_subdirs": [{"value": "default", "label": "default"}],
         "knowledge_subdirs": [{"value": "skills", "label": "skills"}],
         "stt_models": [{"value": "tiny", "label": "tiny"}, {"value": "base", "label": "base"}, {"value": "small", "label": "small"}],
@@ -425,6 +788,141 @@ def create_app(agent: "Agent"):
         ctx = _ensure_context(payload.get("ctxid"))
         return {"ok": True, "ctxid": ctx["id"], "content": json.dumps(ctx, indent=2)}
 
+    @app.post("/chat_files_path_get")
+    async def chat_files_path_get(payload: dict | None = None):
+        return {"ok": True, "path": "$WORK_DIR"}
+
+    @app.get("/get_work_dir_files")
+    async def get_work_dir_files(path: str = ""):
+        try:
+            target = _resolve_workdir_path(path)
+            if not target.exists():
+                return {"ok": False, "error": f"Path does not exist: {target}"}
+            if not target.is_dir():
+                return {"ok": False, "error": "Path is not a directory"}
+            return {"ok": True, "data": _workdir_browser_payload(target)}
+        except Exception as e:
+            return {"ok": False, "error": f"Error fetching files: {e}"}
+
+    @app.post("/rename_work_dir_file")
+    async def rename_work_dir_file(payload: dict | None = None):
+        data = payload or {}
+        action = str(data.get("action") or "rename")
+        new_name = str(data.get("newName") or "").strip()
+
+        if not new_name:
+            return {"ok": False, "error": "Name is required"}
+        if new_name in {".", ".."} or "/" in new_name or "\\" in new_name:
+            return {"ok": False, "error": "Invalid name"}
+
+        try:
+            if action == "create-folder":
+                parent = _resolve_workdir_path(data.get("parentPath") or data.get("currentPath"))
+                if not parent.exists() or not parent.is_dir():
+                    return {"ok": False, "error": "Parent directory not found"}
+                target = parent / new_name
+                if target.exists():
+                    return {"ok": False, "error": f"An item named '{new_name}' already exists."}
+                target.mkdir(parents=False, exist_ok=False)
+                current = _resolve_workdir_path(data.get("currentPath") or parent)
+                return {"ok": True, "data": _workdir_browser_payload(current)}
+
+            source = _resolve_workdir_path(data.get("path"))
+            if not source.exists():
+                return {"ok": False, "error": "File or folder not found"}
+            destination = source.with_name(new_name)
+            if destination.exists() and destination != source:
+                return {"ok": False, "error": f"An item named '{new_name}' already exists."}
+            source.rename(destination)
+            current = _resolve_workdir_path(data.get("currentPath") or destination.parent)
+            return {"ok": True, "data": _workdir_browser_payload(current)}
+        except Exception as e:
+            return {"ok": False, "error": f"Rename failed: {e}"}
+
+    @app.post("/delete_work_dir_file")
+    async def delete_work_dir_file(payload: dict | None = None):
+        data = payload or {}
+        try:
+            target = _resolve_workdir_path(data.get("path"))
+            if not target.exists():
+                return {"ok": False, "error": "File or folder not found"}
+
+            if target.is_dir():
+                shutil.rmtree(target)
+            else:
+                target.unlink()
+
+            current = _resolve_workdir_path(data.get("currentPath") or target.parent)
+            if not current.exists() or not current.is_dir():
+                current = _workdir_root()
+            return {"ok": True, "data": _workdir_browser_payload(current)}
+        except Exception as e:
+            return {"ok": False, "error": f"Delete failed: {e}"}
+
+    @app.post("/upload_work_dir_files")
+    async def upload_work_dir_files(request: Request):
+        failed: list[dict] = []
+        try:
+            form = await request.form()
+            current = _resolve_workdir_path(form.get("path"))
+            if not current.exists() or not current.is_dir():
+                return {"ok": False, "error": "Upload path not found"}
+
+            uploads = []
+            uploads.extend(form.getlist("files[]"))
+            uploads.extend(form.getlist("files"))
+
+            for file_obj in uploads:
+                filename = str(getattr(file_obj, "filename", "") or "").strip()
+                if not filename:
+                    continue
+                safe_name = Path(filename).name
+                destination = current / safe_name
+                try:
+                    content = await file_obj.read()
+                    destination.write_bytes(content)
+                except Exception as file_error:
+                    failed.append({"name": safe_name, "error": str(file_error)})
+
+            payload = {"ok": True, "data": _workdir_browser_payload(current)}
+            if failed:
+                payload["failed"] = failed
+            return payload
+        except Exception as e:
+            return {"ok": False, "error": f"Upload failed: {e}"}
+
+    @app.get("/download_work_dir_file")
+    async def download_work_dir_file(path: str):
+        try:
+            target = _resolve_workdir_path(path)
+            if not target.exists() or not target.is_file():
+                return JSONResponse(status_code=404, content={"ok": False, "error": "File not found"})
+            return FileResponse(path=str(target), filename=target.name)
+        except Exception as e:
+            return JSONResponse(status_code=400, content={"ok": False, "error": f"Download failed: {e}"})
+
+    @app.post("/file_info")
+    async def file_info(payload: dict | None = None):
+        data = payload or {}
+        raw_path = data.get("path")
+        try:
+            target = _resolve_workdir_path(raw_path)
+        except Exception:
+            return {
+                "exists": False,
+                "is_dir": False,
+                "abs_path": "",
+                "file_name": "",
+            }
+
+        exists = target.exists()
+        return {
+            "exists": exists,
+            "is_dir": bool(target.is_dir()) if exists else False,
+            "abs_path": str(target),
+            "file_name": target.name,
+        }
+
     @app.post("/chat_load")
     async def chat_load(payload: dict):
         loaded = []
@@ -539,7 +1037,159 @@ def create_app(agent: "Agent"):
         incoming = payload.get("settings", {}) if isinstance(payload, dict) else {}
         if isinstance(incoming, dict):
             compat_settings.update(incoming)
+            gogcli_cfg = agent.config.setdefault("gogcli", {})
+            if "gogcli_binary" in incoming:
+                gogcli_cfg["binary"] = str(incoming.get("gogcli_binary") or "gog")
+            if "gogcli_timeout_seconds" in incoming:
+                try:
+                    gogcli_cfg["timeout_seconds"] = max(1, int(incoming.get("gogcli_timeout_seconds") or 60))
+                except Exception:
+                    gogcli_cfg["timeout_seconds"] = 60
         return {"ok": True, "settings": compat_settings, "additional": compat_additional}
+
+    @app.post("/catalog_refresh")
+    async def catalog_refresh(payload: dict | None = None):
+        counts = _refresh_catalog()
+        return {"ok": True, "counts": counts, "summary": catalog_summary, "additional": compat_additional}
+
+    @app.post("/catalog_status")
+    async def catalog_status(payload: dict | None = None):
+        return {
+            "ok": True,
+            "summary": catalog_summary,
+            "counts": {
+                "chat_providers": len(catalog_chat_providers),
+                "embedding_providers": len(catalog_embedding_providers),
+                "agents": len(catalog_agents),
+                "minapps": len(catalog_minapps),
+            },
+            "additional": compat_additional,
+        }
+
+    @app.post("/minapps")
+    async def minapps(payload: dict | None = None):
+        return {"ok": True, "data": catalog_minapps, "count": len(catalog_minapps), "source": catalog_summary.get("source", "")}
+
+    @app.post("/launchpad_apps")
+    async def launchpad_apps(payload: dict | None = None):
+        return {"ok": True, "data": catalog_minapps, "count": len(catalog_minapps), "source": catalog_summary.get("source", "")}
+
+    @app.post("/agents_catalog")
+    async def agents_catalog(payload: dict | None = None):
+        provider_agents = [a for a in catalog_agents if str(a.get("key", "")).startswith("provider__")]
+        model_agents = [a for a in catalog_agents if str(a.get("key", "")).startswith("model__")]
+        minapp_agents = [a for a in catalog_agents if str(a.get("key", "")).startswith("minapp__")]
+        return {
+            "ok": True,
+            "source": catalog_summary.get("source", ""),
+            "counts": {
+                "provider_agents": len(provider_agents),
+                "model_agents": len(model_agents),
+                "minapp_agents": len(minapp_agents),
+                "total_catalog_agents": len(catalog_agents),
+            },
+            "data": {
+                "provider_agents": provider_agents,
+                "model_agents": model_agents,
+                "minapp_agents": minapp_agents,
+            },
+        }
+
+    @app.post("/catalog_sync_from_cherry")
+    async def catalog_sync_from_cherry(payload: dict | None = None):
+        data = payload or {}
+        owner = str(data.get("owner") or "David2024patton")
+        repo = str(data.get("repo") or "cherry-studio")
+        branch = str(data.get("branch") or "main")
+
+        try:
+            catalog = _sync_catalog_from_cherry(owner=owner, repo=repo, branch=branch)
+            counts = _refresh_catalog()
+            return {
+                "ok": True,
+                "counts": counts,
+                "summary": catalog_summary,
+                "source": catalog_summary.get("source", ""),
+                "providers": catalog_summary.get("provider_count", 0),
+                "models": catalog_summary.get("model_count", 0),
+                "minapps": len(catalog_minapps),
+                "additional": compat_additional,
+            }
+        except (HTTPError, URLError, TimeoutError) as e:
+            return {"ok": False, "error": f"Catalog sync failed: {e}"}
+        except Exception as e:
+            return {"ok": False, "error": f"Catalog sync failed: {e}"}
+
+    @app.post("/system_test_run")
+    async def system_test_run(request: Request, payload: dict | None = None):
+        data = payload or {}
+        test_name = str(data.get("test") or "all").strip().lower()
+
+        repo_root = Path(__file__).parent.parent
+        script_map = {
+            "resources": "tools/check_resource_endpoints.sh",
+            "memory": "tools/check_memory_smoke.sh",
+            "chat": "tools/check_chat_smoke.sh",
+            "all": "tools/check_system_smoke.sh",
+        }
+
+        rel_script = script_map.get(test_name)
+        if not rel_script:
+            return {
+                "ok": False,
+                "error": "Unknown test. Use one of: resources, memory, chat, all",
+                "test": test_name,
+            }
+
+        script_path = repo_root / rel_script
+        if not script_path.exists():
+            return {
+                "ok": False,
+                "error": f"Script not found: {rel_script}",
+                "test": test_name,
+            }
+
+        command = ["bash", str(script_path)]
+        env = os.environ.copy()
+        env["WEBUI_BASE_URL"] = str(request.base_url).rstrip("/")
+
+        try:
+            completed = await asyncio.to_thread(
+                subprocess.run,
+                command,
+                cwd=str(repo_root),
+                capture_output=True,
+                text=True,
+                timeout=300,
+                env=env,
+            )
+            output = (completed.stdout or "").strip()
+            error_output = (completed.stderr or "").strip()
+            merged_output = "\n".join([part for part in [output, error_output] if part]).strip()
+
+            return {
+                "ok": completed.returncode == 0,
+                "test": test_name,
+                "command": f"bash {rel_script}",
+                "exit_code": completed.returncode,
+                "output": merged_output,
+            }
+        except subprocess.TimeoutExpired:
+            return {
+                "ok": False,
+                "test": test_name,
+                "command": f"bash {rel_script}",
+                "exit_code": -1,
+                "error": "Test timed out after 300 seconds",
+            }
+        except Exception as exc:
+            return {
+                "ok": False,
+                "test": test_name,
+                "command": f"bash {rel_script}",
+                "exit_code": -1,
+                "error": str(exc),
+            }
 
     @app.post("/settings_workdir_file_structure")
     async def settings_workdir_file_structure(payload: dict):
@@ -574,7 +1224,34 @@ def create_app(agent: "Agent"):
 
     @app.post("/agents")
     async def agents(payload: dict):
-        return {"ok": True, "data": [{"key": "default", "label": "Default", "name": "default"}]}
+        runtime_profiles: list[dict] = []
+        if hasattr(agent, "swarm") and agent.swarm:
+            try:
+                runtime_profiles = [
+                    {
+                        "key": p.get("name", ""),
+                        "label": p.get("display_name") or p.get("name", ""),
+                        "name": p.get("name", ""),
+                    }
+                    for p in (agent.swarm.list_profiles() or [])
+                    if p.get("name")
+                ]
+            except Exception:
+                runtime_profiles = []
+
+        by_key: dict[str, dict] = {}
+        for item in [*runtime_profiles, *catalog_agents]:
+            key = str(item.get("key") or item.get("name") or "").strip()
+            if not key:
+                continue
+            by_key[key] = {
+                "key": key,
+                "label": str(item.get("label") or key),
+                "name": str(item.get("name") or key),
+            }
+
+        merged = sorted(by_key.values(), key=lambda x: x.get("label", "").lower())
+        return {"ok": True, "data": merged}
 
     @app.post("/skills")
     async def skills(payload: dict):
@@ -599,20 +1276,57 @@ def create_app(agent: "Agent"):
     async def mcp_servers_status(payload: dict | None = None):
         if hasattr(agent, "mcp_client") and agent.mcp_client:
             status = agent.mcp_client.get_status()
-            return {"ok": True, "data": status}
-        return {"ok": True, "data": {"servers": {}}}
+            servers = []
+            if isinstance(status, dict):
+                for name, info in (status.get("servers") or {}).items():
+                    servers.append({
+                        "name": name,
+                        "connected": bool((info or {}).get("connected")),
+                        "tool_count": len((info or {}).get("tools") or []),
+                        "tools": (info or {}).get("tools") or [],
+                        "error": (info or {}).get("error", ""),
+                    })
+            servers.sort(key=lambda s: (s.get("name") or "").lower())
+            return {"ok": True, "success": True, "data": status, "status": servers}
+        empty = {"servers": {}, "configured": 0, "connected": 0, "total_tools": 0}
+        return {"ok": True, "success": True, "data": empty, "status": []}
 
     @app.post("/mcp_servers_apply")
     async def mcp_servers_apply(payload: dict):
-        return {"ok": True}
+        value = payload.get("mcp_servers") if isinstance(payload, dict) else None
+        if isinstance(value, str) and value.strip():
+            compat_settings["mcp_servers"] = value
+            compat_settings["mcpServers"] = value
+        status_resp = await mcp_servers_status(None)
+        return {"ok": True, "success": True, "status": status_resp.get("status", [])}
 
     @app.post("/mcp_server_get_detail")
     async def mcp_server_get_detail(payload: dict):
-        return {"ok": True, "data": {}}
+        server_name = ""
+        if isinstance(payload, dict):
+            server_name = str(payload.get("server_name") or "")
+
+        detail = {"name": server_name, "connected": False, "tools": [], "tool_count": 0, "error": ""}
+        if hasattr(agent, "mcp_client") and agent.mcp_client and server_name:
+            status = agent.mcp_client.get_status() or {}
+            info = (status.get("servers") or {}).get(server_name) or {}
+            tools = info.get("tools") or []
+            detail = {
+                "name": server_name,
+                "connected": bool(info.get("connected")),
+                "tools": tools,
+                "tool_count": len(tools),
+                "error": info.get("error", ""),
+            }
+        return {"ok": True, "success": True, "data": detail, "detail": detail}
 
     @app.post("/mcp_server_get_log")
     async def mcp_server_get_log(payload: dict):
-        return {"ok": True, "data": []}
+        server_name = ""
+        if isinstance(payload, dict):
+            server_name = str(payload.get("server_name") or "")
+        log_lines: list[str] = [f"MCP server: {server_name or 'unknown'}", "No runtime log available in compatibility mode."]
+        return {"ok": True, "success": True, "data": log_lines, "log": "\n".join(log_lines)}
 
     @app.post("/tunnel_proxy")
     async def tunnel_proxy(payload: dict):
@@ -646,6 +1360,85 @@ def create_app(agent: "Agent"):
     @app.post("/scheduler_task_delete")
     async def scheduler_task_delete(payload: dict):
         return {"ok": True}
+
+    @app.post("/resource_hub")
+    async def resource_hub(payload: dict | None = None):
+        root = Path(__file__).parent.parent
+
+        def list_names(folder: Path, pattern: str, exclude: set[str] | None = None) -> list[dict]:
+            exclude = exclude or set()
+            output: list[dict] = []
+            if not folder.exists():
+                return output
+            for file in sorted(folder.glob(pattern), key=lambda p: p.name.lower()):
+                if file.name in exclude:
+                    continue
+                output.append({
+                    "name": file.name,
+                    "path": str(file.relative_to(root)),
+                    "size": file.stat().st_size,
+                })
+            return output
+
+        tasks = []
+        if hasattr(agent, "task_board") and agent.task_board:
+            for task in agent.task_board.list_all(limit=200):
+                d = task.to_dict()
+                tasks.append({
+                    "id": d.get("id"),
+                    "title": d.get("title") or d.get("id"),
+                    "status": d.get("status", "unknown"),
+                })
+
+        mcp = {"configured": 0, "connected": 0, "total_tools": 0}
+        if hasattr(agent, "mcp_client") and agent.mcp_client:
+            status = agent.mcp_client.get_status() or {}
+            mcp = {
+                "configured": status.get("configured", 0),
+                "connected": status.get("connected", 0),
+                "total_tools": status.get("total_tools", 0),
+            }
+
+        return {
+            "ok": True,
+            "data": {
+                "adapters": list_names(root / "adapters", "*.py", {"__init__.py"}),
+                "prompts": list_names(root / "prompts", "*.md"),
+                "tools": list_names(root / "tools", "*.py", {"__init__.py", "base.py", "response.py"}),
+                "skills": list_names(root / "skills", "*.md", {"SKILL.md"}),
+                "tasks": tasks,
+                "mcp": mcp,
+            },
+        }
+
+    @app.post("/resource_file")
+    async def resource_file(payload: dict):
+        root = Path(__file__).parent.parent
+        kind = str(payload.get("kind", "")).strip().lower()
+        name = str(payload.get("name", "")).strip()
+
+        if not name or "/" in name or "\\" in name or ".." in name:
+            return JSONResponse({"error": "Invalid file name"}, status_code=400)
+
+        base_dir_by_kind = {
+            "adapters": root / "adapters",
+            "prompts": root / "prompts",
+            "tools": root / "tools",
+            "skills": root / "skills",
+        }
+        base_dir = base_dir_by_kind.get(kind)
+        if not base_dir:
+            return JSONResponse({"error": "Unsupported resource kind"}, status_code=400)
+
+        target = base_dir / name
+        if not target.exists() or not target.is_file():
+            return JSONResponse({"error": "Resource not found"}, status_code=404)
+
+        try:
+            content = target.read_text(encoding="utf-8")
+            return {"ok": True, "kind": kind, "name": name, "content": content}
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
 
     @app.get("/api/health")
     async def health():
