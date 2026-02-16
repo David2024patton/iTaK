@@ -47,6 +47,7 @@ The detailed content for this topic starts below.
 2. [Deployment Checklist](root/DEPLOYMENT_CHECKLIST.md)
 3. [Testing Guide](root/TESTING.md)
 4. [Production Testing Summary](root/PRODUCTION_TESTING_SUMMARY.md)
+5. [OpenClaw Adoption Plan](root/OPENCLAW_2026_2_14_ADOPTION_PLAN.md)
 
 ### 3) Developer Path
 
@@ -72,6 +73,7 @@ The detailed content for this topic starts below.
 - Testing: [root/TESTING.md](root/TESTING.md)
 - Integration patterns: [integration-design.md](integration-design.md)
 - Agent-Zero comparison: [root/iTAK_VS_AGENT_ZERO.md](root/iTAK_VS_AGENT_ZERO.md)
+- OpenClaw update adoption: [root/OPENCLAW_2026_2_14_ADOPTION_PLAN.md](root/OPENCLAW_2026_2_14_ADOPTION_PLAN.md)
 
 ---
 
@@ -81,3 +83,4 @@ The detailed content for this topic starts below.
 - Advanced docs keep implementation detail and file mapping.
 - AI docs keep structured facts with explicit paths and commands.
 - Feature claims should be evidence-based (code/tests/docs), not marketing-only.
+- Contributor writing and formatting rules are documented in [../CONTRIBUTING.md](../CONTRIBUTING.md).

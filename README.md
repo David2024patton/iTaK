@@ -226,6 +226,7 @@ python -m app.main --webui
 - Run no-em-dash check: `tools/check_no_emdash.sh --paths prompts memory`
 - Install local pre-commit enforcement: `tools/install_git_hooks.sh`
 - CI also enforces markdown lint on every push and pull request.
+- Contributor style rules are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 👉 **[INSTALLATION GUIDE](docs/root/INSTALLATION_GUIDE.md)** - Complete step-by-step walkthrough for new users:
 

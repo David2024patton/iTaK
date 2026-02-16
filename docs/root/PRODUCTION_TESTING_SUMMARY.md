@@ -21,6 +21,12 @@ The detailed content for this topic starts below.
 - Prefer reproducible commands (`pytest`, smoke scripts) and capture exact outputs.
 - Treat numeric metrics as snapshots unless tied to current command output.
 
+## OpenClaw Parity Tracking
+
+- OpenClaw release reviewed: `v2026.2.14`
+- Adoption execution plan: [OPENCLAW_2026_2_14_ADOPTION_PLAN.md](OPENCLAW_2026_2_14_ADOPTION_PLAN.md)
+- Use that plan as the canonical checklist for security/stability parity work.
+
 **Date:** February 14, 2026  
 **Version:** 4.0  
 **Status:** ✅ **PRODUCTION-READY** (with conditions)
