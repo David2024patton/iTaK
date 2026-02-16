@@ -7,7 +7,7 @@
     <img src="https://img.shields.io/badge/Python-3.11+-blue?logo=python" alt="Python">
     <img src="https://img.shields.io/badge/License-MIT-green" alt="License">
     <img src="https://img.shields.io/badge/Version-4.0-orange" alt="Version">
-    <img src="https://img.shields.io/badge/Tests-258_tests_|_85%25_coverage-success" alt="Tests">
+    <img src="https://img.shields.io/badge/Tests-396_collected_(snapshot)-success" alt="Tests">
     <img src="https://img.shields.io/badge/Status-Production_Ready-brightgreen" alt="Status">
   </p>
 </p>
@@ -88,7 +88,7 @@ python -m app.main --webui
 
 **iTaK** is a modular, self-healing AI agent framework that combines Agent Zero's monologue engine with MemGPT's infinite memory architecture and OpenClaw's multi-channel connectivity. It's not just another chatbot - it's an autonomous coding assistant, DevOps engineer, and research analyst that remembers everything, fixes its own mistakes, and works across Discord, Telegram, Slack, and a web dashboard simultaneously.
 
-**Production-Ready:** 258 tests, 85% coverage, HIPAA/PCI/SOC2/GDPR compliance certified.
+**Production-oriented:** large automated test suite, compliance-focused controls, and multi-channel operations.
 
 ## 🎯 What Makes iTaK Different
 
@@ -105,8 +105,8 @@ python -m app.main --webui
 | Built-in code quality gate (linting) | ❌ | ❌ | ✅ | ✅ |
 | Real-time WebUI dashboard | ❌ | ✅ | ✅ | ✅ |
 | Crash recovery & checkpoints | ❌ | ❌ | ❌ | ✅ |
-| **Test Coverage** | ❌ | Unknown | Unknown | **85% (258 tests)** |
-| **Production Ready** | ❌ | ⚠️ Caution | Partial | **✅ Compliance Certified** |
+| **Testing Footprint** | ❌ | Unknown | Unknown | **396 collected tests (snapshot)** |
+| **Compliance Posture** | ❌ | ⚠️ Caution | Partial | **Compliance-focused tests and controls** |
 | Media pipeline (image/audio/video) | ❌ | ❌ | Partial | ✅ |
 | Presence system (typing/status) | ❌ | ❌ | ✅ | ✅ |
 | Output guard (PII/secret redaction) | ❌ | ❌ | ❌ | ✅ |
@@ -217,6 +217,12 @@ python -m app.main --webui
 ---
 
 ## 📚 Documentation
+
+Start with role-based navigation:
+
+- **Wiki Home:** [docs/WIKI.md](docs/WIKI.md)
+- **Noob Path:** [docs/NOOBS_FIRST_DAY.md](docs/NOOBS_FIRST_DAY.md)
+- **AI Context:** [docs/AI_CONTEXT.md](docs/AI_CONTEXT.md)
 
 Detailed guides for every module, config option, and API endpoint:
 

@@ -2,6 +2,12 @@
 
 > From zero to running agent in 5 minutes.
 
+## Choose Your Path
+
+- Beginner walkthrough: [NOOBS_FIRST_DAY.md](NOOBS_FIRST_DAY.md)
+- Wiki navigation hub: [WIKI.md](WIKI.md)
+- AI-friendly structured context: [AI_CONTEXT.md](AI_CONTEXT.md)
+
 ## Prerequisites
 
 | Requirement | Minimum | Check |

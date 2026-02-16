@@ -2,6 +2,10 @@
 
 Get iTaK up and running in **2 minutes** with ONE Python script!
 
+> New here? Use the wiki-style docs hub: [../WIKI.md](../WIKI.md)
+>
+> Beginner path: [../NOOBS_FIRST_DAY.md](../NOOBS_FIRST_DAY.md) · AI path: [../AI_CONTEXT.md](../AI_CONTEXT.md)
+
 ## 🎯 Universal Installer (Recommended)
 
 **ONE command works on ALL platforms** — Linux, macOS, Windows (WSL), and WSL directly!
@@ -299,8 +303,8 @@ User: Create a task to learn Docker
 | **Commands** | 1-2 | 2 |
 | **Configuration** | Via Web UI | Via Web UI |
 | **Memory System** | 4-tier | Basic |
-| **Test Coverage** | 85% (258 tests) | Unknown |
-| **Production Ready** | ✅ Yes | ⚠️ Experimental |
+| **Testing Footprint** | 396 collected tests (snapshot) | Unknown |
+| **Production Posture** | Compliance-focused controls/tests | ⚠️ Experimental |
 
 iTaK matches Agent-Zero's ease of installation while providing enterprise-grade features!
 
@@ -347,7 +351,10 @@ Check your API key:
 ### Learn More
 - [Full Installation Guide](INSTALLATION_GUIDE.md) - Complete setup with all features
 - [iTaK vs Agent-Zero](iTAK_VS_AGENT_ZERO.md) - Detailed comparison
-- [Testing Documentation](TESTING.md) - 258 tests, 85% coverage
+- [Testing Documentation](TESTING.md) - Current test and smoke-test workflow
+- [Wiki Home](../WIKI.md) - Role-based documentation map
+- [Noob First Day](../NOOBS_FIRST_DAY.md) - Step-by-step beginner flow
+- [AI Context](../AI_CONTEXT.md) - Structured project facts for agents/tools
 - [Production Deployment](PRODUCTION_TESTING_SUMMARY.md) - Enterprise ready
 
 ### Get Help
