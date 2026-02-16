@@ -1,4 +1,4 @@
-# iTaK — Dockerfile
+# iTaK - Dockerfile
 # Build stage for the main agent container
 
 FROM python:3.12-slim

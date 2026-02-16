@@ -23,7 +23,7 @@ The detailed content for this topic starts below.
 
 ## 🚀 Quick Install (All Platforms)
 
-**ONE command works everywhere** — Linux, macOS, Windows (WSL), or WSL directly:
+**ONE command works everywhere** - Linux, macOS, Windows (WSL), or WSL directly:
 
 ```bash
 git clone https://github.com/David2024patton/iTaK.git

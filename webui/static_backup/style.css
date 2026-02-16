@@ -1,4 +1,4 @@
-/* ===== iTaK Dashboard — Design Tokens ===== */
+/* ===== iTaK Dashboard - Design Tokens ===== */
 :root {
     --bg-primary: #0a0a0f;
     --bg-secondary: #12121a;
@@ -421,7 +421,7 @@ body {
 }
 
 /* ======================================================= */
-/*             MISSION CONTROL — KANBAN BOARD              */
+/*             MISSION CONTROL - KANBAN BOARD              */
 /* ======================================================= */
 
 .inbox-color {

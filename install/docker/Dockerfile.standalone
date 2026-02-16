@@ -1,4 +1,4 @@
-# iTaK — Standalone Quick-Install Dockerfile
+# iTaK - Standalone Quick-Install Dockerfile
 # Optimized for quick install like Agent-Zero: docker run -p 8000:8000 itak
 
 FROM python:3.12-slim

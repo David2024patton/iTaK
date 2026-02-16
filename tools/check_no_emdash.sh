@@ -6,7 +6,7 @@ usage() {
   cat <<'EOF'
 Usage: tools/check_no_emdash.sh [--staged] [--paths <path> [<path> ...]]
 
-Checks files for em-dash characters (U+2014, "—").
+Checks files for em-dash characters (U+2014).
 
 Options:
   --staged              Check staged markdown files only
@@ -80,10 +80,11 @@ if [[ ${#files[@]} -eq 0 ]]; then
 fi
 
 violations=0
+emdash=$'\u2014'
 
 for file in "${files[@]}"; do
   [[ -f "${file}" ]] || continue
-  if grep -n "—" "${file}" >/tmp/emdash_hits.$$ 2>/dev/null; then
+  if grep -n "${emdash}" "${file}" >/tmp/emdash_hits.$$ 2>/dev/null; then
     if [[ ${violations} -eq 0 ]]; then
       echo "Em-dash usage detected (use '-' instead):"
     fi

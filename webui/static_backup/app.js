@@ -1,4 +1,4 @@
-// ===== iTaK Dashboard — app.js =====
+// ===== iTaK Dashboard - app.js =====
 const API = window.location.origin;
 let ws = null;
 
@@ -135,7 +135,7 @@ async function searchMemory() {
 }
 
 // ======================================================
-//             MISSION CONTROL — KANBAN BOARD
+//             MISSION CONTROL - KANBAN BOARD
 // ======================================================
 
 function timeAgo(ts) {

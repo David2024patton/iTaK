@@ -1,4 +1,4 @@
-# iTaK CI — minimal deps for testing only
+# iTaK CI - minimal deps for testing only
 # Full requirements.txt has heavy native packages (browser-use, playwright,
 # weaviate-client, neo4j, discord.py) that need special CI setup.
 # Tests in tests/test_core.py only need lightweight core modules.

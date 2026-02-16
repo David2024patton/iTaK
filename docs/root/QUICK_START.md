@@ -29,7 +29,7 @@ Get iTaK up and running in **2 minutes** with ONE Python script!
 
 ## 🎯 Universal Installer (Recommended)
 
-**ONE command works on ALL platforms** — Linux, macOS, Windows (WSL), and WSL directly!
+**ONE command works on ALL platforms** - Linux, macOS, Windows (WSL), and WSL directly!
 
 ```bash
 git clone https://github.com/David2024patton/iTaK.git
@@ -271,7 +271,7 @@ If you skip the setup wizard, you can add API keys anytime:
 | OpenRouter | `OPENROUTER_API_KEY` | <https://openrouter.ai/keys> |
 | Local Ollama | `OLLAMA_BASE_URL` | <http://localhost:11434> (install Ollama) |
 
-**Tip:** Start with Google Gemini — it has a free tier!
+**Tip:** Start with Google Gemini - it has a free tier!
 
 ---
 
