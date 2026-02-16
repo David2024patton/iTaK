@@ -2,7 +2,7 @@
 
 ## At a Glance
 - Audience: Maintainers reviewing implementation details for email account creation support.
-- Scope: This page explains `Summary: Email Account Creation Feature Added`.
+- Scope: Document autonomous email account workflows, supported actions, and operational constraints.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start

@@ -2,7 +2,7 @@
 
 ## At a Glance
 - Audience: Evaluators comparing iTaK with other agent frameworks for fit and tradeoffs.
-- Scope: This page explains `iTaK vs Agent-Zero: Feature Comparison`.
+- Scope: Compare capabilities and tradeoffs using repository-backed evidence and deployment-aware caveats.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start

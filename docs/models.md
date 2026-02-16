@@ -2,7 +2,7 @@
 
 ## At a Glance
 - Audience: Developers extending iTaK behavior via tools, prompts, models, and core modules.
-- Scope: This page explains `Models & LLM Providers Guide`.
+- Scope: Describe module responsibilities, configuration surfaces, and extension patterns used in day-to-day work.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start

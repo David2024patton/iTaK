@@ -2,7 +2,7 @@
 
 ## At a Glance
 - Audience: Beginners, operators, and AI agents navigating iTaK documentation quickly.
-- Scope: This page explains `iTaK Noob First Day Guide`.
+- Scope: Walk first-time users through day-one setup, first run, and confidence checks.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start

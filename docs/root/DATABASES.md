@@ -2,13 +2,13 @@
 
 ## At a Glance
 - Audience: Operators and developers managing iTaK data stores and memory layers.
-- Scope: This page explains `iTaK Database Architecture`.
+- Scope: Explain each database layer, why it exists, and how to run, verify, and maintain it safely.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
-- Open related navigation docs: [../WIKI.md](../WIKI.md) and [../AI_CONTEXT.md](../AI_CONTEXT.md).
-- Identify commands or modules named on this page before making changes.
-- Validate resulting behavior with the smallest relevant test or smoke check.
+- Confirm which storage layers are enabled in your environment before troubleshooting.
+- Use this page to map each service to its role, data type, and operational dependency.
+- Run the smallest relevant health check per datastore after any configuration change.
 
 ## Deep Dive
 The detailed content for this topic starts below.

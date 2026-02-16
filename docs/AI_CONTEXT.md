@@ -2,7 +2,7 @@
 
 ## At a Glance
 - Audience: Beginners, operators, and AI agents navigating iTaK documentation quickly.
-- Scope: This page explains `iTaK AI Context`.
+- Scope: Provide an AI-readable map of architecture, subsystems, and where to find canonical details.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start

@@ -2,7 +2,7 @@
 
 ## At a Glance
 - Audience: Developers and operators tuning performance, throughput, and resource usage.
-- Scope: This page explains `iTaK Performance Optimization Summary`.
+- Scope: Summarize optimization work, measurement approach, and the conditions required to reproduce results.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start

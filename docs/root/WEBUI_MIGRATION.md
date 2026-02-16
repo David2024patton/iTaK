@@ -2,7 +2,7 @@
 
 ## At a Glance
 - Audience: Developers integrating channels, APIs, and system architecture components.
-- Scope: This page explains `WebUI Migration to Agent Zero Architecture`.
+- Scope: Explain component boundaries, integration points, and expected behavior across interfaces.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start

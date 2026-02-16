@@ -2,13 +2,13 @@
 
 ## At a Glance
 - Audience: Maintainers auditing completed scope for skills and tools enhancements.
-- Scope: This page explains `Implementation Summary: Skills and Tools Enhancement`.
+- Scope: Summarize what was shipped, where it was implemented, and what remains for follow-up.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
-- Open related navigation docs: [../WIKI.md](../WIKI.md) and [../AI_CONTEXT.md](../AI_CONTEXT.md).
-- Identify commands or modules named on this page before making changes.
-- Validate resulting behavior with the smallest relevant test or smoke check.
+- Start with the implemented feature list, then verify each item against referenced files.
+- Use this page to separate completed delivery from backlog or stretch goals.
+- Re-run targeted checks before declaring any section production-ready.
 
 ## Deep Dive
 The detailed content for this topic starts below.

@@ -2,7 +2,7 @@
 
 ## At a Glance
 - Audience: Developers and operators configuring autonomous email account workflows.
-- Scope: This page explains `Email Account Creation Feature`.
+- Scope: Document autonomous email account workflows, supported actions, and operational constraints.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start

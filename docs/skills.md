@@ -2,7 +2,7 @@
 
 ## At a Glance
 - Audience: Developers and contributors authoring, maintaining, and mapping iTaK skills.
-- Scope: This page explains `Skills Reference`.
+- Scope: Describe module responsibilities, configuration surfaces, and extension patterns used in day-to-day work.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start

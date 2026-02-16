@@ -2,7 +2,7 @@
 
 ## At a Glance
 - Audience: Project leads and contributors coordinating long-range iTaK roadmap execution.
-- Scope: This page explains `iTaK - Master Gameplan`.
+- Scope: Organize roadmap intent, sequencing, and execution expectations across major project phases.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start

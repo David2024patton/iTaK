@@ -2,7 +2,7 @@
 
 ## At a Glance
 - Audience: Beginners, operators, and AI agents navigating iTaK documentation quickly.
-- Scope: This page explains `iTaK Wiki`.
+- Scope: Navigate the docs by role and jump quickly to setup, operations, and development paths.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start

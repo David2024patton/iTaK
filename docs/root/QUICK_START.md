@@ -2,13 +2,13 @@
 
 ## At a Glance
 - Audience: New users, operators, and developers setting up iTaK environments.
-- Scope: This page explains `iTaK Quick Start Guide`.
+- Scope: Get iTaK running quickly with the minimum required steps and immediate verification checks.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
-- Open related navigation docs: [../WIKI.md](../WIKI.md) and [../AI_CONTEXT.md](../AI_CONTEXT.md).
-- Identify commands or modules named on this page before making changes.
-- Validate resulting behavior with the smallest relevant test or smoke check.
+- Follow the commands in order without skipping prerequisite checks.
+- Confirm services are reachable on expected ports before moving to integrations.
+- Use this guide for first launch, then continue into deeper setup docs as needed.
 
 ## Deep Dive
 The detailed content for this topic starts below.

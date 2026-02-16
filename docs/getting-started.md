@@ -2,7 +2,7 @@
 
 ## At a Glance
 - Audience: New users, operators, and developers setting up iTaK environments.
-- Scope: This page explains `Getting Started`.
+- Scope: Guide environment setup from prerequisites to first successful launch with validation checkpoints.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start

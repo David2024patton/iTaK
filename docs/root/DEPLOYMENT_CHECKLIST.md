@@ -2,7 +2,7 @@
 
 ## At a Glance
 - Audience: Security-conscious operators and developers implementing hardening controls.
-- Scope: This page explains `iTaK Deployment Checklist`.
+- Scope: Document hardening controls, secure defaults, and verification steps before deployment.
 - Last reviewed: 2026-02-16.
 
 ## Quick Start
