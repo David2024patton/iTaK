@@ -11,4 +11,4 @@ if [ -n "${ITAK_ARGS:-}" ]; then
   exec python -m app.main ${ITAK_ARGS}
 fi
 
-exec python -m app.main --webui
+exec python -m app.main --webui-only
