@@ -116,6 +116,16 @@ def create_app(agent: "Agent"):
 
         return await call_next(request)
 
+    @app.middleware("http")
+    async def no_cache_static(request: Request, call_next):
+        response = await call_next(request)
+        path = request.url.path
+        if path.endswith((".js", ".html", ".css")):
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        return response
+
     # WebSocket connections for real-time updates
     ws_clients: list[WebSocket] = []
 
@@ -608,6 +618,20 @@ def create_app(agent: "Agent"):
         "skills_require_review_summary": True,
     }
 
+    # Provider -> default API base URL map
+    _provider_endpoints = {
+        "openai": "",
+        "google": "",
+        "gemini": "",
+        "anthropic": "",
+        "nvidia": "https://integrate.api.nvidia.com/v1",
+        "openrouter": "https://openrouter.ai/api/v1",
+        "groq": "https://api.groq.com/openai/v1",
+        "ollama": "http://localhost:11434/v1",
+        "mistral": "https://api.mistral.ai/v1",
+        "deepseek": "https://api.deepseek.com/v1",
+    }
+
     compat_additional = {
         "chat_providers": catalog_chat_providers,
         "embedding_providers": catalog_embedding_providers,
@@ -616,6 +640,7 @@ def create_app(agent: "Agent"):
         "catalog_model_count": catalog_summary.get("model_count", 0),
         "catalog_models_by_provider": catalog_payload.get("models_by_provider", {}),
         "catalog_minapp_count": len(catalog_minapps),
+        "provider_endpoints": _provider_endpoints,
         "agent_subdirs": [{"value": "default", "label": "default"}],
         "knowledge_subdirs": [{"value": "skills", "label": "skills"}],
         "stt_models": [{"value": "tiny", "label": "tiny"}, {"value": "base", "label": "base"}, {"value": "small", "label": "small"}],
@@ -1258,6 +1283,137 @@ def create_app(agent: "Agent"):
     @app.post("/launchpad_apps")
     async def launchpad_apps(payload: dict | None = None):
         return {"ok": True, "data": catalog_minapps, "count": len(catalog_minapps), "source": catalog_summary.get("source", "")}
+
+    @app.post("/models_list")
+    async def models_list(payload: dict):
+        """Fetch available models from a provider's API endpoint."""
+        provider = str(payload.get("provider", "")).strip().lower()
+        api_key = str(payload.get("api_key", "")).strip()
+        api_base = str(payload.get("api_base", "")).strip()
+
+        # Use default endpoint if not provided
+        if not api_base:
+            api_base = _provider_endpoints.get(provider, "")
+
+        if not api_base:
+            # For providers with default SDK endpoints, try standard ones
+            _fallback_bases = {
+                "openai": "https://api.openai.com/v1",
+                "anthropic": "https://api.anthropic.com/v1",
+                "google": "https://generativelanguage.googleapis.com/v1beta",
+                "gemini": "https://generativelanguage.googleapis.com/v1beta",
+            }
+            api_base = _fallback_bases.get(provider, "")
+
+        if not api_base:
+            return {"ok": False, "error": f"No API endpoint known for provider '{provider}'. Please enter an API base URL.", "models": []}
+
+        # Normalize URL
+        api_base = api_base.rstrip("/")
+
+        # Special handling for Google/Gemini
+        if provider in ("google", "gemini"):
+            models_url = f"{api_base}/models?key={api_key}" if api_key else f"{api_base}/models"
+            try:
+                import urllib.request
+                req = urllib.request.Request(models_url, headers={"User-Agent": "iTaK/1.0"})
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    data = json.loads(resp.read().decode("utf-8", errors="replace"))
+                models_list = []
+                for m in data.get("models", []):
+                    model_name = m.get("name", "")
+                    display_name = m.get("displayName", model_name)
+                    # name is like 'models/gemini-2.5-pro' -> extract 'gemini-2.5-pro'
+                    model_id = model_name.split("/")[-1] if "/" in model_name else model_name
+                    if model_id and "generateContent" in str(m.get("supportedGenerationMethods", [])):
+                        models_list.append({"id": model_id, "name": display_name})
+                return {"ok": True, "models": sorted(models_list, key=lambda x: x["name"]), "provider": provider}
+            except Exception as e:
+                return {"ok": False, "error": f"Failed to fetch models from Google: {e}", "models": []}
+
+        # Standard OpenAI-compatible /models endpoint
+        models_url = f"{api_base}/models"
+        try:
+            import urllib.request
+            headers = {"User-Agent": "iTaK/1.0"}
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
+            req = urllib.request.Request(models_url, headers=headers)
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                data = json.loads(resp.read().decode("utf-8", errors="replace"))
+
+            models_list = []
+            raw_models = data.get("data", []) if isinstance(data.get("data"), list) else []
+            if not raw_models and isinstance(data.get("models"), list):
+                raw_models = data["models"]
+
+            for m in raw_models:
+                if isinstance(m, dict):
+                    mid = m.get("id", "")
+                    mname = m.get("name") or m.get("id", "")
+                    if mid:
+                        models_list.append({"id": mid, "name": mname})
+                elif isinstance(m, str):
+                    models_list.append({"id": m, "name": m})
+
+            return {"ok": True, "models": sorted(models_list, key=lambda x: x["name"]), "provider": provider}
+        except Exception as e:
+            return {"ok": False, "error": f"Failed to fetch models: {e}", "models": []}
+
+    @app.post("/logs_get")
+    async def logs_get(payload: dict | None = None):
+        """Return recent agent logs for the logs viewer."""
+        max_lines = int((payload or {}).get("max_lines", 200))
+        log_lines = []
+
+        # Try reading from agent log file
+        log_paths = [
+            Path(__file__).parent.parent / "logs" / "agent.log",
+            Path(__file__).parent.parent / "log" / "agent.log",
+            Path(__file__).parent.parent / "agent.log",
+        ]
+
+        log_file = None
+        for lp in log_paths:
+            if lp.exists():
+                log_file = lp
+                break
+
+        if log_file:
+            try:
+                with open(log_file, "r", encoding="utf-8", errors="replace") as f:
+                    all_lines = f.readlines()
+                    log_lines = all_lines[-max_lines:]
+            except Exception as e:
+                log_lines = [f"Error reading log file: {e}\n"]
+
+        # Also collect recent context logs from all chat contexts
+        context_logs = []
+        for ctx_id, ctx in contexts.items():
+            for entry in ctx.get("logs", [])[-50:]:
+                context_logs.append({
+                    "context": ctx.get("name", ctx_id),
+                    "type": entry.get("type", ""),
+                    "content": entry.get("content", ""),
+                    "heading": entry.get("heading", ""),
+                })
+
+        # Include Python logging records if available
+        import logging
+        root_logger = logging.getLogger()
+        handler_logs = []
+        for handler in root_logger.handlers:
+            if hasattr(handler, "buffer"):
+                for record in handler.buffer[-max_lines:]:
+                    handler_logs.append(handler.format(record))
+
+        return {
+            "ok": True,
+            "file_logs": "".join(log_lines),
+            "context_logs": context_logs[-max_lines:],
+            "handler_logs": handler_logs[-max_lines:],
+            "timestamp": time.time(),
+        }
 
     @app.post("/agents_catalog")
     async def agents_catalog(payload: dict | None = None):
