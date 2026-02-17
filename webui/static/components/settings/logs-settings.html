@@ -224,7 +224,7 @@
 
       <!-- Controls -->
       <button @click="fetchLogs()" :disabled="isLoading"
-        style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 4px;"
+        style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;"
         :style="isLoading ? 'opacity: 0.6; cursor: wait;' : ''">
         <span x-show="!isLoading">🔄 Refresh</span>
         <span x-show="isLoading">⏳ Loading...</span>
@@ -238,7 +238,7 @@
         🤖 Send to Agent
       </button>
       <button @click="clearLogs()"
-        style="padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(220,50,50,0.4); background: rgba(220,50,50,0.15); color: #f88; cursor: pointer; font-size: 13px;">
+        style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;">
         🗑️ Clear Logs
       </button>
       <label
