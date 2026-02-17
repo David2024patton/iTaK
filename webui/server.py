@@ -3243,13 +3243,7 @@ def create_app(agent: "Agent"):
     if hasattr(agent, "progress") and agent.progress:
         agent.progress.register_callback(ws_broadcast)
 
-    # --- Serve Frontend ---
-
-    static_dir = Path(__file__).parent / "static"
-    if static_dir.exists():
-        app.mount("/", StaticFiles(directory=str(static_dir), html=True))
-
-    # --- logs_get endpoint for enhanced logs page ---
+    # --- logs_get endpoint for enhanced logs page (MUST be before static mount) ---
     @app.post("/logs_get")
     async def logs_get_endpoint(request: Request):
         body = await request.json() if request.headers.get("content-type", "").startswith("application/json") else {}
@@ -3297,6 +3291,12 @@ def create_app(agent: "Agent"):
             "total_system_logs": len(_system_logs),
             "total_context_logs": len(context_logs),
         })
+
+    # --- Serve Frontend (catch-all, must be LAST) ---
+
+    static_dir = Path(__file__).parent / "static"
+    if static_dir.exists():
+        app.mount("/", StaticFiles(directory=str(static_dir), html=True))
 
     try:
         import socketio
