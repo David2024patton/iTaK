@@ -1,16 +1,11 @@
 <html>
 
 <head>
-    <title>Logs</title>
+  <title>Logs</title>
 </head>
 
 <body>
-    <script type="module">
-        import * as API from "/js/api.js";
-        window._logsAPI = API;
-    </script>
-
-    <div x-data="{
+  <div x-data="{
   logs: '',
   contextLogs: [],
   isLoading: false,
@@ -18,17 +13,34 @@
   autoRefreshInterval: null,
   lastRefresh: '',
   maxLines: 200,
-  activeLogTab: 'context',
+  activeLogTab: 'all',
+  categoryFilter: '',
+  categories: {},
+  totalSystemLogs: 0,
+  totalContextLogs: 0,
+  errorMessage: '',
 
   async fetchLogs() {
     this.isLoading = true;
+    this.errorMessage = '';
     try {
-      const response = await window._logsAPI.callJsonApi('logs_get', { max_lines: this.maxLines });
+      const body = { max_lines: this.maxLines };
+      if (this.categoryFilter) body.category = this.categoryFilter;
+
+      const resp = await fetch('/logs_get', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const response = await resp.json();
+
       if (response && response.ok) {
         this.logs = response.file_logs || '';
         this.contextLogs = response.context_logs || [];
+        this.categories = response.categories || {};
+        this.totalSystemLogs = response.total_system_logs || 0;
+        this.totalContextLogs = response.total_context_logs || 0;
 
-        // Append handler logs if available
         if (response.handler_logs && response.handler_logs.length > 0) {
           this.logs = response.handler_logs.join('\n') + '\n\n' + this.logs;
         }
@@ -38,9 +50,12 @@
         }
 
         this.lastRefresh = new Date().toLocaleTimeString();
+      } else {
+        this.errorMessage = 'Server returned error';
       }
     } catch (e) {
-      this.logs = 'Error fetching logs: ' + e.message;
+      this.errorMessage = 'Error fetching logs: ' + e.message;
+      this.logs = '';
     } finally {
       this.isLoading = false;
     }
@@ -48,45 +63,56 @@
 
   get formattedContextLogs() {
     return this.contextLogs.map(l => {
-      const prefix = l.type === 'user' ? '👤 USER' : l.type === 'response' ? '🤖 AGENT' : '📋 ' + l.type.toUpperCase();
-      const ctx = l.context ? `[${l.context}]` : '';
-      return `${prefix} ${ctx}: ${l.content}`;
+      const prefix = l.type === 'user' ? '👤 USER' : l.type === 'response' ? '🤖 AGENT' : '📋 ' + (l.type || 'unknown').toUpperCase();
+      const ctx = l.context_name ? `[${l.context_name}]` : l.context ? `[${l.context.substring(0,8)}]` : '';
+      return prefix + ' ' + ctx + ': ' + (l.content || '(empty)');
     }).join('\n\n---\n\n');
   },
 
   get currentLogText() {
-    if (this.activeLogTab === 'context') {
-      return this.formattedContextLogs || 'No context logs available.';
+    if (this.activeLogTab === 'chat') {
+      return this.formattedContextLogs || 'No chat logs available.';
     }
-    return this.logs || 'No file logs available.';
+    if (this.activeLogTab === 'system') {
+      return this.logs || 'No system logs available.';
+    }
+    // 'all' tab: combine both
+    const parts = [];
+    if (this.logs) parts.push('═══ SYSTEM LOGS ═══\n' + this.logs);
+    if (this.formattedContextLogs) parts.push('═══ CHAT LOGS ═══\n' + this.formattedContextLogs);
+    return parts.join('\n\n') || 'No logs available.';
+  },
+
+  get categoryBadges() {
+    const cats = Object.entries(this.categories);
+    return cats.sort((a, b) => b[1] - a[1]);
   },
 
   async copyLogs() {
     try {
       await navigator.clipboard.writeText(this.currentLogText);
-      this.$dispatch('toast', { type: 'success', text: 'Logs copied to clipboard' });
     } catch (e) {
-      // Fallback
       const ta = document.createElement('textarea');
       ta.value = this.currentLogText;
       document.body.appendChild(ta);
       ta.select();
       document.execCommand('copy');
       document.body.removeChild(ta);
-      this.$dispatch('toast', { type: 'success', text: 'Logs copied to clipboard' });
     }
   },
 
   async sendToAgent() {
     const logText = this.currentLogText;
     if (!logText || logText.startsWith('No ')) return;
-
     const message = 'Here are the recent logs. Please analyze them for any errors or issues:\n\n```\n' + logText.substring(0, 4000) + '\n```';
     try {
-      await window._logsAPI.callJsonApi('message_async', { text: message });
-      this.$dispatch('toast', { type: 'success', text: 'Logs sent to agent for analysis' });
+      await fetch('/message_async', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: message }),
+      });
     } catch (e) {
-      this.$dispatch('toast', { type: 'error', text: 'Failed to send logs: ' + e.message });
+      this.errorMessage = 'Failed to send logs: ' + e.message;
     }
   },
 
@@ -100,62 +126,104 @@
     }
   },
 
+  filterByCategory(cat) {
+    this.categoryFilter = this.categoryFilter === cat ? '' : cat;
+    this.fetchLogs();
+  },
+
   init() {
     this.fetchLogs();
   }
 }">
 
-        <div class="section-title">System Logs</div>
-        <div class="section-description">
-            View recent agent and context logs. Use these to debug issues with models, connectivity, or agent behavior.
-        </div>
+    <div class="section-title">System Logs</div>
+    <div class="section-description">
+      View recent system, chat, model, and connection logs. Use category filters to isolate specific log types.
+    </div>
 
-        <!-- Log tab selector -->
-        <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center; flex-wrap: wrap;">
-            <button @click="activeLogTab = 'context'"
-                :style="activeLogTab === 'context' ? 'background: var(--color-primary, #6ea8fe); color: #000; border-color: var(--color-primary, #6ea8fe);' : ''"
-                style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;">
-                💬 Chat Logs
-            </button>
-            <button @click="activeLogTab = 'file'"
-                :style="activeLogTab === 'file' ? 'background: var(--color-primary, #6ea8fe); color: #000; border-color: var(--color-primary, #6ea8fe);' : ''"
-                style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;">
-                📄 System Logs
-            </button>
+    <!-- Error banner -->
+    <div x-show="errorMessage" x-text="errorMessage"
+      style="background: rgba(220,50,50,0.15); color: #f88; border: 1px solid rgba(220,50,50,0.3); border-radius: 6px; padding: 8px 12px; margin-bottom: 10px; font-size: 12px;">
+    </div>
 
-            <div style="flex: 1;"></div>
+    <!-- Category filter badges -->
+    <div style="display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; align-items: center;">
+      <span style="font-size: 11px; color: var(--color-text-muted, #888); margin-right: 4px;">Categories:</span>
+      <template x-for="[cat, count] in categoryBadges" :key="cat">
+        <button @click="filterByCategory(cat)" :style="categoryFilter === cat
+                      ? 'background: var(--color-primary, #6ea8fe); color: #000; border-color: var(--color-primary, #6ea8fe);'
+                      : 'background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee);'"
+          style="padding: 3px 10px; border-radius: 12px; border: 1px solid var(--color-border, #444); cursor: pointer; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
+          <span x-text="cat.toUpperCase()"></span>
+          <span style="opacity: 0.6; font-size: 10px;" x-text="'(' + count + ')'"></span>
+        </button>
+      </template>
+      <button x-show="categoryFilter" @click="categoryFilter = ''; fetchLogs()"
+        style="padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(220,50,50,0.4); background: rgba(220,50,50,0.15); color: #f88; cursor: pointer; font-size: 11px;">
+        ✕ Clear
+      </button>
+    </div>
 
-            <!-- Controls -->
-            <button @click="fetchLogs()" :disabled="isLoading"
-                style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 4px;"
-                :style="isLoading ? 'opacity: 0.6; cursor: wait;' : ''">
-                <span x-show="!isLoading">🔄 Refresh</span>
-                <span x-show="isLoading">⏳ Loading...</span>
-            </button>
-            <button @click="copyLogs()"
-                style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;">
-                📋 Copy
-            </button>
-            <button @click="sendToAgent()"
-                style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;">
-                🤖 Send to Agent
-            </button>
-            <label
-                style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--color-text-muted, #888); cursor: pointer;">
-                <input type="checkbox" @change="toggleAutoRefresh()" :checked="autoRefresh" style="cursor: pointer;" />
-                Auto-refresh
-            </label>
-        </div>
+    <!-- Log tab selector -->
+    <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center; flex-wrap: wrap;">
+      <button @click="activeLogTab = 'all'"
+        :style="activeLogTab === 'all' ? 'background: var(--color-primary, #6ea8fe); color: #000; border-color: var(--color-primary, #6ea8fe);' : ''"
+        style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;">
+        📊 All
+      </button>
+      <button @click="activeLogTab = 'chat'"
+        :style="activeLogTab === 'chat' ? 'background: var(--color-primary, #6ea8fe); color: #000; border-color: var(--color-primary, #6ea8fe);' : ''"
+        style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;">
+        💬 Chat
+        <span x-show="totalContextLogs > 0" x-text="'(' + totalContextLogs + ')'"
+          style="font-size: 10px; opacity: 0.7;"></span>
+      </button>
+      <button @click="activeLogTab = 'system'"
+        :style="activeLogTab === 'system' ? 'background: var(--color-primary, #6ea8fe); color: #000; border-color: var(--color-primary, #6ea8fe);' : ''"
+        style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;">
+        🖥️ System
+        <span x-show="totalSystemLogs > 0" x-text="'(' + totalSystemLogs + ')'"
+          style="font-size: 10px; opacity: 0.7;"></span>
+      </button>
 
-        <!-- Last refresh time -->
-        <div x-show="lastRefresh" style="font-size: 11px; color: var(--color-text-muted, #666); margin-bottom: 8px;">
-            Last refreshed: <span x-text="lastRefresh"></span>
-            <span x-show="autoRefresh" style="color: var(--color-primary, #6ea8fe);">• Auto-refreshing every 5s</span>
-        </div>
+      <div style="flex: 1;"></div>
 
-        <!-- Log viewer -->
-        <div style="position: relative;">
-            <pre x-text="currentLogText" style="
+      <!-- Controls -->
+      <button @click="fetchLogs()" :disabled="isLoading"
+        style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 4px;"
+        :style="isLoading ? 'opacity: 0.6; cursor: wait;' : ''">
+        <span x-show="!isLoading">🔄 Refresh</span>
+        <span x-show="isLoading">⏳ Loading...</span>
+      </button>
+      <button @click="copyLogs()"
+        style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;">
+        📋 Copy
+      </button>
+      <button @click="sendToAgent()"
+        style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;">
+        🤖 Send to Agent
+      </button>
+      <label
+        style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--color-text-muted, #888); cursor: pointer;">
+        <input type="checkbox" @change="toggleAutoRefresh()" :checked="autoRefresh" style="cursor: pointer;" />
+        Auto-refresh
+      </label>
+    </div>
+
+    <!-- Last refresh time + stats -->
+    <div x-show="lastRefresh"
+      style="font-size: 11px; color: var(--color-text-muted, #666); margin-bottom: 8px; display: flex; gap: 12px; align-items: center;">
+      <span>Last refreshed: <span x-text="lastRefresh"></span></span>
+      <span x-show="autoRefresh" style="color: var(--color-primary, #6ea8fe);">• Auto-refreshing every
+        5s</span>
+      <span x-show="categoryFilter" style="color: var(--color-primary, #6ea8fe);">
+        Filter: <span x-text="categoryFilter.toUpperCase()"></span>
+      </span>
+    </div>
+
+    <!-- Log viewer -->
+    <div style="position: relative;">
+      <pre x-text="currentLogText" style="
         background: #0d1117;
         color: #c9d1d9;
         border: 1px solid var(--color-border, #333);
@@ -170,22 +238,22 @@
         word-wrap: break-word;
         margin: 0;
       "></pre>
-        </div>
-
-        <!-- Max lines control -->
-        <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
-            <label style="font-size: 12px; color: var(--color-text-muted, #888);">Max lines:</label>
-            <select x-model.number="maxLines" @change="fetchLogs()"
-                style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #1a1a1a); color: var(--color-text, #eee); font-size: 12px;">
-                <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="200" selected>200</option>
-                <option value="500">500</option>
-                <option value="1000">1000</option>
-            </select>
-        </div>
-
     </div>
+
+    <!-- Max lines control -->
+    <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+      <label style="font-size: 12px; color: var(--color-text-muted, #888);">Max lines:</label>
+      <select x-model.number="maxLines" @change="fetchLogs()"
+        style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #1a1a1a); color: var(--color-text, #eee); font-size: 12px;">
+        <option value="50">50</option>
+        <option value="100">100</option>
+        <option value="200" selected>200</option>
+        <option value="500">500</option>
+        <option value="1000">1000</option>
+      </select>
+    </div>
+
+  </div>
 </body>
 
 </html>

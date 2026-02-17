@@ -143,6 +143,7 @@ def create_app(agent: "Agent"):
     sio_runtime_epoch = uuid.uuid4().hex
     sio_sequence = 0
     sio_sid_seqbase: dict[str, int] = {}
+    _system_logs: list[dict] = []  # structured log buffer for logs_get endpoint
 
     def _to_title(value: str) -> str:
         return str(value or "").replace("_", " ").replace("-", " ").strip().title()
@@ -772,6 +773,49 @@ def create_app(agent: "Agent"):
         _save_context(new_ctx)
         return new_ctx
 
+    def _next_sio_envelope(event_type: str, data: dict) -> dict:
+        """Build a Socket.IO delivery envelope matching the frontend's expected format."""
+        nonlocal sio_sequence
+        sio_sequence += 1
+        return {
+            "handlerId": "itak-webui",
+            "eventId": uuid.uuid4().hex,
+            "correlationId": uuid.uuid4().hex,
+            "ts": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime()),
+            "data": {
+                "runtime_epoch": sio_runtime_epoch,
+                "seq": sio_sequence,
+                **data,
+            },
+        }
+
+    def _sio_push_snapshot(ctx: dict):
+        """Push a state snapshot via Socket.IO to all connected clients."""
+        if not sio_server:
+            return
+        try:
+            snapshot = _build_poll_snapshot(context_id=ctx["id"], log_from=0, notifications_from=0)
+            envelope = _next_sio_envelope("state_push", {"snapshot": snapshot})
+            asyncio.ensure_future(
+                sio_server.emit("state_push", envelope, namespace="/state_sync")
+            )
+        except Exception as e:
+            logger.debug(f"Socket.IO push failed: {e}")
+
+    def _append_system_log(category: str, level: str, message: str, context_id: str | None = None):
+        """Append a structured log entry to the system log buffer."""
+        entry = {
+            "timestamp": time.time(),
+            "category": category,  # system, chat, connection, model, error, agent
+            "level": level,        # info, warning, error, debug
+            "message": message,
+            "context": context_id,
+        }
+        _system_logs.append(entry)
+        # Keep buffer bounded
+        if len(_system_logs) > 2000:
+            _system_logs[:] = _system_logs[-1000:]
+
     def _push_log(ctx: dict, log_type: str, content: str, heading: str = "", kvps: dict | None = None):
         entry = {
             "no": ctx["next_no"],
@@ -784,6 +828,10 @@ def create_app(agent: "Agent"):
         ctx["logs"].append(entry)
         ctx["log_version"] += 1
         _save_context(ctx)
+        # Real-time push via Socket.IO
+        _sio_push_snapshot(ctx)
+        # Structured system log
+        _append_system_log("chat", "info", f"[{log_type}] {heading or content[:80]}", ctx.get("id"))
 
     def _list_contexts() -> list[dict]:
         return sorted([
@@ -908,12 +956,14 @@ def create_app(agent: "Agent"):
 
         ctx = _ensure_context(context_id)
         ctx["running"] = True
+        _append_system_log("chat", "info", f"Message received: {message[:60]}...", ctx.get("id"))
         _push_log(ctx, "user", message, kvps={"message_id": message_id} if message_id else {})
 
         try:
             response = await agent.monologue(message)
         except Exception as e:
             response = f"Error: {e}"
+            _append_system_log("error", "error", f"Model call failed: {e}", ctx.get("id"))
         finally:
             ctx["running"] = False
 
@@ -3143,6 +3193,8 @@ def create_app(agent: "Agent"):
             except Exception:
                 pass
 
+        _append_system_log("system", "debug", f"ws_broadcast: {event_type}")
+
     if hasattr(agent, "progress") and agent.progress:
         agent.progress.register_callback(ws_broadcast)
 
@@ -3152,9 +3204,59 @@ def create_app(agent: "Agent"):
     if static_dir.exists():
         app.mount("/", StaticFiles(directory=str(static_dir), html=True))
 
+    # --- logs_get endpoint for enhanced logs page ---
+    @app.post("/logs_get")
+    async def logs_get_endpoint(request: Request):
+        body = await request.json() if request.headers.get("content-type", "").startswith("application/json") else {}
+        max_lines = int(body.get("max_lines", 200) or 200)
+        category_filter = body.get("category")  # optional: system, chat, connection, model, error, agent
+
+        # Build context logs from all contexts
+        context_logs = []
+        for ctx in contexts.values():
+            for log_entry in ctx.get("logs", [])[-max_lines:]:
+                context_logs.append({
+                    "type": log_entry.get("type", "unknown"),
+                    "content": log_entry.get("content", ""),
+                    "heading": log_entry.get("heading", ""),
+                    "context": ctx["id"],
+                    "context_name": ctx.get("name", ""),
+                    "timestamp": log_entry.get("timestamp", 0),
+                })
+
+        # Filter and format system logs
+        sys_logs = _system_logs[-max_lines:]
+        if category_filter:
+            sys_logs = [l for l in sys_logs if l["category"] == category_filter]
+
+        # Build file-style logs from system buffer
+        file_log_lines = []
+        for entry in sys_logs[-max_lines:]:
+            ts = time.strftime("%H:%M:%S", time.localtime(entry["timestamp"]))
+            cat = entry["category"].upper().ljust(10)
+            lvl = entry["level"].upper().ljust(7)
+            file_log_lines.append(f"[{ts}] [{cat}] [{lvl}] {entry['message']}")
+
+        # Categorized system log counts
+        categories = {}
+        for entry in _system_logs:
+            cat = entry.get("category", "unknown")
+            categories[cat] = categories.get(cat, 0) + 1
+
+        return JSONResponse({
+            "ok": True,
+            "file_logs": "\n".join(file_log_lines) if file_log_lines else "",
+            "context_logs": context_logs,
+            "handler_logs": [],
+            "categories": categories,
+            "total_system_logs": len(_system_logs),
+            "total_context_logs": len(context_logs),
+        })
+
     try:
         import socketio
 
+        nonlocal sio_server
         sio_server = socketio.AsyncServer(
             async_mode="asgi",
             cors_allowed_origins="*",
@@ -3168,13 +3270,16 @@ def create_app(agent: "Agent"):
             if isinstance(auth, dict):
                 provided_csrf = str(auth.get("csrf_token", "") or "")
             if provided_csrf and provided_csrf != csrf_token:
+                _append_system_log("connection", "warning", f"Socket.IO CSRF rejected for sid={sid}")
                 return False
             sio_sid_seqbase[sid] = sio_sequence
+            _append_system_log("connection", "info", f"Socket.IO client connected: {sid}")
             return True
 
         @sio_server.on("disconnect", namespace="/state_sync")
         async def state_sync_disconnect(sid):
             sio_sid_seqbase.pop(sid, None)
+            _append_system_log("connection", "info", f"Socket.IO client disconnected: {sid}")
 
         @sio_server.on("state_request", namespace="/state_sync")
         async def state_sync_request(sid, payload):
