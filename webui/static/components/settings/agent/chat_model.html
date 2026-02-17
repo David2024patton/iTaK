@@ -14,39 +14,79 @@
       modelsLoading: false,
       modelsError: '',
       previousProvider: '',
+      useDropdown: false,
+      _fetchTimer: null,
 
       async fetchModels() {
         const settings = $store.settings.settings;
         if (!settings) return;
-        const provider = settings.chat_model_provider || '';
-        const apiKey = (settings.api_keys || {})[provider] || '';
+        const provider = (settings.chat_model_provider || '').toLowerCase();
+        const apiKey = (settings.api_keys || {})[settings.chat_model_provider] || '';
         const apiBase = settings.chat_model_api_base || '';
 
-        if (!provider) {
-          this.modelsError = 'Please select a provider first';
-          return;
-        }
+        if (!provider) return;
+        if (!apiKey && provider !== 'ollama') return;
 
         this.modelsLoading = true;
         this.modelsError = '';
         try {
-          const response = await window._chatModelAPI.callJsonApi('models_list', { provider, api_key: apiKey, api_base: apiBase });
+          const response = await window._chatModelAPI.callJsonApi('models_list', {
+            provider, api_key: apiKey, api_base: apiBase
+          });
 
-          if (response.ok && response.models) {
+          if (response && response.ok && response.models && response.models.length > 0) {
             this.modelsList = response.models;
-            if (response.models.length === 0) {
-              this.modelsError = 'No models found. Check your API key.';
-            }
+            this.useDropdown = true;
+            this.modelsError = '';
+            // Populate the select element via JS since Alpine x-for in <select> is unreliable
+            this.$nextTick(() => this.populateSelect());
           } else {
-            this.modelsError = response.error || 'Failed to fetch models';
+            this.modelsError = (response && response.error) || 'No models found. Check your API key.';
             this.modelsList = [];
+            this.useDropdown = false;
           }
         } catch (e) {
-          this.modelsError = 'Network error: ' + e.message;
+          this.modelsError = 'Network error: ' + (e.message || e);
           this.modelsList = [];
+          this.useDropdown = false;
         } finally {
           this.modelsLoading = false;
         }
+      },
+
+      populateSelect() {
+        const sel = this.$refs.modelSelect;
+        if (!sel) return;
+
+        // Save current value
+        const currentVal = $store.settings.settings.chat_model_name || '';
+
+        // Clear and rebuild options
+        sel.innerHTML = '';
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.textContent = '-- Select a model (' + this.modelsList.length + ' available) --';
+        sel.appendChild(defaultOpt);
+
+        for (const m of this.modelsList) {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = m.name !== m.id ? m.name + ' (' + m.id + ')' : m.id;
+          if (m.id === currentVal) opt.selected = true;
+          sel.appendChild(opt);
+        }
+
+        // Restore selection
+        if (currentVal) sel.value = currentVal;
+      },
+
+      onSelectChange(event) {
+        $store.settings.settings.chat_model_name = event.target.value;
+      },
+
+      switchToManual() {
+        this.useDropdown = false;
+        this.modelsList = [];
       },
 
       autoFillEndpoint() {
@@ -55,23 +95,38 @@
         const provider = (settings.chat_model_provider || '').toLowerCase();
         const endpoints = $store.settings.additional?.provider_endpoints || {};
 
-        // Only auto-fill if provider actually changed and base is empty or was auto-filled
         if (provider !== this.previousProvider) {
           const prevEndpoint = endpoints[this.previousProvider] || '';
           const currentBase = settings.chat_model_api_base || '';
 
-          // Auto-fill if empty or if it matches the previous provider's default
           if (!currentBase || currentBase === prevEndpoint) {
-            const newEndpoint = endpoints[provider] || '';
-            settings.chat_model_api_base = newEndpoint;
+            settings.chat_model_api_base = endpoints[provider] || '';
           }
           this.previousProvider = provider;
-          // Clear model list when provider changes
+          this.useDropdown = false;
           this.modelsList = [];
+          // Auto-fetch if key exists for new provider
+          this.debouncedFetch();
+        }
+      },
+
+      debouncedFetch() {
+        clearTimeout(this._fetchTimer);
+        this._fetchTimer = setTimeout(() => this.fetchModels(), 800);
+      },
+
+      watchApiKey() {
+        const settings = $store.settings.settings;
+        if (!settings) return;
+        const provider = settings.chat_model_provider || '';
+        const apiKey = (settings.api_keys || {})[provider] || '';
+        // Auto-fetch when key looks valid (at least 10 chars)
+        if (apiKey.length >= 10) {
+          this.debouncedFetch();
         }
       }
     }" x-init="previousProvider = ($store.settings.settings?.chat_model_provider || '').toLowerCase()"
-    x-effect="autoFillEndpoint()">
+    x-effect="autoFillEndpoint(); watchApiKey()">
     <template x-if="$store.settings.settings">
       <div>
         <div class="section-title">Chat Model</div>
@@ -97,32 +152,30 @@
         <div class="field">
           <div class="field-label">
             <div class="field-title">Chat model name</div>
-            <div class="field-description">Select a model or type one manually. Click "Fetch Models" to load available
-              models from the provider.</div>
-          </div>
-          <div class="field-control" style="display: flex; flex-direction: column; gap: 8px;">
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <select x-show="modelsList.length > 0" x-model="$store.settings.settings.chat_model_name"
-                style="flex: 1;">
-                <option value="">-- Select a model --</option>
-                <template x-for="m in modelsList" :key="m.id">
-                  <option :value="m.id" x-text="m.name + (m.name !== m.id ? ' (' + m.id + ')' : '')"></option>
-                </template>
-              </select>
-              <input x-show="modelsList.length === 0" type="text" x-model="$store.settings.settings.chat_model_name"
-                placeholder="e.g. gpt-4o or gemini-2.5-pro" style="flex: 1;" />
-              <button @click="fetchModels()" :disabled="modelsLoading"
-                style="white-space: nowrap; padding: 8px 16px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px;"
-                :style="modelsLoading ? 'opacity: 0.6; cursor: wait;' : ''">
-                <span x-show="!modelsLoading">🔄 Fetch Models</span>
-                <span x-show="modelsLoading">⏳ Loading...</span>
-              </button>
+            <div class="field-description">
+              <span x-show="!useDropdown">Type a model name, or enter your API key below to auto-load available
+                models.</span>
+              <span x-show="useDropdown" x-text="modelsList.length + ' models loaded from provider'"></span>
             </div>
-            <div x-show="modelsList.length > 0" style="font-size: 12px; color: var(--color-text-muted, #888);">
-              <span x-text="modelsList.length + ' models available'"></span>
-              <span
-                style="margin-left: 8px; cursor: pointer; text-decoration: underline; color: var(--color-primary, #6ea8fe);"
-                @click="modelsList = []">Switch to manual entry</span>
+          </div>
+          <div class="field-control" style="display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <!-- Dropdown mode: native select populated via JS -->
+              <select x-ref="modelSelect" x-show="useDropdown" @change="onSelectChange($event)" style="flex: 1;">
+                <option value="">-- Select a model --</option>
+              </select>
+              <!-- Manual mode: text input -->
+              <input x-show="!useDropdown" type="text" x-model="$store.settings.settings.chat_model_name"
+                placeholder="e.g. gpt-4o or gemini-2.5-pro" style="flex: 1;" />
+              <!-- Loading indicator -->
+              <span x-show="modelsLoading"
+                style="font-size: 13px; color: var(--color-text-muted, #888); white-space: nowrap;">⏳ Loading
+                models...</span>
+            </div>
+            <!-- Toggle link -->
+            <div x-show="useDropdown" style="font-size: 12px; color: var(--color-text-muted, #888);">
+              <span style="cursor: pointer; text-decoration: underline; color: var(--color-primary, #6ea8fe);"
+                @click="switchToManual()">Switch to manual entry</span>
             </div>
             <div x-show="modelsError" style="font-size: 12px; color: #ff6b6b;" x-text="modelsError"></div>
           </div>
@@ -131,7 +184,8 @@
         <div class="field">
           <div class="field-label">
             <div class="field-title">API key</div>
-            <div class="field-description">API key for the selected chat model provider</div>
+            <div class="field-description">API key for the selected chat model provider. Models will auto-load when a
+              valid key is entered.</div>
           </div>
           <div class="field-control">
             <input type="text" x-model="$store.settings.settings.api_keys[$store.settings.settings.chat_model_provider]"
@@ -170,8 +224,7 @@
             <div class="field-title">Context window space for chat history</div>
             <div class="field-description">
               Portion of context window dedicated to chat history visible to the agent. Chat history will automatically
-              be optimized to fit. Smaller size will result in shorter and more summarized history. The remaining space
-              will be used for system prompt, RAG and response.
+              be optimized to fit.
             </div>
           </div>
           <div class="field-control">
@@ -200,8 +253,7 @@
           <div class="field-label">
             <div class="field-title">Requests per minute limit</div>
             <div class="field-description">
-              Limits the number of requests per minute to the chat model. Waits if the limit is exceeded. Set to 0 to
-              disable rate limiting.
+              Limits the number of requests per minute to the chat model. Set to 0 to disable rate limiting.
             </div>
           </div>
           <div class="field-control">
@@ -213,8 +265,7 @@
           <div class="field-label">
             <div class="field-title">Input tokens per minute limit</div>
             <div class="field-description">
-              Limits the number of input tokens per minute to the chat model. Waits if the limit is exceeded. Set to 0
-              to disable rate limiting.
+              Limits the number of input tokens per minute to the chat model. Set to 0 to disable rate limiting.
             </div>
           </div>
           <div class="field-control">
@@ -226,8 +277,7 @@
           <div class="field-label">
             <div class="field-title">Output tokens per minute limit</div>
             <div class="field-description">
-              Limits the number of output tokens per minute to the chat model. Waits if the limit is exceeded. Set to 0
-              to disable rate limiting.
+              Limits the number of output tokens per minute to the chat model. Set to 0 to disable rate limiting.
             </div>
           </div>
           <div class="field-control">
@@ -240,9 +290,7 @@
             <div class="field-title">Chat model additional parameters</div>
             <div class="field-description">
               Any other parameters supported by <a href='https://docs.litellm.ai/docs/set_keys'
-                target='_blank'>LiteLLM</a>. Format is KEY=VALUE on individual lines, like .env file. Value can also
-              contain JSON objects - when unquoted, it is treated as object, number etc., when quoted, it is treated as
-              string.
+                target='_blank'>LiteLLM</a>. Format is KEY=VALUE on individual lines, like .env file.
             </div>
           </div>
           <div class="field-control">
