@@ -7,15 +7,11 @@ services:
     build:
       context: .
       dockerfile: install/docker/Dockerfile
-    container_name: itak-agent
     restart: unless-stopped
-    env_file: .env
     volumes:
       - itak-data:/app/data
-      - ./memory:/app/memory
-      - ./skills:/app/skills
-      - ./prompts:/app/prompts
-      - ./config.json:/app/config.json
+      - itak-memory:/app/memory
+      - itak-skills:/app/skills
     ports:
       - "${WEBUI_PORT:-48920}:48920"
     depends_on:
@@ -27,7 +23,6 @@ services:
   # ===== Neo4j (Knowledge Graph) =====
   neo4j:
     image: neo4j:5-community
-    container_name: itak-neo4j
     restart: unless-stopped
     ports:
       - "${NEO4J_HTTP_PORT:-47474}:7474"
@@ -52,7 +47,6 @@ services:
   # ===== Weaviate (Vector Database) =====
   weaviate:
     image: semitechnologies/weaviate:latest
-    container_name: itak-weaviate
     restart: unless-stopped
     ports:
       - "${WEAVIATE_PORT:-48080}:8080"
@@ -76,7 +70,6 @@ services:
   # ===== SearXNG (Web Search) =====
   searxng:
     image: searxng/searxng:latest
-    container_name: itak-searxng
     restart: unless-stopped
     ports:
       - "${SEARXNG_PORT:-48888}:8080"
@@ -93,29 +86,14 @@ services:
       retries: 5
       start_period: 20s
 
-  # ===== MemU Server (Optional - Enrichment Pipeline) =====
-  # Uncomment to enable self-hosted MemU extraction
-  # memu-server:
-  #   image: memu/memu-server:latest
-  #   container_name: itak-memu
-  #   restart: unless-stopped
-  #   ports:
-  #     - "${MEMU_PORT:-8080}:8080"
-  #   environment:
-  #     MEMU_API_KEY: "${MEMU_API_KEY:-}"
-  #   volumes:
-  #     - memu-data:/data
-  #   networks:
-  #     - itak-network
-
 volumes:
   itak-data:
+  itak-memory:
+  itak-skills:
   neo4j-data:
   neo4j-logs:
   weaviate-data:
   searxng-data:
-  # memu-data:  # Uncomment if using memu-server
-
 
 networks:
   itak-network:
