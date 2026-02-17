@@ -50,11 +50,11 @@ export async function sendMessage() {
 
     if (message || hasAttachments) {
       // Check if agent is busy - queue instead of sending
-      if (chatsStore.selectedContext.running || messageQueueStore.hasQueue) {
+      if (chatsStore.selectedContext?.running || messageQueueStore.hasQueue) {
         const success = messageQueueStore.addToQueue(message, attachmentsWithUrls);
         // no await for the queue
         // if (success) {
-          inputStore.reset();
+        inputStore.reset();
         // }
         return;
       }
@@ -77,9 +77,11 @@ export async function sendMessage() {
             : "";
 
         // Render user message with attachments
-        setMessages([{ id: messageId, type: "user", heading, content: message, kvps: {
-          // attachments: attachmentsWithUrls, // skip here, let the backend properly log them
-        }}]);
+        setMessages([{
+          id: messageId, type: "user", heading, content: message, kvps: {
+            // attachments: attachmentsWithUrls, // skip here, let the backend properly log them
+          }
+        }]);
 
         // sleep one frame to render the message before upload starts - better UX
         sleep(0);
@@ -372,28 +374,28 @@ export async function applySnapshot(snapshot, options = {}) {
       tasksStore.setSelected(context);
     }
 
-      if (!contextInChats && !contextInTasks) {
-        if (chatsStore.contexts.length > 0) {
-          // If it doesn't exist in the list but other contexts do, fall back to the first
-          const firstChatId = chatsStore.firstId();
-          if (firstChatId) {
-            setContext(firstChatId);
-            chatsStore.setSelected(firstChatId);
-          }
-        } else if (typeof deselectChat === "function") {
-          // No contexts remain – clear state so the welcome screen can surface
-          deselectChat();
+    if (!contextInChats && !contextInTasks) {
+      if (chatsStore.contexts.length > 0) {
+        // If it doesn't exist in the list but other contexts do, fall back to the first
+        const firstChatId = chatsStore.firstId();
+        if (firstChatId) {
+          setContext(firstChatId);
+          chatsStore.setSelected(firstChatId);
         }
+      } else if (typeof deselectChat === "function") {
+        // No contexts remain – clear state so the welcome screen can surface
+        deselectChat();
       }
-    } else {
-      // No context selected: keep it that way so the welcome screen stays visible.
     }
-
-    // update message queue
-    messageQueueStore.updateFromPoll();
-
-    return { updated };
+  } else {
+    // No context selected: keep it that way so the welcome screen stays visible.
   }
+
+  // update message queue
+  messageQueueStore.updateFromPoll();
+
+  return { updated };
+}
 
 export async function poll() {
   try {
@@ -696,7 +698,7 @@ async function startPolling() {
           now - lastHandshakeKickMs >= kickCooldownMs;
         if (eligible) {
           lastHandshakeKickMs = now;
-          syncStore.sendStateRequest({ forceFull: true }).catch(() => {});
+          syncStore.sendStateRequest({ forceFull: true }).catch(() => { });
         }
       }
 
