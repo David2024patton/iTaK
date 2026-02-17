@@ -206,6 +206,25 @@ export function normalizeProducerOptions(options) {
 export function validateServerEnvelope(envelope) {
   const value = assertPlainObject(envelope, "envelope");
 
+  // --- Agent Zero flat format detection ---
+  // Agent Zero sends: { runtime_epoch: "...", seq: N, snapshot: {...} }
+  // No handlerId/eventId/correlationId wrapper.
+  if (
+    typeof value.runtime_epoch === "string" &&
+    typeof value.seq === "number" &&
+    value.snapshot !== undefined
+  ) {
+    const normalized = {
+      handlerId: "agent-zero",
+      eventId: `push-${value.seq}`,
+      correlationId: `push-${value.seq}`,
+      ts: new Date().toISOString(),
+      data: Object.freeze({ ...value }),
+    };
+    return Object.freeze(normalized);
+  }
+
+  // --- Legacy wrapped format ---
   const handlerId = normalizeCorrelationId(value.handlerId)?.trim();
   if (!handlerId) {
     throw new Error("Server envelope missing handlerId");
@@ -292,7 +311,7 @@ class WebSocketClient {
       this._connectErrorRetryTimer = null;
       if (this._manualDisconnect) return;
       if (this.connected) return;
-      this.connect().catch(() => {});
+      this.connect().catch(() => { });
     }, delayMs);
   }
 
@@ -449,13 +468,13 @@ class WebSocketClient {
 
     return new Promise((resolve, reject) => {
       if (timeoutMs > 0) {
-      this.socket
+        this.socket
           .timeout(timeoutMs)
           .emit(eventType, payload, (err, response) => {
-          if (err) {
-            reject(new Error("Request timeout"));
-            return;
-          }
+            if (err) {
+              reject(new Error("Request timeout"));
+              return;
+            }
             resolve(this.normalizeRequestResponse(response));
           });
         return;
@@ -463,7 +482,7 @@ class WebSocketClient {
 
       this.socket.emit(eventType, payload, (response) => {
         resolve(this.normalizeRequestResponse(response));
-        });
+      });
     });
   }
 
@@ -581,8 +600,8 @@ class WebSocketClient {
       const runtimeId = getRuntimeId();
       const runtimeChanged = Boolean(
         this._lastRuntimeId &&
-          runtimeId &&
-          this._lastRuntimeId !== runtimeId
+        runtimeId &&
+        this._lastRuntimeId !== runtimeId
       );
       const firstConnect = !this._hasConnectedOnce;
       this._hasConnectedOnce = true;
