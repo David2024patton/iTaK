@@ -141,8 +141,11 @@ def create_app(agent: "Agent"):
     notifications_version = 0
     sio_server = None
     sio_runtime_epoch = uuid.uuid4().hex
-    sio_sequence = 0
-    sio_sid_seqbase: dict[str, int] = {}
+    # Per-SID connection projections (Agent Zero StateMonitor pattern)
+    sio_projections: dict[str, dict] = {}  # sid -> {request, seq, seq_base, dirty_version, pushed_version}
+    sio_debounce_handles: dict[str, object] = {}  # sid -> asyncio.TimerHandle
+    sio_push_tasks: dict[str, object] = {}  # sid -> asyncio.Task
+    SIO_DEBOUNCE_SECONDS = 0.025  # 25ms debounce matching Agent Zero
     _system_logs: list[dict] = []  # structured log buffer for logs_get endpoint
 
     def _to_title(value: str) -> str:
@@ -773,34 +776,124 @@ def create_app(agent: "Agent"):
         _save_context(new_ctx)
         return new_ctx
 
-    def _next_sio_envelope(event_type: str, data: dict) -> dict:
-        """Build a Socket.IO delivery envelope matching the frontend's expected format."""
-        nonlocal sio_sequence
-        sio_sequence += 1
-        return {
-            "handlerId": "itak-webui",
-            "eventId": uuid.uuid4().hex,
-            "correlationId": uuid.uuid4().hex,
-            "ts": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime()),
-            "data": {
+    def _sio_mark_dirty_all(reason: str = "unknown"):
+        """Mark all connected SIDs as dirty and schedule debounced pushes."""
+        for sid in list(sio_projections.keys()):
+            _sio_mark_dirty(sid, reason=reason)
+
+    def _sio_mark_dirty_for_context(context_id: str, reason: str = "unknown"):
+        """Mark SIDs watching a specific context as dirty."""
+        if not context_id:
+            return
+        for sid, proj in list(sio_projections.items()):
+            req = proj.get("request")
+            if req and req.get("context") == context_id:
+                _sio_mark_dirty(sid, reason=reason)
+
+    def _sio_mark_dirty(sid: str, reason: str = "unknown"):
+        """Mark a single SID as dirty and schedule a debounced push."""
+        proj = sio_projections.get(sid)
+        if proj is None or proj.get("seq_base", 0) <= 0:
+            return  # No push before a successful state_request
+        proj["dirty_version"] = proj.get("dirty_version", 0) + 1
+        proj["dirty_reason"] = reason
+        _sio_schedule_debounce(sid)
+
+    def _sio_schedule_debounce(sid: str):
+        """Schedule a debounced push for a SID. At most 1 push per debounce window."""
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return
+        # Don't reschedule if already pending or running
+        existing = sio_debounce_handles.get(sid)
+        if existing is not None and not getattr(existing, 'cancelled', lambda: True)():
+            return
+        running = sio_push_tasks.get(sid)
+        if running is not None and not running.done():
+            return
+        handle = loop.call_later(SIO_DEBOUNCE_SECONDS, _sio_on_debounce_fire, sid)
+        sio_debounce_handles[sid] = handle
+
+    def _sio_on_debounce_fire(sid: str):
+        """Called when debounce timer fires — create async push task."""
+        sio_debounce_handles.pop(sid, None)
+        existing = sio_push_tasks.get(sid)
+        if existing is not None and not existing.done():
+            return
+        task = asyncio.create_task(_sio_flush_push(sid))
+        sio_push_tasks[sid] = task
+
+    async def _sio_flush_push(sid: str):
+        """Build snapshot and emit state_push to a single SID."""
+        try:
+            proj = sio_projections.get(sid)
+            if proj is None or not sio_server:
+                return
+            if proj.get("seq_base", 0) <= 0:
+                return
+            request = proj.get("request")
+            if request is None:
+                return
+
+            base_version = proj["dirty_version"]
+
+            # Build snapshot using the client's current cursors
+            snapshot = _build_poll_snapshot(
+                context_id=request.get("context"),
+                log_from=request.get("log_from", 0),
+                notifications_from=request.get("notifications_from", 0),
+            )
+
+            # Re-check projection still exists
+            proj = sio_projections.get(sid)
+            if proj is None:
+                return
+
+            # Increment seq monotonically
+            proj["seq"] = proj.get("seq", 0) + 1
+            seq = proj["seq"]
+
+            # Advance cursors after successful snapshot (incremental delivery)
+            if request is not None:
+                request["log_from"] = snapshot.get("log_version", request.get("log_from", 0))
+                request["notifications_from"] = snapshot.get("notifications_version", request.get("notifications_from", 0))
+
+            # Mark pushed
+            proj["pushed_version"] = max(proj.get("pushed_version", 0), base_version)
+
+            # Agent Zero envelope: {runtime_epoch, seq, snapshot}
+            payload = {
                 "runtime_epoch": sio_runtime_epoch,
-                "seq": sio_sequence,
-                **data,
-            },
-        }
+                "seq": seq,
+                "snapshot": snapshot,
+            }
+
+            try:
+                await sio_server.emit("state_push", payload, namespace="/state_sync", to=sid)
+            except Exception as e:
+                logger.debug(f"Socket.IO push to {sid} failed: {e}")
+                return
+
+        except Exception as e:
+            logger.debug(f"Socket.IO flush_push failed for {sid}: {e}")
+        finally:
+            sio_push_tasks.pop(sid, None)
+            # Schedule follow-up if more dirties arrived during push
+            proj = sio_projections.get(sid)
+            if proj and proj.get("dirty_version", 0) > proj.get("pushed_version", 0):
+                _sio_schedule_debounce(sid)
 
     def _sio_push_snapshot(ctx: dict):
-        """Push a state snapshot via Socket.IO to all connected clients."""
+        """Mark all SIDs dirty to trigger debounced snapshot push."""
         if not sio_server:
             return
-        try:
-            snapshot = _build_poll_snapshot(context_id=ctx["id"], log_from=0, notifications_from=0)
-            envelope = _next_sio_envelope("state_push", {"snapshot": snapshot})
-            asyncio.ensure_future(
-                sio_server.emit("state_push", envelope, namespace="/state_sync")
-            )
-        except Exception as e:
-            logger.debug(f"Socket.IO push failed: {e}")
+        _sio_mark_dirty_for_context(ctx.get("id", ""), reason="_push_log")
+        # Also push to SIDs not watching any specific context
+        for sid, proj in list(sio_projections.items()):
+            req = proj.get("request")
+            if req and not req.get("context"):
+                _sio_mark_dirty(sid, reason="_push_log_global")
 
     def _append_system_log(category: str, level: str, message: str, context_id: str | None = None):
         """Append a structured log entry to the system log buffer."""
@@ -902,20 +995,8 @@ def create_app(agent: "Agent"):
             "group": group,
         })
 
-    def _next_sio_envelope(event_name: str, data: dict, correlation_id: str | None = None) -> dict:
-        nonlocal sio_sequence
-        sio_sequence += 1
-        return {
-            "handlerId": "itak.state_sync",
-            "eventId": f"{event_name}-{uuid.uuid4().hex}",
-            "correlationId": correlation_id or f"push-{uuid.uuid4().hex}",
-            "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "data": {
-                "runtime_epoch": sio_runtime_epoch,
-                "seq": sio_sequence,
-                **(data or {}),
-            },
-        }
+    # Note: _next_sio_envelope removed — Agent Zero protocol sends
+    # {runtime_epoch, seq, snapshot} directly without envelope wrapping.
 
     _load_contexts()
     if not contexts:
@@ -3186,12 +3267,7 @@ def create_app(agent: "Agent"):
                 ws_clients.remove(ws)
 
         if sio_server:
-            try:
-                snapshot = _build_poll_snapshot(context_id=None, log_from=0, notifications_from=0)
-                envelope = _next_sio_envelope("state_push", {"snapshot": snapshot})
-                await sio_server.emit("state_push", envelope, namespace="/state_sync")
-            except Exception:
-                pass
+            _sio_mark_dirty_all(reason="ws_broadcast")
 
         _append_system_log("system", "debug", f"ws_broadcast: {event_type}")
 
@@ -3256,50 +3332,123 @@ def create_app(agent: "Agent"):
     try:
         import socketio
 
-        nonlocal sio_server
         sio_server = socketio.AsyncServer(
             async_mode="asgi",
             cors_allowed_origins="*",
+            namespaces="*",
             logger=False,
             engineio_logger=False,
+            ping_interval=25,
+            ping_timeout=20,
         )
 
         @sio_server.on("connect", namespace="/state_sync")
         async def state_sync_connect(sid, environ, auth):
+            # Validate CSRF token from auth dict
             provided_csrf = ""
             if isinstance(auth, dict):
-                provided_csrf = str(auth.get("csrf_token", "") or "")
+                provided_csrf = str(auth.get("csrf_token", "") or auth.get("csrfToken", "") or "")
             if provided_csrf and provided_csrf != csrf_token:
                 _append_system_log("connection", "warning", f"Socket.IO CSRF rejected for sid={sid}")
                 return False
-            sio_sid_seqbase[sid] = sio_sequence
+            # Register SID projection (Agent Zero StateMonitor pattern)
+            sio_projections[sid] = {
+                "request": None,
+                "seq": 0,
+                "seq_base": 0,
+                "dirty_version": 0,
+                "pushed_version": 0,
+                "dirty_reason": None,
+                "connected_at": time.time(),
+            }
             _append_system_log("connection", "info", f"Socket.IO client connected: {sid}")
             return True
 
         @sio_server.on("disconnect", namespace="/state_sync")
         async def state_sync_disconnect(sid):
-            sio_sid_seqbase.pop(sid, None)
+            # Clean up projection and any pending timers/tasks
+            sio_projections.pop(sid, None)
+            handle = sio_debounce_handles.pop(sid, None)
+            if handle is not None:
+                handle.cancel()
+            task = sio_push_tasks.pop(sid, None)
+            if task is not None:
+                task.cancel()
             _append_system_log("connection", "info", f"Socket.IO client disconnected: {sid}")
 
         @sio_server.on("state_request", namespace="/state_sync")
         async def state_sync_request(sid, payload):
+            """Handle state_request — Agent Zero protocol.
+
+            The frontend sends:
+            {
+                "context": "ctx-id-or-null",
+                "log_from": 0,
+                "notifications_from": 0,
+                "timezone": "America/New_York",
+                "correlationId": "..."
+            }
+            """
             payload = payload or {}
-            request_data = payload.get("data", {}) if isinstance(payload, dict) else {}
-            if not isinstance(request_data, dict):
-                request_data = {}
-            correlation_id = payload.get("correlationId") if isinstance(payload, dict) else None
-            context_id = request_data.get("context")
-            log_from = request_data.get("log_from", 0)
-            notifications_from = request_data.get("notifications_from", 0)
+            if not isinstance(payload, dict):
+                payload = {}
 
-            snapshot = _build_poll_snapshot(
-                context_id=context_id,
-                log_from=log_from,
-                notifications_from=notifications_from,
-            )
+            correlation_id = payload.get("correlationId")
 
-            seq_base = sio_sid_seqbase.get(sid, sio_sequence)
-            sio_sid_seqbase[sid] = sio_sequence
+            # Extract request fields (Agent Zero sends them flat, not nested in "data")
+            context_id = payload.get("context")
+            log_from = payload.get("log_from", 0)
+            notifications_from = payload.get("notifications_from", 0)
+            timezone = payload.get("timezone", "UTC")
+
+            # Also support nested "data" format for backwards compatibility
+            if "data" in payload and isinstance(payload["data"], dict):
+                data = payload["data"]
+                context_id = data.get("context", context_id)
+                log_from = data.get("log_from", log_from)
+                notifications_from = data.get("notifications_from", notifications_from)
+                timezone = data.get("timezone", timezone)
+
+            # Coerce types
+            try:
+                log_from = max(0, int(log_from or 0))
+            except (TypeError, ValueError):
+                log_from = 0
+            try:
+                notifications_from = max(0, int(notifications_from or 0))
+            except (TypeError, ValueError):
+                notifications_from = 0
+            if isinstance(context_id, str):
+                context_id = context_id.strip() or None
+
+            # Update per-SID projection
+            seq_base = 1
+            proj = sio_projections.get(sid)
+            if proj is None:
+                # SID connected but somehow not in projections — register now
+                proj = {
+                    "request": None, "seq": 0, "seq_base": 0,
+                    "dirty_version": 0, "pushed_version": 0,
+                    "dirty_reason": None, "connected_at": time.time(),
+                }
+                sio_projections[sid] = proj
+
+            proj["request"] = {
+                "context": context_id,
+                "log_from": log_from,
+                "notifications_from": notifications_from,
+                "timezone": timezone,
+            }
+            proj["seq_base"] = seq_base
+            proj["seq"] = seq_base
+
+            # Schedule immediate snapshot push (INVARIANT.STATE.INITIAL_SNAPSHOT)
+            _sio_mark_dirty(sid, reason="state_request")
+
+            _append_system_log("connection", "info",
+                f"state_request accepted sid={sid} ctx={context_id} log_from={log_from}")
+
+            # Return acknowledgement matching Agent Zero format
             return {
                 "correlationId": correlation_id,
                 "results": [{
@@ -3307,7 +3456,6 @@ def create_app(agent: "Agent"):
                     "data": {
                         "runtime_epoch": sio_runtime_epoch,
                         "seq_base": seq_base,
-                        "snapshot": snapshot,
                     },
                 }],
             }
