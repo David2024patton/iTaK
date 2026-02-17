@@ -1172,9 +1172,6 @@ def create_app(agent: "Agent"):
                 """Convert WebUI provider/model fields into a litellm model identifier."""
                 if not model_name:
                     return ""
-                # If the model already contains a provider prefix (e.g. 'gemini/gemini-2.5-pro'), use it as-is
-                if "/" in model_name:
-                    return model_name
                 # Map common WebUI provider labels to litellm prefixes
                 prefix_map = {
                     "openai": "openai",
@@ -1188,6 +1185,17 @@ def create_app(agent: "Agent"):
                     "deepseek": "deepseek",
                     "nvidia": "nvidia_nim",
                 }
+                # Known litellm provider prefixes (superset of prefix_map values)
+                _known_prefixes = set(prefix_map.values()) | {
+                    "nvidia_nim", "azure", "bedrock", "vertex_ai", "huggingface",
+                    "together_ai", "replicate", "cohere", "sagemaker", "fireworks_ai",
+                }
+                # If the model already has a known litellm provider prefix, use as-is
+                if "/" in model_name:
+                    maybe_prefix = model_name.split("/", 1)[0]
+                    if maybe_prefix in _known_prefixes:
+                        return model_name
+                # Otherwise, prepend the mapped prefix
                 prefix = prefix_map.get(provider.lower(), provider.lower()) if provider else ""
                 if prefix:
                     return f"{prefix}/{model_name}"
