@@ -916,6 +916,7 @@ def create_app(agent: "Agent"):
             "heading": heading,
             "content": content,
             "kvps": kvps or {},
+            "timestamp": time.time(),
         }
         ctx["next_no"] += 1
         ctx["logs"].append(entry)
@@ -3284,7 +3285,7 @@ def create_app(agent: "Agent"):
 
         return JSONResponse({
             "ok": True,
-            "file_logs": "\n".join(file_log_lines) if file_log_lines else "",
+            "file_logs": "\n\n".join(file_log_lines) if file_log_lines else "",
             "context_logs": context_logs,
             "handler_logs": [],
             "categories": categories,

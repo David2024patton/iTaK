@@ -65,9 +65,14 @@
     return this.contextLogs.map(l => {
       const prefix = l.type === 'user' ? '👤 USER' : l.type === 'response' ? '🤖 AGENT' : '📋 ' + (l.type || 'unknown').toUpperCase();
       const ctx = l.context_name ? `[${l.context_name}]` : l.context ? `[${l.context.substring(0,8)}]` : '';
-      const ts = l.timestamp ? `[${new Date(l.timestamp * 1000).toLocaleString()}] ` : '';
-      return ts + prefix + ' ' + ctx + ': ' + (l.content || '(empty)');
-    }).join('\n\n---\n\n');
+      let ts = '';
+      if (l.timestamp && l.timestamp > 0) {
+        const d = new Date(l.timestamp * 1000);
+        const pad = n => String(n).padStart(2, '0');
+        ts = `[${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}] `;
+      }
+      return ts + prefix + ' ' + ctx + '\n' + (l.content || '(empty)');
+    }).join('\n\n────────────────────────────────\n\n');
   },
 
   get currentLogText() {
@@ -79,8 +84,8 @@
     }
     // 'all' tab: combine both
     const parts = [];
-    if (this.logs) parts.push('═══ SYSTEM LOGS ═══\n' + this.logs);
-    if (this.formattedContextLogs) parts.push('═══ CHAT LOGS ═══\n' + this.formattedContextLogs);
+    if (this.logs) parts.push('\n═══ SYSTEM LOGS ═══\n\n' + this.logs);
+    if (this.formattedContextLogs) parts.push('\n═══ CHAT LOGS ═══\n\n' + this.formattedContextLogs);
     return parts.join('\n\n') || 'No logs available.';
   },
 
@@ -261,10 +266,10 @@
         color: #c9d1d9;
         border: 1px solid var(--color-border, #333);
         border-radius: 8px;
-        padding: 16px;
+        padding: 16px 20px;
         font-family: 'Fira Code', 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
         font-size: 12px;
-        line-height: 1.5;
+        line-height: 1.8;
         max-height: 500px;
         overflow-y: auto;
         white-space: pre-wrap;
