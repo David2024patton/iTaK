@@ -1240,7 +1240,7 @@ def create_app(agent: "Agent"):
                     "groq": "GROQ_API_KEY",
                     "mistral": "MISTRAL_API_KEY",
                     "deepseek": "DEEPSEEK_API_KEY",
-                    "nvidia": "NVIDIA_API_KEY",
+                    "nvidia": "NVIDIA_NIM_API_KEY",
                 }
                 for provider_label, key_value in api_keys.items():
                     if not key_value:
