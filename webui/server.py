@@ -595,7 +595,7 @@ def create_app(agent: "Agent"):
         "auth_login": "",
         "auth_password": "",
         "root_password": "",
-        "api_keys": {},
+        "api_keys": agent.config.get("api_keys", {}),
         "litellm_global_kwargs": "{}",
         "variables": "",
         "secrets": "",
@@ -617,6 +617,66 @@ def create_app(agent: "Agent"):
         "skills_allow_untrusted_import": True,
         "skills_require_review_summary": True,
     }
+
+    # --- Propagate API keys at startup (same logic as settings_set) ---
+    import litellm as _litellm_init
+    _startup_keys = compat_settings.get("api_keys", {})
+    if isinstance(_startup_keys, dict):
+        _key_env_map_startup = {
+            "openai": "OPENAI_API_KEY",
+            "google": "GEMINI_API_KEY",
+            "gemini": "GEMINI_API_KEY",
+            "anthropic": "ANTHROPIC_API_KEY",
+            "openrouter": "OPENROUTER_API_KEY",
+            "groq": "GROQ_API_KEY",
+            "mistral": "MISTRAL_API_KEY",
+            "deepseek": "DEEPSEEK_API_KEY",
+            "nvidia": "NVIDIA_NIM_API_KEY",
+        }
+        for _p_label, _k_value in _startup_keys.items():
+            if not _k_value:
+                continue
+            _env_name = _key_env_map_startup.get(_p_label.lower())
+            if _env_name:
+                os.environ[_env_name] = str(_k_value)
+                setattr(_litellm_init, _env_name.lower(), str(_k_value))
+            else:
+                os.environ[f"{_p_label.upper()}_API_KEY"] = str(_k_value)
+        logger.info(f"Startup: propagated {len(_startup_keys)} API key(s) to environment")
+
+    # --- Settings persistence helper ---
+    def _persist_config_settings():
+        """Write current model settings and API keys back to config.json."""
+        try:
+            config_path = Path(__file__).parent.parent / "config.json"
+            existing = {}
+            if config_path.exists():
+                with open(config_path, "r", encoding="utf-8") as f:
+                    existing = json.load(f)
+
+            # Update models section
+            models = existing.setdefault("models", {})
+            _role_persist_map = {
+                "chat": ("chat_model_provider", "chat_model_name", "chat_model_api_base"),
+                "utility": ("util_model_provider", "util_model_name", "util_model_api_base"),
+                "browser": ("browser_model_provider", "browser_model_name", "browser_model_api_base"),
+            }
+            for role, (prov_key, name_key, base_key) in _role_persist_map.items():
+                cfg = models.setdefault(role, {})
+                cfg["provider"] = compat_settings.get(prov_key, "")
+                cfg["model"] = compat_settings.get(name_key, "")
+                cfg["api_base"] = compat_settings.get(base_key, "")
+
+            # Update API keys
+            if compat_settings.get("api_keys"):
+                existing["api_keys"] = dict(compat_settings["api_keys"])
+
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(existing, f, indent=2, ensure_ascii=False)
+            logger.info("Settings persisted to config.json")
+        except Exception as e:
+            logger.warning(f"Failed to persist settings to config.json: {e}")
+
 
     # Provider -> default API base URL map
     _provider_endpoints = {
@@ -1263,6 +1323,10 @@ def create_app(agent: "Agent"):
                     gogcli_cfg["timeout_seconds"] = max(1, int(incoming.get("gogcli_timeout_seconds") or 60))
                 except Exception:
                     gogcli_cfg["timeout_seconds"] = 60
+
+            # Persist settings to disk so they survive container restarts
+            _persist_config_settings()
+
         return {"ok": True, "settings": compat_settings, "additional": compat_additional}
 
     @app.post("/catalog_refresh")
