@@ -1604,60 +1604,29 @@ def create_app(agent: "Agent"):
         except Exception as e:
             return {"ok": False, "error": f"Failed to fetch models: {e}", "models": []}
 
-    @app.post("/logs_get")
-    async def logs_get(payload: dict | None = None):
-        """Return recent agent logs for the logs viewer."""
-        max_lines = int((payload or {}).get("max_lines", 200))
-        log_lines = []
+    @app.post("/logs_clear")
+    async def logs_clear(payload: dict | None = None):
+        """Clear all system and context log history."""
+        clear_system = True
+        clear_context = True
+        if payload:
+            clear_system = payload.get("system", True)
+            clear_context = payload.get("context", True)
 
-        # Try reading from agent log file
-        log_paths = [
-            Path(__file__).parent.parent / "logs" / "agent.log",
-            Path(__file__).parent.parent / "log" / "agent.log",
-            Path(__file__).parent.parent / "agent.log",
-        ]
+        cleared = {"system": 0, "context": 0}
+        if clear_system:
+            cleared["system"] = len(_system_logs)
+            _system_logs.clear()
+        if clear_context:
+            for ctx in contexts.values():
+                cleared["context"] += len(ctx.get("logs", []))
+                ctx["logs"] = []
+                ctx["log_version"] = 0
+                ctx["next_no"] = 1
+                _save_context(ctx)
 
-        log_file = None
-        for lp in log_paths:
-            if lp.exists():
-                log_file = lp
-                break
-
-        if log_file:
-            try:
-                with open(log_file, "r", encoding="utf-8", errors="replace") as f:
-                    all_lines = f.readlines()
-                    log_lines = all_lines[-max_lines:]
-            except Exception as e:
-                log_lines = [f"Error reading log file: {e}\n"]
-
-        # Also collect recent context logs from all chat contexts
-        context_logs = []
-        for ctx_id, ctx in contexts.items():
-            for entry in ctx.get("logs", [])[-50:]:
-                context_logs.append({
-                    "context": ctx.get("name", ctx_id),
-                    "type": entry.get("type", ""),
-                    "content": entry.get("content", ""),
-                    "heading": entry.get("heading", ""),
-                })
-
-        # Include Python logging records if available
-        import logging
-        root_logger = logging.getLogger()
-        handler_logs = []
-        for handler in root_logger.handlers:
-            if hasattr(handler, "buffer"):
-                for record in handler.buffer[-max_lines:]:
-                    handler_logs.append(handler.format(record))
-
-        return {
-            "ok": True,
-            "file_logs": "".join(log_lines),
-            "context_logs": context_logs[-max_lines:],
-            "handler_logs": handler_logs[-max_lines:],
-            "timestamp": time.time(),
-        }
+        _append_system_log("system", "info", f"Logs cleared: {cleared['system']} system, {cleared['context']} context entries")
+        return {"ok": True, "cleared": cleared}
 
     @app.post("/agents_catalog")
     async def agents_catalog(payload: dict | None = None):
@@ -3308,7 +3277,7 @@ def create_app(agent: "Agent"):
         # Build file-style logs from system buffer
         file_log_lines = []
         for entry in sys_logs[-max_lines:]:
-            ts = time.strftime("%H:%M:%S", time.localtime(entry["timestamp"]))
+            ts = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(entry["timestamp"]))
             cat = entry["category"].upper().ljust(10)
             lvl = entry["level"].upper().ljust(7)
             file_log_lines.append(f"[{ts}] [{cat}] [{lvl}] {entry['message']}")

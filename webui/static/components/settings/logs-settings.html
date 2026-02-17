@@ -65,7 +65,8 @@
     return this.contextLogs.map(l => {
       const prefix = l.type === 'user' ? '👤 USER' : l.type === 'response' ? '🤖 AGENT' : '📋 ' + (l.type || 'unknown').toUpperCase();
       const ctx = l.context_name ? `[${l.context_name}]` : l.context ? `[${l.context.substring(0,8)}]` : '';
-      return prefix + ' ' + ctx + ': ' + (l.content || '(empty)');
+      const ts = l.timestamp ? `[${new Date(l.timestamp * 1000).toLocaleString()}] ` : '';
+      return ts + prefix + ' ' + ctx + ': ' + (l.content || '(empty)');
     }).join('\n\n---\n\n');
   },
 
@@ -129,6 +130,34 @@
   filterByCategory(cat) {
     this.categoryFilter = this.categoryFilter === cat ? '' : cat;
     this.fetchLogs();
+  },
+
+  async clearLogs() {
+    if (!confirm('Are you sure you want to clear all log history? This cannot be undone.')) return;
+    this.isLoading = true;
+    this.errorMessage = '';
+    try {
+      const resp = await fetch('/logs_clear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const result = await resp.json();
+      if (result && result.ok) {
+        this.logs = '';
+        this.contextLogs = [];
+        this.categories = {};
+        this.totalSystemLogs = 0;
+        this.totalContextLogs = 0;
+        this.lastRefresh = new Date().toLocaleTimeString();
+      } else {
+        this.errorMessage = 'Failed to clear logs';
+      }
+    } catch (e) {
+      this.errorMessage = 'Error clearing logs: ' + e.message;
+    } finally {
+      this.isLoading = false;
+    }
   },
 
   init() {
@@ -202,6 +231,10 @@
       <button @click="sendToAgent()"
         style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;">
         🤖 Send to Agent
+      </button>
+      <button @click="clearLogs()"
+        style="padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(220,50,50,0.4); background: rgba(220,50,50,0.15); color: #f88; cursor: pointer; font-size: 13px;">
+        🗑️ Clear Logs
       </button>
       <label
         style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--color-text-muted, #888); cursor: pointer;">
