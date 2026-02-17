@@ -1,0 +1,191 @@
+<html>
+
+<head>
+    <title>Logs</title>
+</head>
+
+<body>
+    <script type="module">
+        import * as API from "/js/api.js";
+        window._logsAPI = API;
+    </script>
+
+    <div x-data="{
+  logs: '',
+  contextLogs: [],
+  isLoading: false,
+  autoRefresh: false,
+  autoRefreshInterval: null,
+  lastRefresh: '',
+  maxLines: 200,
+  activeLogTab: 'context',
+
+  async fetchLogs() {
+    this.isLoading = true;
+    try {
+      const response = await window._logsAPI.callJsonApi('logs_get', { max_lines: this.maxLines });
+      if (response && response.ok) {
+        this.logs = response.file_logs || '';
+        this.contextLogs = response.context_logs || [];
+
+        // Append handler logs if available
+        if (response.handler_logs && response.handler_logs.length > 0) {
+          this.logs = response.handler_logs.join('\n') + '\n\n' + this.logs;
+        }
+
+        if (!this.logs && this.contextLogs.length === 0) {
+          this.logs = 'No logs available yet. Send a message to start generating logs.';
+        }
+
+        this.lastRefresh = new Date().toLocaleTimeString();
+      }
+    } catch (e) {
+      this.logs = 'Error fetching logs: ' + e.message;
+    } finally {
+      this.isLoading = false;
+    }
+  },
+
+  get formattedContextLogs() {
+    return this.contextLogs.map(l => {
+      const prefix = l.type === 'user' ? '👤 USER' : l.type === 'response' ? '🤖 AGENT' : '📋 ' + l.type.toUpperCase();
+      const ctx = l.context ? `[${l.context}]` : '';
+      return `${prefix} ${ctx}: ${l.content}`;
+    }).join('\n\n---\n\n');
+  },
+
+  get currentLogText() {
+    if (this.activeLogTab === 'context') {
+      return this.formattedContextLogs || 'No context logs available.';
+    }
+    return this.logs || 'No file logs available.';
+  },
+
+  async copyLogs() {
+    try {
+      await navigator.clipboard.writeText(this.currentLogText);
+      this.$dispatch('toast', { type: 'success', text: 'Logs copied to clipboard' });
+    } catch (e) {
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = this.currentLogText;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      this.$dispatch('toast', { type: 'success', text: 'Logs copied to clipboard' });
+    }
+  },
+
+  async sendToAgent() {
+    const logText = this.currentLogText;
+    if (!logText || logText.startsWith('No ')) return;
+
+    const message = 'Here are the recent logs. Please analyze them for any errors or issues:\n\n```\n' + logText.substring(0, 4000) + '\n```';
+    try {
+      await window._logsAPI.callJsonApi('message_async', { text: message });
+      this.$dispatch('toast', { type: 'success', text: 'Logs sent to agent for analysis' });
+    } catch (e) {
+      this.$dispatch('toast', { type: 'error', text: 'Failed to send logs: ' + e.message });
+    }
+  },
+
+  toggleAutoRefresh() {
+    this.autoRefresh = !this.autoRefresh;
+    if (this.autoRefresh) {
+      this.autoRefreshInterval = setInterval(() => this.fetchLogs(), 5000);
+    } else if (this.autoRefreshInterval) {
+      clearInterval(this.autoRefreshInterval);
+      this.autoRefreshInterval = null;
+    }
+  },
+
+  init() {
+    this.fetchLogs();
+  }
+}">
+
+        <div class="section-title">System Logs</div>
+        <div class="section-description">
+            View recent agent and context logs. Use these to debug issues with models, connectivity, or agent behavior.
+        </div>
+
+        <!-- Log tab selector -->
+        <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center; flex-wrap: wrap;">
+            <button @click="activeLogTab = 'context'"
+                :style="activeLogTab === 'context' ? 'background: var(--color-primary, #6ea8fe); color: #000; border-color: var(--color-primary, #6ea8fe);' : ''"
+                style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;">
+                💬 Chat Logs
+            </button>
+            <button @click="activeLogTab = 'file'"
+                :style="activeLogTab === 'file' ? 'background: var(--color-primary, #6ea8fe); color: #000; border-color: var(--color-primary, #6ea8fe);' : ''"
+                style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;">
+                📄 System Logs
+            </button>
+
+            <div style="flex: 1;"></div>
+
+            <!-- Controls -->
+            <button @click="fetchLogs()" :disabled="isLoading"
+                style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 4px;"
+                :style="isLoading ? 'opacity: 0.6; cursor: wait;' : ''">
+                <span x-show="!isLoading">🔄 Refresh</span>
+                <span x-show="isLoading">⏳ Loading...</span>
+            </button>
+            <button @click="copyLogs()"
+                style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;">
+                📋 Copy
+            </button>
+            <button @click="sendToAgent()"
+                style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;">
+                🤖 Send to Agent
+            </button>
+            <label
+                style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--color-text-muted, #888); cursor: pointer;">
+                <input type="checkbox" @change="toggleAutoRefresh()" :checked="autoRefresh" style="cursor: pointer;" />
+                Auto-refresh
+            </label>
+        </div>
+
+        <!-- Last refresh time -->
+        <div x-show="lastRefresh" style="font-size: 11px; color: var(--color-text-muted, #666); margin-bottom: 8px;">
+            Last refreshed: <span x-text="lastRefresh"></span>
+            <span x-show="autoRefresh" style="color: var(--color-primary, #6ea8fe);">• Auto-refreshing every 5s</span>
+        </div>
+
+        <!-- Log viewer -->
+        <div style="position: relative;">
+            <pre x-text="currentLogText" style="
+        background: #0d1117;
+        color: #c9d1d9;
+        border: 1px solid var(--color-border, #333);
+        border-radius: 8px;
+        padding: 16px;
+        font-family: 'Fira Code', 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+        font-size: 12px;
+        line-height: 1.5;
+        max-height: 500px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        margin: 0;
+      "></pre>
+        </div>
+
+        <!-- Max lines control -->
+        <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+            <label style="font-size: 12px; color: var(--color-text-muted, #888);">Max lines:</label>
+            <select x-model.number="maxLines" @change="fetchLogs()"
+                style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #1a1a1a); color: var(--color-text, #eee); font-size: 12px;">
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200" selected>200</option>
+                <option value="500">500</option>
+                <option value="1000">1000</option>
+            </select>
+        </div>
+
+    </div>
+</body>
+
+</html>
