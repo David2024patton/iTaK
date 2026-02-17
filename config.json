@@ -2,19 +2,19 @@
     "models": {
         "chat": {
             "provider": "nvidia",
-            "model": "meta/llama-3.1-8b-instruct",
+            "model": "nvidia_nim/meta/llama-3.1-8b-instruct",
             "api_base": "https://integrate.api.nvidia.com/v1",
             "context_window": 128000,
             "use_vision": false
         },
         "utility": {
             "provider": "nvidia",
-            "model": "meta/llama-3.1-8b-instruct",
+            "model": "nvidia_nim/meta/llama-3.1-8b-instruct",
             "api_base": "https://integrate.api.nvidia.com/v1"
         },
         "browser": {
             "provider": "nvidia",
-            "model": "meta/llama-3.1-8b-instruct",
+            "model": "nvidia_nim/meta/llama-3.1-8b-instruct",
             "api_base": "https://integrate.api.nvidia.com/v1",
             "use_vision": false
         }

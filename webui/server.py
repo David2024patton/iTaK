@@ -134,6 +134,8 @@ def create_app(agent: "Agent"):
     runtime_id = "itak-webui"
     contexts: dict[str, dict] = {}
     context_counter = 0
+    _chats_dir = Path(__file__).parent.parent / "data" / "chats"
+    _chats_dir.mkdir(parents=True, exist_ok=True)
     notifications: list[dict] = []
     notifications_guid = uuid.uuid4().hex
     notifications_version = 0
@@ -728,11 +730,46 @@ def create_app(agent: "Agent"):
             "project": None,
         }
 
+    def _save_context(ctx: dict):
+        """Persist a single chat context to disk."""
+        try:
+            fp = _chats_dir / f"{ctx['id']}.json"
+            fp.write_text(json.dumps(ctx, default=str), encoding="utf-8")
+        except Exception as e:
+            logger.warning(f"Failed to save context {ctx.get('id')}: {e}")
+
+    def _delete_context_file(ctx_id: str):
+        """Remove a chat context file from disk."""
+        try:
+            fp = _chats_dir / f"{ctx_id}.json"
+            if fp.exists():
+                fp.unlink()
+        except Exception as e:
+            logger.warning(f"Failed to delete context file {ctx_id}: {e}")
+
+    def _load_contexts():
+        """Load all persisted chat contexts from disk."""
+        nonlocal context_counter
+        loaded = 0
+        for fp in _chats_dir.glob("*.json"):
+            try:
+                ctx = json.loads(fp.read_text(encoding="utf-8"))
+                if isinstance(ctx, dict) and "id" in ctx:
+                    ctx["running"] = False  # never resume a running state
+                    contexts[ctx["id"]] = ctx
+                    context_counter = max(context_counter, ctx.get("no", 0))
+                    loaded += 1
+            except Exception as e:
+                logger.warning(f"Failed to load context from {fp.name}: {e}")
+        if loaded:
+            logger.info(f"Restored {loaded} chat context(s) from disk")
+
     def _ensure_context(ctx_id: str | None = None) -> dict:
         if ctx_id and ctx_id in contexts:
             return contexts[ctx_id]
         new_ctx = _make_context()
         contexts[new_ctx["id"]] = new_ctx
+        _save_context(new_ctx)
         return new_ctx
 
     def _push_log(ctx: dict, log_type: str, content: str, heading: str = "", kvps: dict | None = None):
@@ -746,6 +783,7 @@ def create_app(agent: "Agent"):
         ctx["next_no"] += 1
         ctx["logs"].append(entry)
         ctx["log_version"] += 1
+        _save_context(ctx)
 
     def _list_contexts() -> list[dict]:
         return sorted([
@@ -781,7 +819,7 @@ def create_app(agent: "Agent"):
 
     def _build_poll_snapshot(context_id: str | None, log_from: int = 0, notifications_from: int = 0) -> dict:
         ctx = _ensure_context(context_id)
-        logs = ctx["logs"] if int(log_from or 0) <= 0 else []
+        logs = ctx["logs"]
         notifs = [n for n in notifications if n.get("version", 0) > int(notifications_from or 0)]
         return {
             "ok": True,
@@ -831,7 +869,9 @@ def create_app(agent: "Agent"):
             },
         }
 
-    _ensure_context(None)
+    _load_contexts()
+    if not contexts:
+        _ensure_context(None)
 
     # --- REST Endpoints ---
 
@@ -899,6 +939,7 @@ def create_app(agent: "Agent"):
         ctx_id = payload.get("context")
         if ctx_id in contexts:
             del contexts[ctx_id]
+            _delete_context_file(ctx_id)
         if not contexts:
             _ensure_context(None)
         return {"ok": True}
