@@ -210,6 +210,7 @@ class ModelRouter:
         model = model_config.get("model", "gemini/gemini-2.0-flash")
         temperature = model_config.get("temperature", 0.7)
         max_tokens = model_config.get("max_tokens", 4096)
+        api_base = model_config.get("api_base", "") or ""
 
         # Build the list of models to try (primary + fallbacks)
         models_to_try = [model]
@@ -229,6 +230,9 @@ class ModelRouter:
                 "stream": stream_callback is not None,
                 **kwargs,
             }
+            # Pass custom API base URL if configured (e.g. NVIDIA, custom endpoints)
+            if api_base:
+                call_kwargs["api_base"] = api_base
 
             try:
                 if stream_callback:

@@ -164,8 +164,19 @@ def create_app(agent: "Agent"):
         default_chat = [
             {"value": "openai", "label": "OpenAI"},
             {"value": "google", "label": "Google"},
+            {"value": "anthropic", "label": "Anthropic"},
+            {"value": "nvidia", "label": "NVIDIA"},
+            {"value": "openrouter", "label": "OpenRouter"},
+            {"value": "groq", "label": "Groq"},
+            {"value": "ollama", "label": "Ollama"},
+            {"value": "mistral", "label": "Mistral"},
+            {"value": "deepseek", "label": "DeepSeek"},
         ]
-        default_embed = [{"value": "openai", "label": "OpenAI"}]
+        default_embed = [
+            {"value": "openai", "label": "OpenAI"},
+            {"value": "ollama", "label": "Ollama"},
+            {"value": "fastembed", "label": "FastEmbed (Local)"},
+        ]
         default_agents = [{"key": "default", "label": "Default", "name": "default"}]
 
         if payload is None:
@@ -490,36 +501,51 @@ def create_app(agent: "Agent"):
             "parent_path": parent_path,
         }
 
+    # --- Read initial model settings from agent's actual config ---
+    _models_cfg = agent.config.get("models", {})
+    _chat_cfg = _models_cfg.get("chat", {})
+    _util_cfg = _models_cfg.get("utility", {})
+    _browser_cfg = _models_cfg.get("browser", {})
+    _embed_cfg = _models_cfg.get("embeddings", {})
+
+    def _provider_from_model(model_str: str, cfg_provider: str = "") -> str:
+        """Extract a provider label from a litellm model string or config."""
+        if cfg_provider and cfg_provider != "litellm":
+            return cfg_provider
+        if "/" in model_str:
+            return model_str.split("/", 1)[0]  # e.g. 'gemini' from 'gemini/gemini-2.5-pro'
+        return cfg_provider or "openai"
+
     compat_settings = {
-        "chat_model_provider": "openai",
-        "chat_model_name": "gpt-4o-mini",
-        "chat_model_api_base": "",
-        "chat_model_ctx_length": 128000,
+        "chat_model_provider": _provider_from_model(_chat_cfg.get("model", ""), _chat_cfg.get("provider", "")),
+        "chat_model_name": _chat_cfg.get("model", ""),
+        "chat_model_api_base": _chat_cfg.get("api_base", ""),
+        "chat_model_ctx_length": int(_chat_cfg.get("context_window", 128000)),
         "chat_model_ctx_history": 0.7,
-        "chat_model_vision": True,
+        "chat_model_vision": bool(_chat_cfg.get("use_vision", True)),
         "chat_model_rl_requests": 60,
         "chat_model_rl_input": 1000000,
         "chat_model_rl_output": 1000000,
         "chat_model_kwargs": "{}",
-        "util_model_provider": "openai",
-        "util_model_name": "gpt-4o-mini",
-        "util_model_api_base": "",
+        "util_model_provider": _provider_from_model(_util_cfg.get("model", ""), _util_cfg.get("provider", "")),
+        "util_model_name": _util_cfg.get("model", ""),
+        "util_model_api_base": _util_cfg.get("api_base", ""),
         "util_model_rl_requests": 120,
         "util_model_rl_input": 1000000,
         "util_model_rl_output": 1000000,
         "util_model_kwargs": "{}",
-        "browser_model_provider": "openai",
-        "browser_model_name": "gpt-4o-mini",
-        "browser_model_api_base": "",
-        "browser_model_vision": True,
+        "browser_model_provider": _provider_from_model(_browser_cfg.get("model", ""), _browser_cfg.get("provider", "")),
+        "browser_model_name": _browser_cfg.get("model", ""),
+        "browser_model_api_base": _browser_cfg.get("api_base", ""),
+        "browser_model_vision": bool(_browser_cfg.get("use_vision", True)),
         "browser_model_rl_requests": 60,
         "browser_model_rl_input": 1000000,
         "browser_model_rl_output": 1000000,
         "browser_model_kwargs": "{}",
         "browser_http_headers": "{}",
-        "embed_model_provider": "openai",
-        "embed_model_name": "text-embedding-3-small",
-        "embed_model_api_base": "",
+        "embed_model_provider": _provider_from_model(_embed_cfg.get("model", ""), _embed_cfg.get("provider", "")),
+        "embed_model_name": _embed_cfg.get("model", ""),
+        "embed_model_api_base": _embed_cfg.get("api_base", ""),
         "embed_model_rl_requests": 120,
         "embed_model_rl_input": 1000000,
         "embed_model_kwargs": "{}",
@@ -1112,6 +1138,90 @@ def create_app(agent: "Agent"):
         incoming = payload.get("settings", {}) if isinstance(payload, dict) else {}
         if isinstance(incoming, dict):
             compat_settings.update(incoming)
+
+            # --- Propagate model settings to agent.model_router ---
+            import litellm as _litellm
+
+            # Helper: build a litellm model string from provider + model name
+            def _litellm_model(provider: str, model_name: str, api_base: str = "") -> str:
+                """Convert WebUI provider/model fields into a litellm model identifier."""
+                if not model_name:
+                    return ""
+                # If the model already contains a provider prefix (e.g. 'gemini/gemini-2.5-pro'), use it as-is
+                if "/" in model_name:
+                    return model_name
+                # Map common WebUI provider labels to litellm prefixes
+                prefix_map = {
+                    "openai": "openai",
+                    "google": "gemini",
+                    "gemini": "gemini",
+                    "anthropic": "anthropic",
+                    "openrouter": "openrouter",
+                    "groq": "groq",
+                    "ollama": "ollama",
+                    "mistral": "mistral",
+                    "deepseek": "deepseek",
+                    "nvidia": "nvidia_nim",
+                }
+                prefix = prefix_map.get(provider.lower(), provider.lower()) if provider else ""
+                if prefix:
+                    return f"{prefix}/{model_name}"
+                return model_name
+
+            # Map of (provider_key, model_key, base_key) -> router role
+            _role_map = {
+                "chat": ("chat_model_provider", "chat_model_name", "chat_model_api_base"),
+                "utility": ("util_model_provider", "util_model_name", "util_model_api_base"),
+                "browser": ("browser_model_provider", "browser_model_name", "browser_model_api_base"),
+            }
+
+            for role, (prov_key, name_key, base_key) in _role_map.items():
+                if prov_key in incoming or name_key in incoming or base_key in incoming:
+                    provider = compat_settings.get(prov_key, "")
+                    model_name = compat_settings.get(name_key, "")
+                    api_base = compat_settings.get(base_key, "")
+                    litellm_model = _litellm_model(provider, model_name, api_base)
+                    if litellm_model:
+                        agent.model_router.set_model(role, litellm_model)
+                        # Also update api_base in the router's internal config
+                        role_cfg_map = {
+                            "chat": agent.model_router._chat_config,
+                            "utility": agent.model_router._utility_config,
+                            "browser": agent.model_router._browser_config,
+                        }
+                        if api_base:
+                            role_cfg_map[role]["api_base"] = api_base
+                        elif "api_base" in role_cfg_map[role]:
+                            del role_cfg_map[role]["api_base"]
+                        logger.info(f"Model router updated: {role} -> {litellm_model}" + (f" (base: {api_base})" if api_base else ""))
+
+            # Propagate API keys to litellm
+            api_keys = incoming.get("api_keys") or compat_settings.get("api_keys", {})
+            if isinstance(api_keys, dict):
+                _key_env_map = {
+                    "openai": "OPENAI_API_KEY",
+                    "google": "GEMINI_API_KEY",
+                    "gemini": "GEMINI_API_KEY",
+                    "anthropic": "ANTHROPIC_API_KEY",
+                    "openrouter": "OPENROUTER_API_KEY",
+                    "groq": "GROQ_API_KEY",
+                    "mistral": "MISTRAL_API_KEY",
+                    "deepseek": "DEEPSEEK_API_KEY",
+                    "nvidia": "NVIDIA_API_KEY",
+                }
+                for provider_label, key_value in api_keys.items():
+                    if not key_value:
+                        continue
+                    env_name = _key_env_map.get(provider_label.lower())
+                    if env_name:
+                        os.environ[env_name] = str(key_value)
+                        setattr(_litellm, env_name.lower(), str(key_value))
+                    else:
+                        # Generic: set as env var for litellm to pick up
+                        generic_env = f"{provider_label.upper()}_API_KEY"
+                        os.environ[generic_env] = str(key_value)
+
+            # Propagate gogcli settings
             gogcli_cfg = agent.config.setdefault("gogcli", {})
             if "gogcli_binary" in incoming:
                 gogcli_cfg["binary"] = str(incoming.get("gogcli_binary") or "gog")
