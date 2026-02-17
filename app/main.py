@@ -140,7 +140,7 @@ async def main(adapter_name: str = "cli", enable_webui: bool = False, webui_only
     if enable_webui or webui_only:
         try:
             from webui.server import start_webui
-            webui_port = config.get("webui", {}).get("port", 48920)
+            webui_port = int(os.environ.get("WEBUI_PORT", 0)) or config.get("webui", {}).get("port", 0) or 48920
             webui_host = config.get("webui", {}).get("host", "0.0.0.0")
             webui_task = asyncio.create_task(start_webui(agent, host=webui_host, port=webui_port))
             print(f"✅ WebUI: http://{webui_host}:{webui_port}")

@@ -126,7 +126,7 @@
     "webui": {
         "enabled": true,
         "host": "0.0.0.0",
-        "port": 0,
+        "port": 48920,
         "auth_token": "",
         "auth_password": "${WEBUI_PASSWORD}",
         "cors_origins": [
