@@ -6,7 +6,6 @@ Semantic vector search for deep recall across all memories.
 import json
 import logging
 import time
-from typing import Any, Optional
 
 try:
     import weaviate

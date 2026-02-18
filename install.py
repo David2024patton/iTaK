@@ -16,7 +16,7 @@ import secrets
 import tarfile
 import datetime
 from pathlib import Path
-from typing import Tuple, Optional
+from typing import Tuple
 
 # Version
 VERSION = "1.0.0"
@@ -305,6 +305,22 @@ def ensure_webui_auth_token(config_path: Path) -> bool:
     except Exception:
         return False
 
+    webui = data.get("webui")
+    if not isinstance(webui, dict):
+        webui = {}
+        data["webui"] = webui
+
+    current = str(webui.get("auth_token", "")).strip()
+    if current:
+        return True
+
+    webui["auth_token"] = secrets.token_hex(24)
+    try:
+        config_path.write_text(json.dumps(data, indent=4) + "\n", encoding="utf-8")
+        return True
+    except Exception:
+        return False
+
 
 def ensure_env_ports(env_path: Path) -> bool:
     """Ensure .env has random 5-digit host ports when missing/blank."""
@@ -364,22 +380,6 @@ def ensure_env_ports(env_path: Path) -> bool:
     except Exception:
         return False
 
-    webui = data.get("webui")
-    if not isinstance(webui, dict):
-        webui = {}
-        data["webui"] = webui
-
-    current = str(webui.get("auth_token", "")).strip()
-    if current:
-        return True
-
-    webui["auth_token"] = secrets.token_hex(24)
-    try:
-        config_path.write_text(json.dumps(data, indent=4) + "\n", encoding="utf-8")
-        return True
-    except Exception:
-        return False
-
 
 def create_data_directories() -> bool:
     """Create necessary data directories"""
@@ -412,9 +412,9 @@ def display_next_steps(minimal: bool = False) -> None:
     print(f"{Colors.BOLD}Next Steps:{Colors.RESET}\n")
     
     print(f"{Colors.YELLOW}1.{Colors.RESET} Configure your API keys:")
-    print(f"   Edit .env and add at least one LLM API key:")
+    print("   Edit .env and add at least one LLM API key:")
     print(f"   {Colors.CYAN}GEMINI_API_KEY=your_key_here{Colors.RESET}")
-    print(f"   or")
+    print("   or")
     print(f"   {Colors.CYAN}OPENAI_API_KEY=your_key_here{Colors.RESET}\n")
     
     print(f"{Colors.YELLOW}2.{Colors.RESET} Run iTaK:")

@@ -4,11 +4,8 @@ Tests mocked HTTP, throttling, and storage integration.
 """
 
 import asyncio
-import json
 import sqlite3
 import tempfile
-import time
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -165,7 +162,6 @@ class TestMemUStore:
     async def test_memorize_success(self):
         """Should successfully send to MemU and parse response."""
         from memory.memu_store import MemUStore
-        from unittest.mock import MagicMock
         
         store = MemUStore({
             "enabled": True,
@@ -412,7 +408,6 @@ class TestMemUExtension:
         
         # Mock create_task to capture the task
         tasks_created = []
-        original_create_task = asyncio.create_task
         
         def mock_create_task(coro):
             tasks_created.append(coro)
@@ -465,7 +460,6 @@ async def test_memu_full_integration():
     from memory.manager import MemoryManager
     
     # Create temp DB
-    import tempfile
     with tempfile.TemporaryDirectory() as tmp:
         # Initialize stores
         config = {
@@ -502,7 +496,7 @@ async def test_memu_full_integration():
                 assert len(stored_ids) > 0
                 
                 # Check SQLite
-                sqlite = SQLiteStore(f"{tmp}/memory.db")
+                SQLiteStore(f"{tmp}/memory.db")
                 conn = sqlite3.connect(f"{tmp}/memory.db")
                 rows = conn.execute("SELECT * FROM memories WHERE source = 'memu'").fetchall()
                 conn.close()

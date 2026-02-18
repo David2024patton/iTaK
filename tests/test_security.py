@@ -12,9 +12,7 @@ Comprehensive tests for all security features:
 - Webhook secret verification (constant-time comparison)
 """
 
-import hmac
 import time
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest

@@ -10,10 +10,8 @@ Tests for system resilience under failure conditions:
 
 import asyncio
 import pytest
-import tempfile
 import os
-from pathlib import Path
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 
 
 # ============================================================
@@ -87,7 +85,7 @@ class TestDatabaseFailures:
         invalid_path = "/nonexistent/path/db.sqlite"
         
         try:
-            store = SQLiteStore(invalid_path)
+            SQLiteStore(invalid_path)
             # May fail or handle gracefully
         except Exception:
             # Expected to fail
@@ -110,7 +108,7 @@ class TestDatabaseFailures:
         
         try:
             state = {"test": "data"}
-            checkpoint_id = await manager.save(state)
+            await manager.save(state)
             # May fail or handle gracefully
         except (PermissionError, Exception):
             # Expected
@@ -245,7 +243,6 @@ class TestConcurrentFailures:
     async def test_recovery_from_split_brain(self):
         """Should recover from split-brain scenarios."""
         # Simulate split-brain with two conflicting states
-        state_a = {"value": 1}
         state_b = {"value": 2}
         
         # Conflict resolution (simple: last write wins)

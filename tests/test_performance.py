@@ -11,7 +11,6 @@ Tests for performance improvements in:
 
 import time
 import pytest
-from pathlib import Path
 from collections import deque
 
 
@@ -114,7 +113,7 @@ class TestOutputGuardPerformance:
         """Verify categories_found uses efficient deduplication."""
         from security.output_guard import OutputGuard, GuardResult, Redaction, PIICategory
         
-        guard = OutputGuard()
+        OutputGuard()
         
         # Create result with duplicate categories
         redactions = [

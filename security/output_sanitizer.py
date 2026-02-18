@@ -6,10 +6,7 @@ text in messages sent to users via adapters.
 """
 
 import logging
-import os
 import re
-from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 

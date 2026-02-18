@@ -2,7 +2,6 @@
 iTaK Slack Adapter - Slack bot using Socket Mode.
 """
 
-import asyncio
 import logging
 
 try:

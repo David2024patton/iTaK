@@ -10,7 +10,6 @@ import random
 import string
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from typing import Optional
 from tools.base import BaseTool, ToolResult
 
 
@@ -196,7 +195,7 @@ class EmailTool(BaseTool):
                     folder_list.append(folder_str)
 
                 return ToolResult(
-                    output=f"Available folders:\n" + "\n".join(folder_list)
+                    output="Available folders:\n" + "\n".join(folder_list)
                 )
 
         except Exception as e:
@@ -280,7 +279,7 @@ class EmailTool(BaseTool):
             try:
                 error_data = e.response.json()
                 error_detail = f": {error_data.get('detail', error_data)}"
-            except:
+            except Exception:
                 error_detail = f": {e.response.text}"
             return ToolResult(
                 output=f"Failed to create email account - HTTP {e.response.status_code}{error_detail}",

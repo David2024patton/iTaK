@@ -109,7 +109,7 @@ async def lint_python(file_path: str) -> LintResult:
     result.raw_output = stdout + stderr
     if code != 0:
         result.passed = False
-        lines = [l.strip() for l in (stdout + stderr).splitlines() if l.strip() and ":" in l]
+        lines = [line.strip() for line in (stdout + stderr).splitlines() if line.strip() and ":" in line]
         result.errors = lines[:20]  # Cap at 20 errors
 
     return result
@@ -133,7 +133,7 @@ async def lint_javascript(file_path: str) -> LintResult:
     result.raw_output = stdout + stderr
     if code != 0:
         result.passed = False
-        lines = [l.strip() for l in (stdout + stderr).splitlines() if l.strip()]
+        lines = [line.strip() for line in (stdout + stderr).splitlines() if line.strip()]
         result.errors = lines[:20]
 
     return result
@@ -156,7 +156,7 @@ async def lint_shell(file_path: str) -> LintResult:
     result.raw_output = stdout + stderr
     if code != 0:
         result.passed = False
-        lines = [l.strip() for l in (stdout + stderr).splitlines() if l.strip()]
+        lines = [line.strip() for line in (stdout + stderr).splitlines() if line.strip()]
         result.errors = lines[:20]
 
     return result

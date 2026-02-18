@@ -9,10 +9,8 @@ Tests for Model Context Protocol client and server:
 - Multiple MCP server coordination
 """
 
-import asyncio
 import pytest
-import json
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
+from unittest.mock import Mock, AsyncMock, patch
 
 
 # ============================================================
@@ -58,7 +56,7 @@ class TestMCPClientConnection:
             mock_exec.return_value = mock_process
             
             # Connect should work
-            result = await connection.connect()
+            await connection.connect()
             assert mock_exec.called
 
     @pytest.mark.asyncio
@@ -87,7 +85,7 @@ class TestMCPToolDiscovery:
     @pytest.mark.asyncio
     async def test_discover_tools(self):
         """Should discover tools from MCP server."""
-        from core.mcp_client import MCPConnection, MCPServerConfig, MCPTool
+        from core.mcp_client import MCPConnection, MCPServerConfig
         
         config = MCPServerConfig(
             name="test-server",

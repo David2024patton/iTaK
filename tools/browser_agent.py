@@ -35,7 +35,6 @@ class BrowserAgentTool(BaseTool):
         try:
             from browser_use import Agent as BrowserUseAgent
             from browser_use import BrowserSession, BrowserProfile
-            from playwright.async_api import async_playwright
 
             # SSRF guard: validate the target URL before browsing
             if url:
@@ -68,7 +67,6 @@ class BrowserAgentTool(BaseTool):
 
             # Create browser agent with dedicated browser model
             browser_config = self.agent.config.get("models", {}).get("browser", {})
-            model_name = browser_config.get("model", "gemini/gemini-2.0-flash")
 
             import litellm
 

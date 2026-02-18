@@ -2,7 +2,6 @@
 iTaK Discord Adapter - Full Discord bot with threads, progress editing, and slash commands.
 """
 
-import asyncio
 import logging
 from typing import Optional
 
@@ -87,7 +86,7 @@ class DiscordAdapter(BaseAdapter):
                 content = "Hello!"
 
             # Set room context
-            channel_name = getattr(message.channel, "name", "dm")
+            getattr(message.channel, "name", "dm")
             self.agent.context.room_id = f"discord-{message.channel.id}"
 
             # Store active channel for responses

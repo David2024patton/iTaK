@@ -7,7 +7,7 @@ import json
 import sqlite3
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 import threading
 
 import numpy as np

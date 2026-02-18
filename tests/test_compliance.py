@@ -8,12 +8,10 @@ Tests for regulatory compliance:
 - GDPR (data privacy)
 """
 
-import asyncio
 import pytest
 import tempfile
 import json
 from pathlib import Path
-from unittest.mock import Mock, AsyncMock, patch
 
 
 # ============================================================
@@ -55,7 +53,6 @@ class TestHIPAACompliance:
     async def test_audit_logging_access(self):
         """All PHI access should be logged."""
         from core.logger import Logger
-        import tempfile
         
         with tempfile.NamedTemporaryFile(mode='w', suffix='.log', delete=False) as tmp:
             logger = Logger(tmp.name)
@@ -188,7 +185,6 @@ class TestSOC2Compliance:
     async def test_incident_response_logging(self):
         """Incidents should be logged for response."""
         from core.logger import Logger
-        import tempfile
         
         with tempfile.NamedTemporaryFile(mode='w', suffix='.log', delete=False) as tmp:
             logger = Logger(tmp.name)
@@ -245,7 +241,7 @@ class TestGDPRCompliance:
         await store.delete(user_id)
         
         # Data should be deleted
-        results = await store.search(query=str(user_id), limit=10)
+        await store.search(query=str(user_id), limit=10)
         # Should not find deleted data
         assert True
 
@@ -307,11 +303,9 @@ class TestDataProtection:
     @pytest.mark.asyncio
     async def test_access_control_enforcement(self):
         """Should enforce access controls."""
-        from security.rate_limit import RateLimiter
         
         # Simulate access control
         user_role = "standard"
-        admin_only_resource = "/admin/config"
         
         # Should block unauthorized access
         has_access = user_role == "admin"

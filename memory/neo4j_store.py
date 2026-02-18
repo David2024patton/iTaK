@@ -3,9 +3,7 @@ iTaK Neo4j Knowledge Graph - Layer 3 of the 4-layer brain.
 Stores entities, relationships, and contextual knowledge.
 """
 
-import json
 import logging
-from typing import Any, Optional
 
 try:
     from neo4j import GraphDatabase  # Backward-compatible patch target for tests

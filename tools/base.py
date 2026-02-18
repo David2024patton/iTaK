@@ -2,7 +2,7 @@
 iTaK Base Tool - Interface that all tools inherit from.
 """
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
 if TYPE_CHECKING:

@@ -12,7 +12,7 @@ async def execute(agent, error: Exception = None, error_message: str = "", **kwa
     if not hasattr(agent, "self_heal") or agent.self_heal is None:
         return
 
-    from core.self_heal import ErrorCategory, ErrorSeverity
+    from core.self_heal import ErrorSeverity
 
     exc = error if error else Exception(error_message)
     classified = agent.self_heal.classify(exc)

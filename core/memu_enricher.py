@@ -9,7 +9,6 @@ This module processes MemU extraction responses and stores facts in:
 
 import logging
 from pathlib import Path
-from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 

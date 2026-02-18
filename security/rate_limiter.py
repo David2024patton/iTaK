@@ -6,7 +6,6 @@ Token-bucket algorithm with per-adapter and per-model limits.
 import time
 import logging
 from collections import defaultdict, deque
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 

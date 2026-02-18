@@ -13,7 +13,6 @@ import pytest
 import time
 import gc
 import sys
-from unittest.mock import Mock, AsyncMock, patch
 
 
 # ============================================================
@@ -170,7 +169,7 @@ class TestMemoryLeaks:
             for i in range(10):
                 state = {"iteration": i, "data": "x" * 100}
                 checkpoint_id = await manager.save(state)
-                loaded = await manager.load(checkpoint_id)
+                await manager.load(checkpoint_id)
             
             gc.collect()
             final_size = sys.getsizeof(manager)
@@ -239,7 +238,7 @@ class TestPerformanceDegradation:
             
             # Measure search performance
             start = time.time()
-            results = await store.search(query="Entry", limit=10)
+            await store.search(query="Entry", limit=10)
             search_time = time.time() - start
             
             # Should complete in reasonable time

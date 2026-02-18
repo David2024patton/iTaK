@@ -175,7 +175,7 @@ async def main(adapter_name: str = "cli", enable_webui: bool = False, webui_only
     else:
         logger.error(f"Unknown adapter: {adapter_name}")
         print(f"❌ Unknown adapter: {adapter_name}")
-        print(f"   Available: cli, discord, telegram, slack")
+        print("   Available: cli, discord, telegram, slack")
         sys.exit(1)
 
     # Log startup

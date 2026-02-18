@@ -99,7 +99,7 @@ def validate_path(
                     f"PATH_TRAVERSAL path escapes allowed roots: {path} "
                     f"(resolved: {resolved}, roots: {root_list})"
                 )
-                return False, f"Path escapes allowed directory"
+                return False, "Path escapes allowed directory"
         except (OSError, RuntimeError) as e:
             return False, f"Cannot resolve path: {e}"
 

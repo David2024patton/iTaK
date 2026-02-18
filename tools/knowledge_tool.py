@@ -2,7 +2,6 @@
 iTaK Knowledge Tool - Save and query reusable knowledge files.
 """
 
-import time
 from pathlib import Path
 
 from tools.base import BaseTool, ToolResult

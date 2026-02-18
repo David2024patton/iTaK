@@ -12,7 +12,6 @@ Usage:
     python3 setup.py
 """
 
-import os
 import platform
 import shutil
 import subprocess
@@ -23,6 +22,7 @@ from pathlib import Path
 
 
 # ─── Color Codes ───────────────────────────────────────────────────
+import importlib.util
 GREEN = "\033[92m"
 YELLOW = "\033[93m"
 RED = "\033[91m"
@@ -177,7 +177,7 @@ def install_system_dependencies(os_info: dict) -> bool:
     Returns:
         True if successful or skipped, False if failed
     """
-    system = os_info["system"]
+    os_info["system"]
     pkg_mgr = os_info["package_manager"]
     
     print_info("Checking system dependencies...")
@@ -276,12 +276,10 @@ def install_playwright() -> bool:
     print_info("This may take a few minutes and download ~300MB...")
     
     # First check if playwright is installed
-    try:
-        import playwright
-        print_ok("Playwright package is installed")
-    except ImportError:
+    if importlib.util.find_spec("playwright") is None:
         print_error("Playwright package not found - should have been installed with install/requirements/requirements.txt")
         return False
+    print_ok("Playwright package is installed")
     
     # Install chromium browser
     success, output = run_command(
@@ -401,14 +399,14 @@ def print_next_steps():
     print(f"{BOLD}Next Steps:{RESET}\n")
     
     print(f"1. {BOLD}Configure API Keys{RESET}")
-    print(f"   Edit .env and add at least one LLM API key:")
+    print("   Edit .env and add at least one LLM API key:")
     print(f"   {CYAN}   - OPENAI_API_KEY=sk-...{RESET}")
     print(f"   {CYAN}   - ANTHROPIC_API_KEY=sk-ant-...{RESET}")
     print(f"   {CYAN}   - GEMINI_API_KEY=AIza...{RESET}")
     print(f"   {CYAN}   - Or use local Ollama (no key needed){RESET}\n")
     
     print(f"2. {BOLD}Review Configuration{RESET}")
-    print(f"   Edit config.json to customize:")
+    print("   Edit config.json to customize:")
     print(f"   {CYAN}   - Model preferences{RESET}")
     print(f"   {CYAN}   - Memory backends{RESET}")
     print(f"   {CYAN}   - Adapter settings{RESET}\n")

@@ -8,7 +8,6 @@ even if multiple triggers fire simultaneously (cache TTL bypass, etc.).
 import asyncio
 import logging
 import time
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 

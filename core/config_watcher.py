@@ -8,11 +8,10 @@ Ignores meta-only changes (whitespace, comments, formatting) to avoid unnecessar
 import hashlib
 import json
 import logging
-import os
 import time
 import threading
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Callable, Optional
 
 logger = logging.getLogger(__name__)
 

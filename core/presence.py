@@ -13,7 +13,6 @@ import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
 
 logger = logging.getLogger("itak.presence")
 

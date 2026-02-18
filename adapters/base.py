@@ -3,9 +3,8 @@ iTaK Base Adapter - Shared interface for all communication adapters.
 Discord, Telegram, Slack, CLI all inherit from this.
 """
 
-import asyncio
 import inspect
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import TYPE_CHECKING, Any
 
 from security.input_guard import sanitize_inbound_text
 

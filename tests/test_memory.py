@@ -10,10 +10,7 @@ Tests for 4-tier memory system:
 
 import asyncio
 import pytest
-import tempfile
-import sqlite3
-from pathlib import Path
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
+from unittest.mock import Mock, patch, MagicMock
 
 
 # ============================================================
@@ -118,7 +115,7 @@ class TestSQLiteStore:
             "timestamp": "2024-01-01T00:00:00"
         }
         
-        entry_id = await store.save(
+        await store.save(
             content="Test content",
             category="test",
             metadata=metadata
@@ -422,7 +419,7 @@ class TestNeo4jStore:
         
         # Should handle connection failure gracefully
         try:
-            store = Neo4jStore(config)
+            Neo4jStore(config)
             # Query should either work or fail gracefully
         except Exception as e:
             # Expected if Neo4j not available
@@ -514,7 +511,7 @@ class TestMemoryConsistency:
         await manager.initialize()
         
         # Save memory
-        entry_id = await manager.save(
+        await manager.save(
             content="Test consistency",
             category="test"
         )

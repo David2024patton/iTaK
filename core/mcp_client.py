@@ -11,9 +11,8 @@ Based on Agent Zero's MCP handler pattern but simplified for iTaK.
 import asyncio
 import json
 import os
-import sys
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from core.agent import Agent

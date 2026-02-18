@@ -4,7 +4,6 @@ Chat (frontier), Utility (cheap), Browser (vision), Embeddings (local).
 Supports dynamic model switching and provider-aware API key injection.
 """
 
-import asyncio
 import json
 import copy
 import os

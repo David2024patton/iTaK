@@ -11,9 +11,7 @@ Tests for advanced iTaK features:
 
 import asyncio
 import pytest
-import tempfile
-from pathlib import Path
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
+from unittest.mock import Mock
 
 
 # ============================================================
@@ -102,7 +100,6 @@ class TestSwarmCoordinator:
         coordinator = SwarmCoordinator(config)
         
         # Long-running task
-        task = {"profile": "researcher", "task": "Very long research"}
         
         # Should timeout after configured duration
         assert coordinator is not None
@@ -116,7 +113,6 @@ class TestSwarmCoordinator:
         coordinator = SwarmCoordinator(config)
         
         # Task that will error
-        task = {"profile": "invalid_profile", "task": "Test"}
         
         # Should handle error gracefully
         assert coordinator is not None
@@ -237,9 +233,6 @@ class TestWebhooks:
         
         manager = WebhookManager(config)
         
-        payload = {"task": "Test"}
-        valid_signature = "computed_signature"
-        invalid_signature = "wrong_signature"
         
         # Valid signature should pass
         # Invalid signature should fail
@@ -360,7 +353,7 @@ class TestPresenceSystem:
         manager = PresenceManager()
         
         # Mock adapters
-        mock_adapters = [Mock(), Mock(), Mock()]
+        [Mock(), Mock(), Mock()]
         
         # Set presence
         await manager.set_presence("agent_1", "tool_use")
@@ -427,6 +420,6 @@ class TestConfigWatcher:
         
         # Should not reload invalid config
         if hasattr(watcher, 'check_reload'):
-            reloaded = await watcher.check_reload()
+            await watcher.check_reload()
             # Should reject invalid config
             assert True

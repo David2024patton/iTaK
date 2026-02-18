@@ -10,10 +10,9 @@ user RBAC, presence manager, and media pipeline.
 import asyncio
 import json
 import time
-import traceback
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 from core.models import ModelRouter
 from core.progress import ProgressTracker
@@ -467,7 +466,7 @@ class Agent:
                 if asyncio.iscoroutine(result):
                     # Check if we're already in an event loop
                     try:
-                        loop = asyncio.get_running_loop()
+                        asyncio.get_running_loop()
                         # We're in a running loop - this shouldn't happen for _run_extensions
                         # since it's synchronous, but handle it gracefully
                         self.logger.log(

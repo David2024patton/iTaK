@@ -8,13 +8,11 @@ Gameplan §22 - "Agent Swarms & Custom Agents"
 """
 
 import asyncio
-import json
 import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any
 
 logger = logging.getLogger("itak.swarm")
 

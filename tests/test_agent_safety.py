@@ -31,7 +31,7 @@ def _run_extensions_standalone(agent, hook_name: str, **kwargs) -> list:
             if asyncio.iscoroutine(result):
                 # Check if we're already in an event loop
                 try:
-                    loop = asyncio.get_running_loop()
+                    asyncio.get_running_loop()
                     agent.logger.log(
                         EventType.WARNING,
                         f"Extension '{hook_name}' returned coroutine in sync context",

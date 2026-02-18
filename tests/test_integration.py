@@ -389,5 +389,5 @@ def test_integration_completeness():
     print(f"  - Agent Zero: {sum(agent_zero_features)}/{len(agent_zero_features)} features")
     print(f"  - Letta/MemGPT: {sum(letta_features)}/{len(letta_features)} features")
     print(f"  - OpenClaw: {sum(openclaw_features)}/{len(openclaw_features)} features")
-    print(f"  - Neo4j: Integrated")
+    print("  - Neo4j: Integrated")
     print(f"  - iTaK-unique: {sum(itak_features)}/{len(itak_features)} features")

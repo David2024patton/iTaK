@@ -2,9 +2,7 @@
 iTaK Telegram Adapter - Telegram bot with polling and progress edits.
 """
 
-import asyncio
 import logging
-from typing import Optional
 
 try:
     import telegram  # Backward-compatible patch target for tests

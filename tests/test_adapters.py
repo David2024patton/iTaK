@@ -11,7 +11,7 @@ Tests for multi-channel adapters:
 
 import asyncio
 import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
+from unittest.mock import Mock, AsyncMock, patch
 
 
 # ============================================================
@@ -31,7 +31,6 @@ class TestBaseAdapter:
         """Adapter should initialize with config."""
         from adapters.base import BaseAdapter
         
-        config = {"name": "TestAdapter"}
         # Base adapter may be abstract, so this tests the interface exists
         assert BaseAdapter is not None
 
@@ -72,7 +71,7 @@ class TestCLIAdapter:
         
         # Should not crash
         try:
-            response = await adapter.process_message("Hello")
+            await adapter.process_message("Hello")
             # May return error message or re-raise
             assert True
         except Exception as e:
@@ -106,7 +105,7 @@ class TestDiscordAdapter:
         from adapters.discord import DiscordAdapter
         
         # Mock Discord client
-        mock_client = Mock()
+        Mock()
         mock_message = Mock()
         mock_message.content = "Hello bot"
         mock_message.author.bot = False

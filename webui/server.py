@@ -18,7 +18,7 @@ import time
 import uuid
 import zipfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 from urllib.parse import quote, urlsplit, urlunsplit
 from urllib.error import HTTPError, URLError
 from urllib.request import Request as UrlRequest, urlopen
@@ -33,7 +33,7 @@ def create_app(agent: "Agent"):
     """Create the FastAPI application."""
     from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
     from fastapi.staticfiles import StaticFiles
-    from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+    from fastapi.responses import FileResponse, JSONResponse
     from fastapi.middleware.cors import CORSMiddleware
 
     app = FastAPI(title="iTaK Dashboard", version="1.0.0")
@@ -1859,7 +1859,7 @@ def create_app(agent: "Agent"):
         branch = str(data.get("branch") or "main")
 
         try:
-            catalog = _sync_catalog_from_cherry(owner=owner, repo=repo, branch=branch)
+            _sync_catalog_from_cherry(owner=owner, repo=repo, branch=branch)
             counts = _refresh_catalog()
             return {
                 "ok": True,
@@ -3468,7 +3468,7 @@ def create_app(agent: "Agent"):
         # Filter and format system logs
         sys_logs = _system_logs[-max_lines:]
         if category_filter:
-            sys_logs = [l for l in sys_logs if l["category"] == category_filter]
+            sys_logs = [log_entry for log_entry in sys_logs if log_entry["category"] == category_filter]
 
         # Build file-style logs from system buffer
         file_log_lines = []

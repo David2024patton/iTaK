@@ -3,7 +3,6 @@ iTaK CLI Adapter - Terminal interface with spinner progress.
 """
 
 import asyncio
-import sys
 
 from adapters.base import BaseAdapter
 

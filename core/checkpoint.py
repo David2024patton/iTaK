@@ -6,7 +6,7 @@ Saves agent state to disk at intervals so it can resume after crashes.
 import json
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from core.agent import Agent

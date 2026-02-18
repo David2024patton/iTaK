@@ -14,7 +14,6 @@ import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
 
 from security.input_guard import sanitize_inbound_payload, sanitize_inbound_text
 

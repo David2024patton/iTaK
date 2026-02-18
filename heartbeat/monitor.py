@@ -6,7 +6,7 @@ Detects stalled agents, crashed services, and triggers self-healing.
 import asyncio
 import logging
 import time
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import TYPE_CHECKING, Callable
 
 if TYPE_CHECKING:
     from core.agent import Agent

@@ -85,7 +85,7 @@ def check_config() -> tuple[list[str], int, int]:
     config_path = Path("config.json")
     if not config_path.exists():
         lines.append(_fail("config.json not found"))
-        lines.append(f"        --> cp install/config/config.json.example config.json")
+        lines.append("        --> cp install/config/config.json.example config.json")
         return lines, 0, 1
 
     try:
@@ -269,7 +269,7 @@ def check_api_keys() -> tuple[list[str], int, int]:
 
         if has_non_local_provider:
             lines.append(_fail("No LLM API key found! Add at least one to .env or config.api_keys"))
-            lines.append(f"        --> echo NVIDIA_NIM_API_KEY=your_key >> .env")
+            lines.append("        --> echo NVIDIA_NIM_API_KEY=your_key >> .env")
             failed += 1
         else:
             lines.append(_warn("No remote API key found, but configured models are local-only (Ollama/FastEmbed)"))
@@ -312,7 +312,7 @@ async def check_services() -> tuple[list[str], int, int]:
             passed += 1
         except Exception as e:
             lines.append(_fail(f"Neo4j FAILED: {e}"))
-            lines.append(f"        --> Check NEO4J_URI and NEO4J_PASSWORD in .env")
+            lines.append("        --> Check NEO4J_URI and NEO4J_PASSWORD in .env")
             failed += 1
     else:
         lines.append(_warn("Neo4j not configured (knowledge graph disabled)"))
@@ -501,7 +501,7 @@ def check_security() -> tuple[list[str], int, int]:
 
     # 2. Path Traversal Guard
     try:
-        from security.path_guard import validate_path, validate_session_id
+        from security.path_guard import validate_path
         ok, _ = validate_path("data/test.txt")
         bad, _ = validate_path("../../../etc/passwd")
         if ok and not bad:
@@ -554,7 +554,7 @@ def check_security() -> tuple[list[str], int, int]:
                 passed += 1
             else:
                 lines.append(_warn("WebUI auth token not set (auto-generated at runtime)"))
-                lines.append(f"        --> Add \"webui\": {{\"auth_token\": \"<token>\"}} to config.json")
+                lines.append("        --> Add \"webui\": {\"auth_token\": \"<token>\"} to config.json")
                 passed += 1  # Not fatal, auto-generates
         else:
             lines.append(_warn("config.json not found, skipping WebUI auth check"))

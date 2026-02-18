@@ -8,12 +8,9 @@ Tests for core agent functionality:
 - SelfHeal (error recovery)
 """
 
-import asyncio
 import json
 import pytest
-import tempfile
-from pathlib import Path
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
+from unittest.mock import Mock, AsyncMock, patch
 
 
 # ============================================================

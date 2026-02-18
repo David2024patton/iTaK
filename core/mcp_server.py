@@ -7,10 +7,9 @@ can call iTaK tools over SSE transport via the Model Context Protocol.
 Gameplan §20 - "Connect to Everything"
 """
 
-import asyncio
 import json
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 logger = logging.getLogger("itak.mcp_server")
