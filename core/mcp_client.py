@@ -97,11 +97,18 @@ class MCPConnection:
         self._connected = False
         if self.process:
             try:
-                self.process.terminate()
-                await asyncio.wait_for(self.process.wait(), timeout=5)
+                terminate_result = self.process.terminate()
+                if asyncio.iscoroutine(terminate_result):
+                    await terminate_result
+
+                wait_result = self.process.wait()
+                if asyncio.iscoroutine(wait_result):
+                    await asyncio.wait_for(wait_result, timeout=5)
             except Exception:
                 try:
-                    self.process.kill()
+                    kill_result = self.process.kill()
+                    if asyncio.iscoroutine(kill_result):
+                        await kill_result
                 except Exception:
                     pass
             self.process = None
@@ -128,6 +135,9 @@ class MCPConnection:
         # Read response line
         line = await self.process.stdout.readline()
         if not line:
+            return None
+
+        if not isinstance(line, (bytes, bytearray)):
             return None
 
         try:

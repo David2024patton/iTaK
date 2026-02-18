@@ -49,6 +49,25 @@ def load_config() -> dict:
     return config
 
 
+def validate_required_models(config: dict) -> None:
+    """Fail fast when required model slots are missing/blank."""
+    models = config.get("models", {}) if isinstance(config.get("models", {}), dict) else {}
+    missing: list[str] = []
+
+    for slot in ("chat", "utility"):
+        slot_cfg = models.get(slot, {}) if isinstance(models.get(slot, {}), dict) else {}
+        model_name = str(slot_cfg.get("model", "") or "").strip()
+        if not model_name:
+            missing.append(f"models.{slot}.model")
+
+    if missing:
+        print("❌ Invalid model configuration. Required model values are missing:")
+        for item in missing:
+            print(f"   - {item}")
+        print("   Set values in config.json or via ITAK_SET_ environment overrides.")
+        sys.exit(1)
+
+
 def load_env():
     """Load environment variables from .env file if it exists."""
     env_path = Path(".env")
@@ -78,6 +97,7 @@ async def main(adapter_name: str = "cli", enable_webui: bool = False, webui_only
     # Load configuration
     load_env()
     config = load_config()
+    validate_required_models(config)
 
     # Preflight check - validate prerequisites and auto-install missing packages
     try:

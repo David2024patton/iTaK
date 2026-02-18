@@ -119,8 +119,15 @@ def check_config() -> tuple[list[str], int, int]:
         else:
             lines.append(_warn(f"config.{section} missing (using defaults)"))
 
-    # Model validation
-    models = config.get("models", {})
+    # Model validation (honor ITAK_SET_ overrides so diagnostics match runtime)
+    effective_config = config
+    try:
+        from core.models import apply_env_overrides
+        effective_config, _, _ = apply_env_overrides(config, prefix="ITAK_SET_")
+    except Exception:
+        effective_config = config
+
+    models = effective_config.get("models", {})
     for slot in ["chat", "utility"]:
         model_cfg = models.get(slot, {})
         if model_cfg.get("model"):
