@@ -619,7 +619,7 @@ async function startPolling() {
   // Fallback polling cadence:
   // - DISCONNECTED: do not poll (transport down, avoid request spam)
   // - HANDSHAKE_PENDING/DEGRADED: steady fallback cadence to keep UI responsive
-  const degradedIntervalMs = 250;
+  const degradedIntervalMs = 1000;
   let missingSyncSinceMs = null;
   let consecutivePollFailures = 0;
   let lastHandshakeKickMs = 0;
@@ -647,7 +647,6 @@ async function startPolling() {
 
       const shouldPoll =
         syncMode === "DEGRADED" ||
-        syncMode === "DISCONNECTED" ||
         (missingSyncSinceMs != null && Date.now() - missingSyncSinceMs > 2000);
       if (!shouldPoll) {
         setTimeout(_doPoll.bind(this), nextInterval);
@@ -694,13 +693,14 @@ async function startPolling() {
         syncStore.mode = "DISCONNECTED";
       }
 
-      // If we're polling and the backend responds, try to re-establish push sync immediately.
+      // If we're polling in degraded mode and the backend responds, try to re-establish push sync.
       if (syncStore && pollOk) {
         const now = Date.now();
         const modeNow = typeof syncStore.mode === "string" ? syncStore.mode : null;
-        const kickCooldownMs = modeNow === "DISCONNECTED" ? 0 : 3000;
+        const kickCooldownMs = 3000;
         const eligible =
-          (modeNow === "DISCONNECTED" || modeNow === "DEGRADED") &&
+          modeNow === "DEGRADED" &&
+          syncStore.needsHandshake === true &&
           typeof syncStore.sendStateRequest === "function" &&
           now - lastHandshakeKickMs >= kickCooldownMs;
         if (eligible) {
