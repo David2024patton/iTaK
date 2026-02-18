@@ -210,3 +210,30 @@ Use conservative defaults and explicit override tracking.
 - [ ] Adapter-specific smoke checks pass
 - [ ] Security checks pass (`python -m app.main --doctor`)
 - [ ] Rollback procedure reviewed with on-call owner
+
+### Dokploy WebSocket Validation (Chat UI)
+
+Use this when chat output appears in logs but not in the main chat panel.
+
+1. Verify reverse-proxy upgrade headers
+
+  - [ ] `Upgrade: websocket` is forwarded
+  - [ ] `Connection: upgrade` is forwarded
+  - [ ] WebSocket read timeout is at least `60s`
+
+2. Validate browser transport
+
+  - [ ] Open browser devtools on your Dokploy URL
+  - [ ] Confirm `wss://.../socket.io/...` connects without repeated reconnect loops
+  - [ ] Confirm `/poll` calls succeed (`200`) while chat is active
+
+3. Validate app behavior after deploy
+
+  - [ ] Send one test prompt in chat
+  - [ ] Confirm `/message_async` returns `ok: true`
+  - [ ] Confirm the assistant reply appears in the chat panel within one poll cycle
+
+4. Fallback sanity check (current build)
+
+  - [ ] The frontend triggers an immediate `poll()` after `/message_async`
+  - [ ] Assistant output appears even if websocket push is delayed

@@ -121,6 +121,13 @@ export async function sendMessage() {
         toast("No response returned.", "error");
       } else {
         setContext(jsonResponse.context);
+        // Ensure the just-completed response is visible even when WS push is delayed or dropped.
+        // This keeps chat rendering reliable behind reverse proxies/load balancers.
+        try {
+          await poll();
+        } catch (_error) {
+          // Poll fallback errors are already handled by poll()/syncStore.
+        }
       }
     }
   } catch (e) {

@@ -120,7 +120,7 @@ def create_app(agent: "Agent"):
     async def no_cache_static(request: Request, call_next):
         response = await call_next(request)
         path = request.url.path
-        if path.endswith((".js", ".html", ".css")):
+        if path in {"/", "/index.html"} or path.endswith((".js", ".html", ".css")):
             response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
             response.headers["Pragma"] = "no-cache"
             response.headers["Expires"] = "0"

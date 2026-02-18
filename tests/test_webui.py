@@ -386,6 +386,45 @@ class TestQueueReliabilityRegression:
         assert [item.get("id") for item in second_items] == ["stable-id"]
 
 
+class TestChatResponseVisibilityRegression:
+    """Regression coverage for message_async -> poll response visibility."""
+
+    def test_message_async_response_is_present_in_poll_logs(self):
+        from webui.server import create_app
+
+        agent = _make_agent()
+        agent.monologue = AsyncMock(return_value="hello from agent")
+        app = create_app(agent)
+        client = TestClient(app)
+
+        send = client.post(
+            "/message_async",
+            json={"text": "hi there"},
+        )
+        assert send.status_code == 200
+        send_payload = send.json()
+        assert send_payload.get("ok") is True
+        context_id = send_payload.get("context")
+        assert isinstance(context_id, str) and context_id
+
+        snapshot = client.post(
+            "/poll",
+            json={"context": context_id, "log_from": 0, "notifications_from": 0},
+        )
+        assert snapshot.status_code == 200
+        snapshot_payload = snapshot.json()
+        logs = snapshot_payload.get("logs") or []
+
+        user_logs = [entry for entry in logs if entry.get("type") == "user"]
+        response_logs = [entry for entry in logs if entry.get("type") == "response"]
+
+        assert user_logs, "Expected at least one user log entry"
+        assert response_logs, "Expected at least one response log entry"
+        assert user_logs[-1].get("content") == "hi there"
+        assert response_logs[-1].get("content") == "hello from agent"
+        assert (response_logs[-1].get("kvps") or {}).get("finished") is True
+
+
 class TestFileBrowserCrudRegression:
     """Regression coverage for AZ2 file browser CRUD and guard behavior."""
 
