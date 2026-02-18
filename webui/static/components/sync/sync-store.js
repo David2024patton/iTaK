@@ -68,6 +68,8 @@ const model = {
   _lastForceReconnectAtMs: 0,
   _forceReconnectThreshold: 3,
   _suppressDisconnectToastOnce: false,
+  _disconnectToastTimer: null,
+  _disconnectToastDelayMs: 1800,
 
   runtimeEpoch: null,
   seqBase: 0,
@@ -261,6 +263,10 @@ const model = {
         }
         this._clearHandshakeRetry();
         this._handshakeRetryAttempt = 0;
+        if (this._disconnectToastTimer) {
+          clearTimeout(this._disconnectToastTimer);
+          this._disconnectToastTimer = null;
+        }
 
         // Always re-handshake on every Socket.IO connect.
         //
@@ -289,12 +295,21 @@ const model = {
         // Uses the same group as "Reconnected" so the reconnect toast replaces it if still visible.
         const suppressToast = this._suppressDisconnectToastOnce;
         this._suppressDisconnectToastOnce = false;
+        if (this._disconnectToastTimer) {
+          clearTimeout(this._disconnectToastTimer);
+          this._disconnectToastTimer = null;
+        }
         if (this._seenFirstConnect && !restartToastActive && !suppressToast) {
-          notificationStore
-            .frontendWarning("Disconnected", "Connection", 5, "reconnect", undefined, true)
-            .catch((error) => {
-              console.error("[syncStore] disconnected toast failed:", error);
-            });
+          this._disconnectToastTimer = setTimeout(() => {
+            this._disconnectToastTimer = null;
+            if (stateSocket.isConnected()) return;
+            if (this.mode !== SYNC_MODES.DISCONNECTED) return;
+            notificationStore
+              .frontendWarning("Disconnected", "Connection", 5, "reconnect", undefined, true)
+              .catch((error) => {
+                console.error("[syncStore] disconnected toast failed:", error);
+              });
+          }, this._disconnectToastDelayMs);
         }
       });
 

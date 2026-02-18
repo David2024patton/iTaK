@@ -19,6 +19,28 @@
   totalSystemLogs: 0,
   totalContextLogs: 0,
   errorMessage: '',
+  copyFeedback: '',
+  copyFeedbackTimer: null,
+
+  buttonStyle(active = false) {
+    const base = 'padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;';
+    const activeStyle = 'background: var(--color-primary, #6ea8fe); color: #000; border-color: var(--color-primary, #6ea8fe);';
+    return active ? base + activeStyle : base;
+  },
+
+  setCopyFeedback(message) {
+    this.copyFeedback = message || '';
+    if (this.copyFeedbackTimer) {
+      clearTimeout(this.copyFeedbackTimer);
+      this.copyFeedbackTimer = null;
+    }
+    if (this.copyFeedback) {
+      this.copyFeedbackTimer = setTimeout(() => {
+        this.copyFeedback = '';
+        this.copyFeedbackTimer = null;
+      }, 1800);
+    }
+  },
 
   async fetchLogs() {
     this.isLoading = true;
@@ -97,6 +119,7 @@
   async copyLogs() {
     try {
       await navigator.clipboard.writeText(this.currentLogText);
+      this.setCopyFeedback('Copied');
     } catch (e) {
       const ta = document.createElement('textarea');
       ta.value = this.currentLogText;
@@ -104,6 +127,7 @@
       ta.select();
       document.execCommand('copy');
       document.body.removeChild(ta);
+      this.setCopyFeedback('Copied');
     }
   },
 
@@ -184,16 +208,13 @@
     <div style="display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; align-items: center;">
       <span style="font-size: 11px; color: var(--color-text-muted, #888); margin-right: 4px;">Categories:</span>
       <template x-for="[cat, count] in categoryBadges" :key="cat">
-        <button @click="filterByCategory(cat)" :style="categoryFilter === cat
-                      ? 'background: var(--color-primary, #6ea8fe); color: #000; border-color: var(--color-primary, #6ea8fe);'
-                      : 'background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee);'"
-          style="padding: 3px 10px; border-radius: 12px; border: 1px solid var(--color-border, #444); cursor: pointer; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
+        <button @click="filterByCategory(cat)" :style="buttonStyle(categoryFilter === cat) + 'display: inline-flex; align-items: center; gap: 4px;'">
           <span x-text="cat.toUpperCase()"></span>
           <span style="opacity: 0.6; font-size: 10px;" x-text="'(' + count + ')'"></span>
         </button>
       </template>
       <button x-show="categoryFilter" @click="categoryFilter = ''; fetchLogs()"
-        style="padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(220,50,50,0.4); background: rgba(220,50,50,0.15); color: #f88; cursor: pointer; font-size: 11px;">
+        :style="buttonStyle(false) + 'border-color: rgba(220,50,50,0.4); background: rgba(220,50,50,0.15); color: #f88;'">
         ✕ Clear
       </button>
     </div>
@@ -201,20 +222,17 @@
     <!-- Log tab selector -->
     <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center; flex-wrap: wrap;">
       <button @click="activeLogTab = 'all'"
-        :style="activeLogTab === 'all' ? 'background: var(--color-primary, #6ea8fe); color: #000; border-color: var(--color-primary, #6ea8fe);' : ''"
-        style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;">
+        :style="buttonStyle(activeLogTab === 'all')">
         📊 All
       </button>
       <button @click="activeLogTab = 'chat'"
-        :style="activeLogTab === 'chat' ? 'background: var(--color-primary, #6ea8fe); color: #000; border-color: var(--color-primary, #6ea8fe);' : ''"
-        style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;">
+        :style="buttonStyle(activeLogTab === 'chat')">
         💬 Chat
         <span x-show="totalContextLogs > 0" x-text="'(' + totalContextLogs + ')'"
           style="font-size: 10px; opacity: 0.7;"></span>
       </button>
       <button @click="activeLogTab = 'system'"
-        :style="activeLogTab === 'system' ? 'background: var(--color-primary, #6ea8fe); color: #000; border-color: var(--color-primary, #6ea8fe);' : ''"
-        style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;">
+        :style="buttonStyle(activeLogTab === 'system')">
         🖥️ System
         <span x-show="totalSystemLogs > 0" x-text="'(' + totalSystemLogs + ')'"
           style="font-size: 10px; opacity: 0.7;"></span>
@@ -224,8 +242,7 @@
 
       <!-- Controls -->
       <button @click="fetchLogs()" :disabled="isLoading"
-        style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;"
-        :style="isLoading ? 'opacity: 0.6; cursor: wait;' : ''">
+        :style="buttonStyle(false) + (isLoading ? 'opacity: 0.6; cursor: wait;' : '')">
         <span x-show="!isLoading">🔄 Refresh</span>
         <span x-show="isLoading">⏳ Loading...</span>
       </button>
@@ -233,6 +250,8 @@
         style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;">
         📋 Copy
       </button>
+      <span x-show="copyFeedback" x-text="copyFeedback"
+        style="font-size: 12px; color: var(--color-primary, #6ea8fe);"></span>
       <button @click="sendToAgent()"
         style="padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border, #444); background: var(--color-surface, #2a2a2a); color: var(--color-text, #eee); cursor: pointer; font-size: 13px;">
         🤖 Send to Agent

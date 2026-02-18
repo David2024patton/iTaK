@@ -282,6 +282,8 @@ class WebSocketClient {
     this._hasConnectedOnce = false;
     this._lastRuntimeId = null;
     this._csrfInvalidatedForConnectError = false;
+    this._lastCsrfInvalidateAtMs = 0;
+    this._csrfInvalidateCooldownMs = 1500;
     this._connectErrorRetryTimer = null;
     this._connectErrorRetryAttempt = 0;
   }
@@ -637,8 +639,13 @@ class WebSocketClient {
     this.socket.on("connect_error", (error) => {
       this.debugLog("socket connect_error", error);
       this.invokeErrorCallbacks(error);
-      if (!this._csrfInvalidatedForConnectError) {
+      const now = Date.now();
+      if (
+        !this._csrfInvalidatedForConnectError ||
+        now - this._lastCsrfInvalidateAtMs >= this._csrfInvalidateCooldownMs
+      ) {
         this._csrfInvalidatedForConnectError = true;
+        this._lastCsrfInvalidateAtMs = now;
         invalidateCsrfToken();
       }
       this._scheduleConnectErrorRetry("connect_error");
