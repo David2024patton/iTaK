@@ -196,6 +196,35 @@ class TestWebUIEndpoints:
         assert inc_payload.get("logs") == []
         assert inc_payload.get("log_version") == len(all_logs)
 
+    def test_poll_with_null_context_does_not_create_new_chat(self, client):
+        """Null-context polling should not create a new chat on each request."""
+        first = client.post(
+            "/poll",
+            json={"context": None, "log_from": 0, "notifications_from": 0},
+        )
+        assert first.status_code == 200
+        first_payload = first.json()
+        first_contexts = first_payload.get("contexts", [])
+        first_count = len(first_contexts)
+
+        second = client.post(
+            "/poll",
+            json={"context": None, "log_from": 0, "notifications_from": 0},
+        )
+        assert second.status_code == 200
+        second_payload = second.json()
+        second_count = len(second_payload.get("contexts", []))
+
+        assert first_payload.get("context") is None
+        assert first_payload.get("log_guid") == "global"
+        assert first_payload.get("log_version") == 0
+        assert first_payload.get("logs") == []
+        assert second_payload.get("context") is None
+        assert second_payload.get("log_guid") == "global"
+        assert second_payload.get("log_version") == 0
+        assert second_payload.get("logs") == []
+        assert second_count == first_count
+
 
 class TestSettingsParity:
     """Guard against frontend/backend settings drift."""

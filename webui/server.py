@@ -960,7 +960,7 @@ def create_app(agent: "Agent"):
         return output
 
     def _build_poll_snapshot(context_id: str | None, log_from: int = 0, notifications_from: int = 0) -> dict:
-        ctx = _ensure_context(context_id)
+        ctx = _ensure_context(context_id) if context_id else None
 
         # Incremental log delivery: return only entries newer than client's cursor.
         # This keeps fallback polling and push snapshots lightweight for large chats.
@@ -969,24 +969,35 @@ def create_app(agent: "Agent"):
         except Exception:
             safe_log_from = 0
 
-        all_logs = ctx["logs"]
-        if safe_log_from <= 0:
-            logs = all_logs
-        elif safe_log_from >= len(all_logs):
+        if ctx is None:
             logs = []
+            log_guid = "global"
+            log_version = 0
+            paused = False
+            snapshot_context = None
         else:
-            logs = all_logs[safe_log_from:]
+            all_logs = ctx["logs"]
+            if safe_log_from <= 0:
+                logs = all_logs
+            elif safe_log_from >= len(all_logs):
+                logs = []
+            else:
+                logs = all_logs[safe_log_from:]
+            log_guid = ctx["log_guid"]
+            log_version = ctx["log_version"]
+            paused = bool(ctx.get("paused"))
+            snapshot_context = ctx["id"]
 
         notifs = [n for n in notifications if n.get("version", 0) > int(notifications_from or 0)]
         return {
             "ok": True,
-            "context": ctx["id"],
-            "log_guid": ctx["log_guid"],
-            "log_version": ctx["log_version"],
+            "context": snapshot_context,
+            "log_guid": log_guid,
+            "log_version": log_version,
             "logs": logs,
             "log_progress": "",
             "log_progress_active": False,
-            "paused": bool(ctx.get("paused")),
+            "paused": paused,
             "contexts": _list_contexts(),
             "tasks": _list_tasks_for_sidebar(),
             "notifications": notifs,
