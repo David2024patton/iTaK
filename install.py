@@ -37,6 +37,16 @@ class Colors:
     CYAN = "\033[96m"
 
 
+def _safe_symbol(symbol: str, fallback: str) -> str:
+    """Return a terminal-safe symbol for current stdout encoding."""
+    encoding = (sys.stdout.encoding or "utf-8")
+    try:
+        symbol.encode(encoding)
+        return symbol
+    except Exception:
+        return fallback
+
+
 def print_header(text: str) -> None:
     """Print a formatted header"""
     print(f"\n{Colors.BOLD}{Colors.CYAN}{'=' * 60}{Colors.RESET}")
@@ -46,22 +56,26 @@ def print_header(text: str) -> None:
 
 def print_success(text: str) -> None:
     """Print success message"""
-    print(f"{Colors.GREEN}✓ {text}{Colors.RESET}")
+    check = _safe_symbol("✓", "+")
+    print(f"{Colors.GREEN}{check} {text}{Colors.RESET}")
 
 
 def print_error(text: str) -> None:
     """Print error message"""
-    print(f"{Colors.RED}✗ {text}{Colors.RESET}")
+    cross = _safe_symbol("✗", "x")
+    print(f"{Colors.RED}{cross} {text}{Colors.RESET}")
 
 
 def print_warning(text: str) -> None:
     """Print warning message"""
-    print(f"{Colors.YELLOW}⚠ {text}{Colors.RESET}")
+    warn = _safe_symbol("⚠", "!")
+    print(f"{Colors.YELLOW}{warn} {text}{Colors.RESET}")
 
 
 def print_info(text: str) -> None:
     """Print info message"""
-    print(f"{Colors.BLUE}ℹ {text}{Colors.RESET}")
+    info = _safe_symbol("ℹ", "i")
+    print(f"{Colors.BLUE}{info} {text}{Colors.RESET}")
 
 
 def detect_os() -> Tuple[str, str]:

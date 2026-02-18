@@ -52,16 +52,28 @@ def apply_env_overrides(config: dict, prefix: str = "ITAK_SET_") -> tuple[dict, 
         node: Any = updated
         missing = False
         for segment in path[:-1]:
-            if not isinstance(node, dict) or segment not in node:
+            if not isinstance(node, dict):
                 missing = True
                 break
-            node = node.get(segment)
+            resolved_segment = segment
+            if resolved_segment not in node:
+                lower_map = {k.lower(): k for k in node.keys() if isinstance(k, str)}
+                resolved_segment = lower_map.get(segment.lower(), "")
+            if not resolved_segment or resolved_segment not in node:
+                missing = True
+                break
+            node = node.get(resolved_segment)
         leaf = path[-1]
-        if missing or not isinstance(node, dict) or leaf not in node:
+        resolved_leaf = leaf
+        if not missing and isinstance(node, dict) and resolved_leaf not in node:
+            lower_map = {k.lower(): k for k in node.keys() if isinstance(k, str)}
+            resolved_leaf = lower_map.get(leaf.lower(), "")
+
+        if missing or not isinstance(node, dict) or not resolved_leaf or resolved_leaf not in node:
             errors.append(f"{key}: path does not exist in config")
             continue
 
-        current = node[leaf]
+        current = node[resolved_leaf]
         try:
             if isinstance(current, bool):
                 casted = _parse_bool(raw_value)
@@ -81,8 +93,8 @@ def apply_env_overrides(config: dict, prefix: str = "ITAK_SET_") -> tuple[dict, 
             errors.append(f"{key}: invalid value ({exc})")
             continue
 
-        node[leaf] = casted
-        applied.append(key)
+        node[resolved_leaf] = casted
+        applied.append(f"{prefix}{'__'.join(path).lower()}")
 
     return updated, errors, applied
 

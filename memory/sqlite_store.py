@@ -35,7 +35,16 @@ class SQLiteStore:
     def _get_connection(self) -> sqlite3.Connection:
         """Get thread-local database connection. Creates one if doesn't exist."""
         if not hasattr(self._local, 'conn') or self._local.conn is None:
-            self._local.conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
+            try:
+                self._local.conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
+            except sqlite3.OperationalError as exc:
+                message = str(exc).lower()
+                if "unable to open database file" not in message:
+                    raise
+                fallback_path = self.db_path.parent / f"{self.db_path.stem}_itak.db"
+                fallback_path.parent.mkdir(parents=True, exist_ok=True)
+                self.db_path = fallback_path
+                self._local.conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
             self._local.conn.row_factory = sqlite3.Row
         return self._local.conn
 
