@@ -961,7 +961,22 @@ def create_app(agent: "Agent"):
 
     def _build_poll_snapshot(context_id: str | None, log_from: int = 0, notifications_from: int = 0) -> dict:
         ctx = _ensure_context(context_id)
-        logs = ctx["logs"]
+
+        # Incremental log delivery: return only entries newer than client's cursor.
+        # This keeps fallback polling and push snapshots lightweight for large chats.
+        try:
+            safe_log_from = max(0, int(log_from or 0))
+        except Exception:
+            safe_log_from = 0
+
+        all_logs = ctx["logs"]
+        if safe_log_from <= 0:
+            logs = all_logs
+        elif safe_log_from >= len(all_logs):
+            logs = []
+        else:
+            logs = all_logs[safe_log_from:]
+
         notifs = [n for n in notifications if n.get("version", 0) > int(notifications_from or 0)]
         return {
             "ok": True,

@@ -158,6 +158,44 @@ class TestWebUIEndpoints:
         assert res.status_code == 200
         assert "iTaK" in res.text
 
+    def test_poll_respects_log_from_cursor(self, client):
+        """Polling should return only logs newer than log_from cursor."""
+        create = client.post("/chat_create", json={})
+        assert create.status_code == 200
+        ctxid = create.json().get("ctxid")
+        assert ctxid
+
+        for i in range(3):
+            msg = client.post(
+                "/message_async",
+                json={"text": f"msg {i}", "context": ctxid},
+            )
+            assert msg.status_code == 200
+
+        full = client.post(
+            "/poll",
+            json={"context": ctxid, "log_from": 0, "notifications_from": 0},
+        )
+        assert full.status_code == 200
+        full_payload = full.json()
+        all_logs = full_payload.get("logs", [])
+        assert isinstance(all_logs, list)
+        assert len(all_logs) >= 6  # 3 user + 3 response
+        assert full_payload.get("log_version") == len(all_logs)
+
+        incremental = client.post(
+            "/poll",
+            json={
+                "context": ctxid,
+                "log_from": len(all_logs),
+                "notifications_from": 0,
+            },
+        )
+        assert incremental.status_code == 200
+        inc_payload = incremental.json()
+        assert inc_payload.get("logs") == []
+        assert inc_payload.get("log_version") == len(all_logs)
+
 
 class TestSettingsParity:
     """Guard against frontend/backend settings drift."""
