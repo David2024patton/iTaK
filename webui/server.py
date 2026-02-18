@@ -3436,11 +3436,12 @@ def create_app(agent: "Agent"):
             # without resetting projection state or scheduling another snapshot flush.
             now = time.time()
             last_req = proj.get("last_state_request") or {}
+            duplicate_window_s = 8.0 if context_id is None else 0.9
             is_duplicate = (
                 last_req.get("context") == context_id
                 and int(last_req.get("log_from", -1)) == log_from
                 and int(last_req.get("notifications_from", -1)) == notifications_from
-                and (now - float(last_req.get("at", 0.0))) < 0.9
+                and (now - float(last_req.get("at", 0.0))) < duplicate_window_s
             )
             if is_duplicate:
                 seq_base = int(proj.get("seq_base") or 1)
