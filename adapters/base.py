@@ -7,6 +7,8 @@ import asyncio
 import inspect
 from typing import TYPE_CHECKING, Any, Callable, Optional
 
+from security.input_guard import sanitize_inbound_text
+
 if TYPE_CHECKING:
     from core.agent import Agent
 
@@ -53,6 +55,11 @@ class BaseAdapter:
             result = self.agent.output_guard.sanitize(text)
             return result.sanitized_text
         return text
+
+    def _sanitize_input(self, text: str) -> str:
+        """Sanitize inbound user text before internal processing/storage."""
+        output_guard = getattr(self.agent, "output_guard", None)
+        return sanitize_inbound_text(text, output_guard)
 
     async def send_message(self, content: str, **kwargs):
         """Send a message to the user. Override in subclasses.
@@ -104,6 +111,8 @@ class BaseAdapter:
             user_id = "unknown"
         if content is None:
             content = ""
+
+        content = self._sanitize_input(content)
 
         # Set context
         if hasattr(self.agent, "context"):

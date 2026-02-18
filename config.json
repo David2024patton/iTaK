@@ -1,25 +1,40 @@
 {
+    "agent": {
+        "name": "iTaK",
+        "version": "0.1.0",
+        "max_iterations": 20,
+        "timeout_seconds": 180,
+        "repeat_detection": true,
+        "checkpoint_enabled": true,
+        "checkpoint_interval_steps": 3
+    },
     "models": {
         "chat": {
-            "provider": "nvidia",
+            "provider": "litellm",
             "model": "nvidia_nim/meta/llama-3.1-8b-instruct",
             "api_base": "https://integrate.api.nvidia.com/v1",
+            "max_tokens": 2048,
+            "temperature": 0.4,
             "context_window": 128000,
             "use_vision": false
         },
         "utility": {
-            "provider": "nvidia",
-            "model": "nvidia_nim/meta/llama-3.1-8b-instruct",
-            "api_base": "https://integrate.api.nvidia.com/v1"
-        },
-        "browser": {
-            "provider": "nvidia",
+            "provider": "litellm",
             "model": "nvidia_nim/meta/llama-3.1-8b-instruct",
             "api_base": "https://integrate.api.nvidia.com/v1",
+            "max_tokens": 1024,
+            "temperature": 0.2
+        },
+        "browser": {
+            "provider": "litellm",
+            "model": "nvidia_nim/meta/llama-3.1-8b-instruct",
+            "api_base": "https://integrate.api.nvidia.com/v1",
+            "max_tokens": 1536,
+            "temperature": 0.3,
             "use_vision": false
         }
     },
-    "api_keys": {
-        "nvidia": "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"
+    "webui": {
+        "auth_token": "cd3d598e2531c9d9fa8316f5b212b83f677bf5e42c59db5c"
     }
 }

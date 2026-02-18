@@ -13,6 +13,7 @@ import { store as chatTopStore } from "/components/chat/top-section/chat-top-sto
 import { store as _tooltipsStore } from "/components/tooltips/tooltip-store.js";
 import { store as messageQueueStore } from "/components/chat/message-queue/message-queue-store.js";
 import { store as syncStore } from "/components/sync/sync-store.js"
+import { initInteractionLogger } from "/js/interaction-logger.js";
 
 globalThis.fetchApi = api.fetchApi; // TODO - backward compatibility for non-modular scripts, remove once refactored to alpine
 
@@ -101,6 +102,14 @@ export async function sendMessage() {
         });
       } else {
         // For text-only messages
+        setMessages([
+          {
+            id: messageId,
+            type: "user",
+            content: message,
+          },
+        ]);
+
         const data = {
           text: message,
           context,
@@ -730,6 +739,8 @@ async function startPolling() {
 
 // All initializations and event listeners are now consolidated here
 document.addEventListener("DOMContentLoaded", function () {
+  initInteractionLogger();
+
   // Assign DOM elements to variables now that the DOM is ready
   leftPanel = document.getElementById("left-panel");
   rightPanel = document.getElementById("right-panel");

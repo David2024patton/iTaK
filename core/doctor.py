@@ -185,27 +185,75 @@ def check_api_keys() -> tuple[list[str], int, int]:
     else:
         lines.append(_warn(".env file not found - checking env vars only"))
 
+    config: dict = {}
+    config_api_keys: dict = {}
+    configured_model_providers: list[str] = []
+    try:
+        config = json.loads(Path("config.json").read_text(encoding="utf-8"))
+        config_api_keys = config.get("api_keys", {}) if isinstance(config.get("api_keys", {}), dict) else {}
+        for slot in ["chat", "utility", "browser", "embeddings"]:
+            model_cfg = config.get("models", {}).get(slot, {})
+            if not isinstance(model_cfg, dict):
+                continue
+            provider = str(model_cfg.get("provider", "") or "").strip().lower()
+            model_name = str(model_cfg.get("model", "") or "").strip().lower()
+            if provider and provider != "litellm":
+                configured_model_providers.append(provider)
+            elif "/" in model_name:
+                configured_model_providers.append(model_name.split("/", 1)[0])
+    except Exception:
+        pass
+
     key_map = {
-        "Google Gemini": ["GOOGLE_API_KEY", "GEMINI_API_KEY"],
-        "OpenAI": ["OPENAI_API_KEY"],
-        "Anthropic Claude": ["ANTHROPIC_API_KEY"],
-        "OpenRouter": ["OPENROUTER_API_KEY"],
-        "Groq": ["GROQ_API_KEY"],
+        "Google Gemini": {
+            "env": ["GOOGLE_API_KEY", "GEMINI_API_KEY"],
+            "config": ["google", "gemini"],
+        },
+        "OpenAI": {
+            "env": ["OPENAI_API_KEY"],
+            "config": ["openai"],
+        },
+        "Anthropic Claude": {
+            "env": ["ANTHROPIC_API_KEY"],
+            "config": ["anthropic"],
+        },
+        "OpenRouter": {
+            "env": ["OPENROUTER_API_KEY"],
+            "config": ["openrouter"],
+        },
+        "Groq": {
+            "env": ["GROQ_API_KEY"],
+            "config": ["groq"],
+        },
+        "NVIDIA NIM": {
+            "env": ["NVIDIA_NIM_API_KEY", "NVIDIA_API_KEY"],
+            "config": ["nvidia", "nvidia_nim"],
+        },
     }
 
     found_any = False
-    for provider, env_vars in key_map.items():
+    for provider, key_sources in key_map.items():
         val = ""
-        used_env_var = ""
-        for env_var in env_vars:
+        used_source = ""
+
+        for env_var in key_sources.get("env", []):
             candidate = os.environ.get(env_var, "")
             if candidate:
                 val = candidate
-                used_env_var = env_var
+                used_source = env_var
                 break
+
+        if not val:
+            for cfg_key in key_sources.get("config", []):
+                candidate = config_api_keys.get(cfg_key, "")
+                if candidate:
+                    val = str(candidate)
+                    used_source = f"config.api_keys.{cfg_key}"
+                    break
+
         if val:
             masked = val[:8] + "..." + val[-4:] if len(val) > 16 else "****"
-            suffix = f" ({used_env_var})" if used_env_var else ""
+            suffix = f" ({used_source})" if used_source else ""
             lines.append(_ok(f"{provider}{suffix}: {masked}"))
             passed += 1
             found_any = True
@@ -213,9 +261,19 @@ def check_api_keys() -> tuple[list[str], int, int]:
             lines.append(_warn(f"{provider}: not configured"))
 
     if not found_any:
-        lines.append(_fail("No LLM API key found! Add at least one to .env"))
-        lines.append(f"        --> echo GOOGLE_API_KEY=your_key >> .env")
-        failed += 1
+        local_only_providers = {"ollama", "fastembed"}
+        has_non_local_provider = any(
+            provider for provider in configured_model_providers
+            if provider not in local_only_providers
+        )
+
+        if has_non_local_provider:
+            lines.append(_fail("No LLM API key found! Add at least one to .env or config.api_keys"))
+            lines.append(f"        --> echo NVIDIA_NIM_API_KEY=your_key >> .env")
+            failed += 1
+        else:
+            lines.append(_warn("No remote API key found, but configured models are local-only (Ollama/FastEmbed)"))
+            passed += 1
 
     # Platform tokens
     platform_keys = {

@@ -30,6 +30,8 @@ TRAVERSAL_PATTERNS = [
     "..%5c",
 ]
 
+ABSOLUTE_PATH_PATTERN = re.compile(r"^[a-zA-Z]:[\\/]")
+
 
 def validate_path(
     path: str,
@@ -68,7 +70,12 @@ def validate_path(
 
     # 4. Check absolute paths
     if not allow_absolute:
-        if os.path.isabs(path):
+        looks_absolute = (
+            os.path.isabs(path)
+            or path.startswith(("/", "\\"))
+            or bool(ABSOLUTE_PATH_PATTERN.match(path))
+        )
+        if looks_absolute:
             logger.warning(f"PATH_TRAVERSAL absolute path rejected: {path}")
             return False, "Absolute paths not allowed"
 

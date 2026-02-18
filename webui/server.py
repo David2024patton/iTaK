@@ -139,6 +139,7 @@ def create_app(agent: "Agent"):
     notifications: list[dict] = []
     notifications_guid = uuid.uuid4().hex
     notifications_version = 0
+    _message_tasks: set[asyncio.Task] = set()
     sio_server = None
     sio_runtime_epoch = uuid.uuid4().hex
     # Per-SID connection projections (Agent Zero StateMonitor pattern)
@@ -532,6 +533,101 @@ def create_app(agent: "Agent"):
             return model_str.split("/", 1)[0]  # e.g. 'gemini' from 'gemini/gemini-2.5-pro'
         return cfg_provider or "openai"
 
+    _provider_primary_env_map = {
+        "openai": "OPENAI_API_KEY",
+        "google": "GEMINI_API_KEY",
+        "gemini": "GEMINI_API_KEY",
+        "anthropic": "ANTHROPIC_API_KEY",
+        "openrouter": "OPENROUTER_API_KEY",
+        "groq": "GROQ_API_KEY",
+        "mistral": "MISTRAL_API_KEY",
+        "deepseek": "DEEPSEEK_API_KEY",
+        "nvidia": "NVIDIA_NIM_API_KEY",
+    }
+
+    _provider_env_aliases = {
+        "google": ["GEMINI_API_KEY", "GOOGLE_API_KEY"],
+        "gemini": ["GEMINI_API_KEY", "GOOGLE_API_KEY"],
+        "nvidia": ["NVIDIA_NIM_API_KEY", "NVIDIA_API_KEY"],
+    }
+
+    def _collect_api_keys_from_environment() -> dict:
+        """Collect provider API keys from process env and .env file (env wins)."""
+        env_file_path = Path(__file__).parent.parent / ".env"
+        env_file_values: dict[str, str] = {}
+
+        if env_file_path.exists():
+            try:
+                for line in env_file_path.read_text(encoding="utf-8").splitlines():
+                    raw = line.strip()
+                    if not raw or raw.startswith("#") or "=" not in raw:
+                        continue
+                    key, _, value = raw.partition("=")
+                    env_file_values[key.strip()] = value.strip().strip('"').strip("'")
+            except Exception as e:
+                logger.warning(f"Failed to parse .env for API keys: {e}")
+
+        keys: dict[str, str] = {}
+        providers = sorted(set(_provider_primary_env_map.keys()))
+        for provider in providers:
+            aliases = _provider_env_aliases.get(provider, [_provider_primary_env_map[provider]])
+            val = ""
+            for env_name in aliases:
+                candidate = os.environ.get(env_name, "") or env_file_values.get(env_name, "")
+                if candidate:
+                    val = str(candidate)
+                    break
+            if val:
+                keys[provider] = val
+
+        return keys
+
+    def _persist_api_keys_to_env(api_keys: dict):
+        """Persist provider API keys to .env and treat .env as source of truth."""
+        try:
+            env_path = Path(__file__).parent.parent / ".env"
+            existing_lines: list[str] = []
+            if env_path.exists():
+                existing_lines = env_path.read_text(encoding="utf-8").splitlines()
+
+            known_env_names = set(_provider_primary_env_map.values()) | {
+                "GOOGLE_API_KEY",
+                "NVIDIA_API_KEY",
+            }
+
+            preserved: list[str] = []
+            for line in existing_lines:
+                stripped = line.strip()
+                if not stripped or stripped.startswith("#") or "=" not in line:
+                    preserved.append(line)
+                    continue
+                key_name = line.split("=", 1)[0].strip()
+                if key_name in known_env_names:
+                    continue
+                preserved.append(line)
+
+            new_entries: list[str] = []
+            if isinstance(api_keys, dict):
+                for provider, value in sorted(api_keys.items(), key=lambda item: str(item[0]).lower()):
+                    provider_key = str(provider or "").strip().lower()
+                    api_value = str(value or "").strip()
+                    if not api_value:
+                        continue
+                    env_name = _provider_primary_env_map.get(provider_key)
+                    if not env_name:
+                        env_name = f"{provider_key.upper()}_API_KEY"
+                    new_entries.append(f"{env_name}={api_value}")
+
+            output_lines = preserved[:]
+            if output_lines and output_lines[-1].strip() != "":
+                output_lines.append("")
+            output_lines.extend(new_entries)
+
+            env_path.write_text("\n".join(output_lines).rstrip() + "\n", encoding="utf-8")
+            logger.info(f"Persisted {len(new_entries)} API key(s) to .env")
+        except Exception as e:
+            logger.warning(f"Failed to persist API keys to .env: {e}")
+
     compat_settings = {
         "chat_model_provider": _provider_from_model(_chat_cfg.get("model", ""), _chat_cfg.get("provider", "")),
         "chat_model_name": _chat_cfg.get("model", ""),
@@ -601,7 +697,7 @@ def create_app(agent: "Agent"):
         "auth_login": "",
         "auth_password": "",
         "root_password": "",
-        "api_keys": agent.config.get("api_keys", {}),
+        "api_keys": {},
         "litellm_global_kwargs": "{}",
         "variables": "",
         "secrets": "",
@@ -624,25 +720,25 @@ def create_app(agent: "Agent"):
         "skills_require_review_summary": True,
     }
 
+    # --- API keys source of truth: .env / environment (with one-time legacy migration) ---
+    _runtime_env_keys = _collect_api_keys_from_environment()
+    _legacy_config_keys = agent.config.get("api_keys", {}) if isinstance(agent.config.get("api_keys", {}), dict) else {}
+    if _legacy_config_keys:
+        merged = dict(_legacy_config_keys)
+        merged.update(_runtime_env_keys)
+        compat_settings["api_keys"] = merged
+        _persist_api_keys_to_env(merged)
+    else:
+        compat_settings["api_keys"] = _runtime_env_keys
+
     # --- Propagate API keys at startup (same logic as settings_set) ---
     import litellm as _litellm_init
     _startup_keys = compat_settings.get("api_keys", {})
     if isinstance(_startup_keys, dict):
-        _key_env_map_startup = {
-            "openai": "OPENAI_API_KEY",
-            "google": "GEMINI_API_KEY",
-            "gemini": "GEMINI_API_KEY",
-            "anthropic": "ANTHROPIC_API_KEY",
-            "openrouter": "OPENROUTER_API_KEY",
-            "groq": "GROQ_API_KEY",
-            "mistral": "MISTRAL_API_KEY",
-            "deepseek": "DEEPSEEK_API_KEY",
-            "nvidia": "NVIDIA_NIM_API_KEY",
-        }
         for _p_label, _k_value in _startup_keys.items():
             if not _k_value:
                 continue
-            _env_name = _key_env_map_startup.get(_p_label.lower())
+            _env_name = _provider_primary_env_map.get(_p_label.lower())
             if _env_name:
                 os.environ[_env_name] = str(_k_value)
                 setattr(_litellm_init, _env_name.lower(), str(_k_value))
@@ -652,7 +748,7 @@ def create_app(agent: "Agent"):
 
     # --- Settings persistence helper ---
     def _persist_config_settings():
-        """Write current model settings and API keys back to config.json."""
+        """Write current model settings back to config.json."""
         try:
             config_path = Path(__file__).parent.parent / "config.json"
             existing = {}
@@ -662,6 +758,35 @@ def create_app(agent: "Agent"):
 
             # Update models section
             models = existing.setdefault("models", {})
+
+            def _persist_litellm_model(provider: str, model_name: str) -> str:
+                if not model_name:
+                    return ""
+                prefix_map = {
+                    "openai": "openai",
+                    "google": "gemini",
+                    "gemini": "gemini",
+                    "anthropic": "anthropic",
+                    "openrouter": "openrouter",
+                    "groq": "groq",
+                    "ollama": "ollama",
+                    "mistral": "mistral",
+                    "deepseek": "deepseek",
+                    "nvidia": "nvidia_nim",
+                }
+                known_prefixes = set(prefix_map.values()) | {
+                    "nvidia_nim", "azure", "bedrock", "vertex_ai", "huggingface",
+                    "together_ai", "replicate", "cohere", "sagemaker", "fireworks_ai",
+                }
+                if "/" in model_name:
+                    maybe_prefix = model_name.split("/", 1)[0]
+                    if maybe_prefix in known_prefixes:
+                        return model_name
+
+                normalized_provider = str(provider or "").strip().lower()
+                prefix = prefix_map.get(normalized_provider, normalized_provider)
+                return f"{prefix}/{model_name}" if prefix else model_name
+
             _role_persist_map = {
                 "chat": ("chat_model_provider", "chat_model_name", "chat_model_api_base"),
                 "utility": ("util_model_provider", "util_model_name", "util_model_api_base"),
@@ -669,13 +794,15 @@ def create_app(agent: "Agent"):
             }
             for role, (prov_key, name_key, base_key) in _role_persist_map.items():
                 cfg = models.setdefault(role, {})
-                cfg["provider"] = compat_settings.get(prov_key, "")
-                cfg["model"] = compat_settings.get(name_key, "")
+                provider = compat_settings.get(prov_key, "")
+                model_name = compat_settings.get(name_key, "")
+                cfg["provider"] = provider
+                cfg["model"] = _persist_litellm_model(provider, model_name)
                 cfg["api_base"] = compat_settings.get(base_key, "")
 
-            # Update API keys
-            if compat_settings.get("api_keys"):
-                existing["api_keys"] = dict(compat_settings["api_keys"])
+            # Keep API keys out of config.json (stored in .env)
+            if "api_keys" in existing:
+                existing.pop("api_keys", None)
 
             with open(config_path, "w", encoding="utf-8") as f:
                 json.dump(existing, f, indent=2, ensure_ascii=False)
@@ -1067,16 +1194,30 @@ def create_app(agent: "Agent"):
         _append_system_log("chat", "info", f"Message received: {message[:60]}...", ctx.get("id"))
         _push_log(ctx, "user", message, kvps={"message_id": message_id} if message_id else {})
 
-        try:
-            response = await agent.monologue(message)
-        except Exception as e:
-            response = f"Error: {e}"
-            _append_system_log("error", "error", f"Model call failed: {e}", ctx.get("id"))
-        finally:
-            ctx["running"] = False
+        async def _run_message(ctx_id: str, text: str):
+            run_ctx = contexts.get(ctx_id)
+            if not run_ctx:
+                return
 
-        _push_log(ctx, "response", str(response), kvps={"finished": True})
-        return {"ok": True, "context": ctx["id"]}
+            try:
+                response = await agent.monologue(text)
+            except Exception as e:
+                response = f"Error: {e}"
+                _append_system_log("error", "error", f"Model call failed: {e}", run_ctx.get("id"))
+            finally:
+                latest_ctx = contexts.get(ctx_id)
+                if latest_ctx:
+                    latest_ctx["running"] = False
+
+            latest_ctx = contexts.get(ctx_id)
+            if latest_ctx:
+                _push_log(latest_ctx, "response", str(response), kvps={"finished": True})
+
+        task = asyncio.create_task(_run_message(ctx["id"], message))
+        _message_tasks.add(task)
+        task.add_done_callback(_message_tasks.discard)
+
+        return {"ok": True, "context": ctx["id"], "accepted": True}
 
     @app.post("/poll")
     async def poll(payload: dict):
@@ -1085,6 +1226,48 @@ def create_app(agent: "Agent"):
             log_from=payload.get("log_from", 0),
             notifications_from=payload.get("notifications_from", 0),
         )
+
+    @app.post("/interaction_log")
+    async def interaction_log(payload: dict | None = None):
+        body = payload or {}
+        events = body.get("events") or []
+        reason = str(body.get("reason") or "unknown")
+
+        if not isinstance(events, list):
+            return {"ok": False, "error": "events must be a list"}
+
+        max_events = 60
+        accepted = 0
+
+        for item in events[:max_events]:
+            if not isinstance(item, dict):
+                continue
+
+            evt_type = str(item.get("type") or "unknown")[:32]
+            target = str(item.get("target") or "unknown")[:120]
+            key = str(item.get("key") or "")[:24]
+            context_id = item.get("context")
+            x = item.get("x")
+            y = item.get("y")
+            pointer = str(item.get("pointer") or "")[:16]
+            code = str(item.get("code") or "")[:24]
+
+            parts = [f"{evt_type} @ {target}"]
+            if key:
+                parts.append(f"key={key}")
+            if code:
+                parts.append(f"code={code}")
+            if pointer:
+                parts.append(f"pointer={pointer}")
+            if isinstance(x, (int, float)) and isinstance(y, (int, float)):
+                parts.append(f"xy=({int(x)},{int(y)})")
+
+            message = " | ".join(parts)
+            _append_system_log("interaction", "debug", message, context_id)
+            accepted += 1
+
+        _append_system_log("interaction", "info", f"batch reason={reason} count={accepted}")
+        return {"ok": True, "accepted": accepted}
 
     @app.post("/chat_create")
     async def chat_create(payload: dict):
@@ -1415,6 +1598,7 @@ def create_app(agent: "Agent"):
 
     @app.post("/settings_get")
     async def settings_get(request: Request):
+        compat_settings["api_keys"] = _collect_api_keys_from_environment() or compat_settings.get("api_keys", {})
         return {"ok": True, "settings": compat_settings, "additional": compat_additional}
 
     @app.post("/settings_set")
@@ -1490,21 +1674,10 @@ def create_app(agent: "Agent"):
             # Propagate API keys to litellm
             api_keys = incoming.get("api_keys") or compat_settings.get("api_keys", {})
             if isinstance(api_keys, dict):
-                _key_env_map = {
-                    "openai": "OPENAI_API_KEY",
-                    "google": "GEMINI_API_KEY",
-                    "gemini": "GEMINI_API_KEY",
-                    "anthropic": "ANTHROPIC_API_KEY",
-                    "openrouter": "OPENROUTER_API_KEY",
-                    "groq": "GROQ_API_KEY",
-                    "mistral": "MISTRAL_API_KEY",
-                    "deepseek": "DEEPSEEK_API_KEY",
-                    "nvidia": "NVIDIA_NIM_API_KEY",
-                }
                 for provider_label, key_value in api_keys.items():
                     if not key_value:
                         continue
-                    env_name = _key_env_map.get(provider_label.lower())
+                    env_name = _provider_primary_env_map.get(provider_label.lower())
                     if env_name:
                         os.environ[env_name] = str(key_value)
                         setattr(_litellm, env_name.lower(), str(key_value))
@@ -1512,6 +1685,8 @@ def create_app(agent: "Agent"):
                         # Generic: set as env var for litellm to pick up
                         generic_env = f"{provider_label.upper()}_API_KEY"
                         os.environ[generic_env] = str(key_value)
+
+                _persist_api_keys_to_env(api_keys)
 
             # Propagate gogcli settings
             gogcli_cfg = agent.config.setdefault("gogcli", {})

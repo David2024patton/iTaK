@@ -139,29 +139,42 @@ const model = {
 
   // Setup user interaction handling for autoplay policy
   setupUserInteractionHandling() {
-    const enableAudio = () => {
-      if (!this.userHasInteracted) {
-        this.userHasInteracted = true;
-        console.log("User interaction detected - audio playback enabled");
+    const unlockAudio = () => {
+      if (this.userHasInteracted) return;
+      this.userHasInteracted = true;
+      console.log("User interaction detected - audio playback enabled");
 
-        // Create a dummy audio context to "unlock" audio
+      const initializeAudioContext = () => {
         try {
-          this.audioContext = new (window.AudioContext ||
-            window.webkitAudioContext)();
-          this.audioContext.resume();
+          if (!this.audioContext) {
+            this.audioContext = new (window.AudioContext ||
+              window.webkitAudioContext)();
+          }
+          if (this.audioContext?.state === "suspended") {
+            this.audioContext.resume().catch(() => { });
+          }
         } catch (e) {
           console.log("AudioContext not available");
         }
+      };
+
+      if (typeof window.requestIdleCallback === "function") {
+        window.requestIdleCallback(initializeAudioContext, { timeout: 300 });
+      } else {
+        setTimeout(initializeAudioContext, 0);
       }
     };
 
-    // Listen for any user interaction
-    const events = ["click", "touchstart", "keydown", "mousedown"];
-    events.forEach((event) => {
-      document.addEventListener(event, enableAudio, {
-        once: true,
-        passive: true,
-      });
+    document.addEventListener("pointerdown", unlockAudio, {
+      once: true,
+      passive: true,
+    });
+    document.addEventListener("touchstart", unlockAudio, {
+      once: true,
+      passive: true,
+    });
+    document.addEventListener("keydown", unlockAudio, {
+      once: true,
     });
   },
 

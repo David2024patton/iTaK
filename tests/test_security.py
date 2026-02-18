@@ -139,6 +139,56 @@ class TestOutputGuard:
         assert "[AWS KEY REDACTED]" in result.sanitized_text
 
 
+class TestInboundSanitization:
+    """Test inbound sanitization for adapter and webhook ingress."""
+
+    @pytest.mark.asyncio
+    async def test_base_adapter_sanitizes_inbound_message(self):
+        from adapters.base import BaseAdapter
+        from security.output_guard import OutputGuard
+
+        class DummyAdapter(BaseAdapter):
+            async def send_message(self, content: str, **kwargs):
+                return content
+
+        agent = MagicMock()
+        agent.output_guard = OutputGuard(config={})
+        agent.message_loop = MagicMock(return_value="ok")
+        agent.context = MagicMock()
+
+        adapter = DummyAdapter(agent, {})
+        raw = "My email is user@example.com"
+
+        await adapter.handle_message(user_id="u1", content=raw)
+
+        called_content = agent.message_loop.call_args.args[0]
+        assert "user@example.com" not in called_content
+        assert "[EMAIL REDACTED]" in called_content
+
+    def test_webhook_parse_inbound_sanitizes_payload(self):
+        from core.webhooks import WebhookEngine
+        from security.output_guard import OutputGuard
+
+        agent = MagicMock()
+        agent.output_guard = OutputGuard(config={})
+
+        engine = WebhookEngine(agent, {"integrations": {}})
+        parsed = engine.parse_inbound({
+            "title": "Customer email user@example.com",
+            "message": "Reach me at user@example.com",
+            "metadata": {
+                "address": "123 Main St",
+                "contact": "user@example.com",
+            },
+        })
+
+        assert "user@example.com" not in parsed.title
+        assert "[EMAIL REDACTED]" in parsed.title
+        assert "user@example.com" not in parsed.message
+        assert "[EMAIL REDACTED]" in parsed.message
+        assert "user@example.com" not in parsed.metadata.get("contact", "")
+
+
 # ============================================================
 # PathGuard Tests
 # ============================================================

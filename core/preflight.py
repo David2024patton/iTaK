@@ -184,19 +184,32 @@ def run_preflight(config: dict | None = None, auto_install: bool = True) -> Pref
     # 5. API keys
     # ------------------------------------------------------------------
     env_path = Path(".env")
+    env_file_values: dict[str, str] = {}
     if env_path.exists():
         result.passed.append(".env file found")
+        try:
+            for line in env_path.read_text(encoding="utf-8").splitlines():
+                raw = line.strip()
+                if not raw or raw.startswith("#") or "=" not in raw:
+                    continue
+                key, _, value = raw.partition("=")
+                env_file_values[key.strip()] = value.strip().strip('"').strip("'")
+        except Exception:
+            pass
     else:
         result.warnings.append(".env file not found - API keys may be missing")
 
     has_any_key = any(
-        os.environ.get(key)
+        os.environ.get(key) or env_file_values.get(key)
         for key in [
             "GOOGLE_API_KEY",
+            "GEMINI_API_KEY",
             "OPENAI_API_KEY",
             "ANTHROPIC_API_KEY",
             "OPENROUTER_API_KEY",
             "GROQ_API_KEY",
+            "NVIDIA_NIM_API_KEY",
+            "NVIDIA_API_KEY",
         ]
     )
     if has_any_key:

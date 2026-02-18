@@ -129,7 +129,7 @@ html {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  position: fixed;
+  position: relative;
   -webkit-font-smoothing: antialiased; /* Improve font rendering */
   -moz-osx-font-smoothing: grayscale; /* Improve font rendering */
 }
@@ -137,6 +137,22 @@ html {
 body {
   overscroll-behavior: none;
   -webkit-overscroll-behavior: none;
+}
+
+@media (hover: none), (pointer: coarse), (max-width: 768px) {
+  html,
+  body {
+    height: 100dvh;
+    min-height: 100dvh !important;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #right-panel {
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
 }
 
 p:last-child {
@@ -387,8 +403,8 @@ img {
   display: flex;
   height: 100%;
   overflow: auto;
-  -webkit-scroll-behavior: smooth;
-  scroll-behavior: smooth;
+  -webkit-scroll-behavior: auto;
+  scroll-behavior: auto;
 }
 
 /* Right Panel */

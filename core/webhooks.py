@@ -16,6 +16,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from security.input_guard import sanitize_inbound_payload, sanitize_inbound_text
+
 logger = logging.getLogger("itak.webhooks")
 
 
@@ -133,13 +135,27 @@ class WebhookEngine:
 
     def parse_inbound(self, data: dict) -> InboundPayload:
         """Parse and validate an inbound webhook payload."""
+        output_guard = getattr(self.agent, "output_guard", None)
+
+        title = sanitize_inbound_text(
+            str(data.get("title", data.get("subject", "Webhook task"))),
+            output_guard,
+        )
+        message = sanitize_inbound_text(
+            str(data.get("message", data.get("body", data.get("text", "")))),
+            output_guard,
+        )
+        source = sanitize_inbound_text(str(data.get("source", "webhook")), output_guard)
+        priority = sanitize_inbound_text(str(data.get("priority", "medium")), output_guard)
+        metadata = sanitize_inbound_payload(data.get("metadata", {}), output_guard)
+
         return InboundPayload(
-            title=data.get("title", data.get("subject", "Webhook task")),
-            message=data.get("message", data.get("body", data.get("text", ""))),
-            source=data.get("source", "webhook"),
-            priority=data.get("priority", "medium"),
+            title=title,
+            message=message,
+            source=source,
+            priority=priority,
             callback_url=data.get("callback_url", ""),
-            metadata=data.get("metadata", {}),
+            metadata=metadata if isinstance(metadata, dict) else {},
         )
 
     async def process_inbound(self, payload: InboundPayload) -> dict:

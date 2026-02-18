@@ -8,6 +8,8 @@ import { store as chatsStore } from "/components/sidebar/chats/chats-store.js";
 const model = {
   paused: false,
   message: "",
+  _resizeRafId: null,
+  _lastAppliedHeight: "",
 
   _getSendState() {
     const hasInput = this.message.trim() || attachmentsStore?.attachments?.length > 0;
@@ -63,10 +65,21 @@ const model = {
 
   adjustTextareaHeight() {
     const chatInput = document.getElementById("chat-input");
-    if (chatInput) {
-      chatInput.style.height = "auto";
-      chatInput.style.height = chatInput.scrollHeight + "px";
+    if (!chatInput) return;
+
+    if (this._resizeRafId !== null) {
+      cancelAnimationFrame(this._resizeRafId);
     }
+
+    this._resizeRafId = requestAnimationFrame(() => {
+      this._resizeRafId = null;
+      chatInput.style.height = "auto";
+      const nextHeight = `${chatInput.scrollHeight}px`;
+      if (nextHeight !== this._lastAppliedHeight) {
+        chatInput.style.height = nextHeight;
+        this._lastAppliedHeight = nextHeight;
+      }
+    });
   },
 
   async pauseAgent(paused) {
