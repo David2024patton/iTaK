@@ -34,10 +34,25 @@ let autoScroll = true;
 let context = null;
 globalThis.resetCounter = 0; // Used by stores and getChatBasedId
 let skipOneSpeech = false;
+let sendInFlight = false;
+const MESSAGE_SEND_TIMEOUT_MS = 120000;
 
 // Sidebar toggle logic is now handled by sidebar-store.js
 
 export async function sendMessage() {
+  if (sendInFlight) {
+    const message = inputStore.message.trim();
+    const attachmentsWithUrls = attachmentsStore.getAttachmentsForSending();
+    const hasAttachments = attachmentsWithUrls.length > 0;
+
+    if (message || hasAttachments) {
+      messageQueueStore.addToQueue(message, attachmentsWithUrls);
+      inputStore.reset();
+    }
+    return;
+  }
+
+  sendInFlight = true;
   try {
     const message = inputStore.message.trim();
     const attachmentsWithUrls = attachmentsStore.getAttachmentsForSending();
@@ -98,6 +113,7 @@ export async function sendMessage() {
 
         response = await api.fetchApi("/message_async", {
           method: "POST",
+          timeoutMs: MESSAGE_SEND_TIMEOUT_MS,
           body: formData,
         });
       } else {
@@ -117,11 +133,17 @@ export async function sendMessage() {
         };
         response = await api.fetchApi("/message_async", {
           method: "POST",
+          timeoutMs: MESSAGE_SEND_TIMEOUT_MS,
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
         });
+      }
+
+      if (!response || !response.ok) {
+        const errorBody = response ? await response.text() : "No response";
+        throw new Error(errorBody || "message_async request failed");
       }
 
       // Handle response
@@ -130,17 +152,21 @@ export async function sendMessage() {
         toast("No response returned.", "error");
       } else {
         setContext(jsonResponse.context);
-        // Ensure the just-completed response is visible even when WS push is delayed or dropped.
-        // This keeps chat rendering reliable behind reverse proxies/load balancers.
+        // Immediately request a fresh websocket snapshot for the active context.
+        // This keeps UX snappy without HTTP polling fallback.
         try {
-          await poll();
+          if (typeof syncStore.sendStateRequest === "function") {
+            await syncStore.sendStateRequest({ forceFull: true });
+          }
         } catch (_error) {
-          // Poll fallback errors are already handled by poll()/syncStore.
+          // Handshake/reconnect retries are handled by syncStore.
         }
       }
     }
   } catch (e) {
     toastFetchError("Error sending message", e); // Will use new notification system
+  } finally {
+    sendInFlight = false;
   }
 }
 globalThis.sendMessage = sendMessage;
@@ -229,8 +255,8 @@ async function updateUserTime() {
 updateUserTime();
 setInterval(updateUserTime, 1000);
 
-function setMessages(...params) {
-  return msgs.setMessages(...params);
+async function setMessages(...params) {
+  return await msgs.setMessages(...params);
 }
 
 globalThis.loadKnowledge = async function () {
@@ -245,8 +271,8 @@ function adjustTextareaHeight() {
   }
 }
 
-export const sendJsonData = async function (url, data) {
-  return await api.callJsonApi(url, data);
+export const sendJsonData = async function (url, data, options = {}) {
+  return await api.callJsonApi(url, data, options);
   // const response = await api.fetchApi(url, {
   //     method: 'POST',
   //     headers: {
@@ -293,6 +319,28 @@ function setConnectionStatus(connected) {
 let lastLogVersion = 0;
 let lastLogGuid = "";
 let lastSpokenNo = 0;
+let lastContextsSignature = "";
+let lastTasksSignature = "";
+
+function buildContextsSignature(contexts) {
+  if (!Array.isArray(contexts) || contexts.length === 0) return "";
+  let signature = `${contexts.length}|`;
+  for (let i = 0; i < contexts.length; i++) {
+    const ctx = contexts[i] || {};
+    signature += `${ctx.id || ""}:${ctx.no || 0}:${ctx.created_at || 0}:${ctx.running ? 1 : 0}:${ctx.name || ""}:${ctx.project || ""};`;
+  }
+  return signature;
+}
+
+function buildTasksSignature(tasks) {
+  if (!Array.isArray(tasks) || tasks.length === 0) return "";
+  let signature = `${tasks.length}|`;
+  for (let i = 0; i < tasks.length; i++) {
+    const task = tasks[i] || {};
+    signature += `${task.id || ""}:${task.no || 0}:${task.created_at || 0}:${task.running ? 1 : 0}:${task.state || ""}:${task.task_name || ""};`;
+  }
+  return signature;
+}
 
 export function buildStateRequestPayload(options = {}) {
   const { forceFull = false } = options || {};
@@ -331,7 +379,7 @@ export async function applySnapshot(snapshot, options = {}) {
 
   // If the chat has been reset, reset cursors and request a resync from the caller.
   // Note: on first snapshot after a context switch, lastLogGuid is intentionally empty,
-  // so the mismatch is expected and should not trigger a second state_request/poll.
+  // so the mismatch is expected and should not trigger a second state_request.
   if (lastLogGuid != snapshot.log_guid) {
     if (lastLogGuid) {
       const chatHistoryEl = document.getElementById("chat-history");
@@ -350,7 +398,7 @@ export async function applySnapshot(snapshot, options = {}) {
 
   if (lastLogVersion != snapshot.log_version) {
     updated = true;
-    setMessages(snapshot.logs);
+    await setMessages(snapshot.logs);
     afterMessagesUpdate(snapshot.logs);
   }
 
@@ -370,13 +418,21 @@ export async function applySnapshot(snapshot, options = {}) {
     setConnectionStatus(true);
   }
 
-  // Update chats list using store
-  let contexts = snapshot.contexts || [];
-  chatsStore.applyContexts(contexts);
+  // Update chats/tasks only when payload actually changed to avoid unnecessary
+  // Alpine reactivity churn during frequent state pushes.
+  let contexts = Array.isArray(snapshot.contexts) ? snapshot.contexts : [];
+  const contextsSignature = buildContextsSignature(contexts);
+  if (contextsSignature !== lastContextsSignature) {
+    chatsStore.applyContexts(contexts);
+    lastContextsSignature = contextsSignature;
+  }
 
-  // Update tasks list using store
-  let tasks = snapshot.tasks || [];
-  tasksStore.applyTasks(tasks);
+  let tasks = Array.isArray(snapshot.tasks) ? snapshot.tasks : [];
+  const tasksSignature = buildTasksSignature(tasks);
+  if (tasksSignature !== lastTasksSignature) {
+    tasksStore.applyTasks(tasks);
+    lastTasksSignature = tasksSignature;
+  }
 
   // Make sure the active context is properly selected in both lists
   if (context) {
@@ -412,32 +468,6 @@ export async function applySnapshot(snapshot, options = {}) {
 
   return { updated };
 }
-
-export async function poll() {
-  try {
-    // Get timezone from navigator
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    const log_from = lastLogVersion;
-    const response = await sendJsonData("/poll", {
-      log_from: log_from,
-      notifications_from: notificationStore.lastNotificationVersion || 0,
-      context: context || null,
-      timezone: timezone,
-    });
-
-    const result = await applySnapshot(response, {
-      touchConnectionStatus: true,
-      onLogGuidReset: poll,
-    });
-    return { ok: true, updated: Boolean(result && result.updated) };
-  } catch (error) {
-    console.error("Error:", error);
-    setConnectionStatus(false);
-    return { ok: false, updated: false };
-  }
-}
-globalThis.poll = poll;
 
 function afterMessagesUpdate(logs) {
   if (preferencesStore.speech) speakMessages(logs);
@@ -544,7 +574,7 @@ export const setContext = function (id) {
   tasksStore.setSelected(id);
 
   // Trigger a new WS handshake for the newly selected context (push-based sync).
-  // This keeps the UI current without needing /poll during healthy operation.
+  // This keeps the UI current over websocket state sync.
   try {
     if (typeof syncStore.sendStateRequest === "function") {
       syncStore.sendStateRequest({ forceFull: true }).catch((error) => {
@@ -625,116 +655,9 @@ import { store as _chatNavigationStore } from "/components/chat/navigation/chat-
 // setInterval(poll, 250);
 
 async function startPolling() {
-  // Fallback polling cadence:
-  // - DISCONNECTED: do not poll (transport down, avoid request spam)
-  // - HANDSHAKE_PENDING/DEGRADED: steady fallback cadence to keep UI responsive
-  const degradedIntervalMs = 1000;
-  let missingSyncSinceMs = null;
-  let consecutivePollFailures = 0;
-  let lastHandshakeKickMs = 0;
-  const startedAtMs = Date.now();
-  const initialNoPollGraceMs = 2000;
-  let pollInFlight = false;
-
-  async function _doPoll() {
-    const tickStartedAt = Date.now();
-    let nextInterval = degradedIntervalMs;
-
-    try {
-      const syncMode = typeof syncStore.mode === "string" ? syncStore.mode : null;
-      // Polling is a fallback. In V1:
-      // - DEGRADED: poll at fallback cadence to keep the UI usable while WS sync is unavailable.
-      // - DISCONNECTED: do not poll; rely on Socket.IO reconnect and avoid console/network spam.
-      // Safety net: if the sync store never loads, start polling after a short grace period.
-      if (!syncStore || !syncMode) {
-        if (missingSyncSinceMs == null) {
-          missingSyncSinceMs = Date.now();
-        }
-      } else {
-        missingSyncSinceMs = null;
-      }
-
-      const shouldPoll =
-        syncMode === "DEGRADED" ||
-        (missingSyncSinceMs != null && Date.now() - missingSyncSinceMs > 2000);
-      if (!shouldPoll) {
-        setTimeout(_doPoll.bind(this), nextInterval);
-        return;
-      }
-
-      if (pollInFlight) {
-        setTimeout(_doPoll.bind(this), nextInterval);
-        return;
-      }
-
-      // Avoid a “single poll on boot” while the websocket handshake is racing to take over.
-      if (Date.now() - startedAtMs < initialNoPollGraceMs && (!syncStore || !syncMode)) {
-        setTimeout(_doPoll.bind(this), nextInterval);
-        return;
-      }
-
-      // Call through `globalThis.poll` so test harnesses (and future instrumentation)
-      // can wrap/spy on polling behaviour. Fall back to the module-local function
-      // if the global is unavailable.
-      const pollFn = typeof globalThis.poll === "function" ? globalThis.poll : poll;
-      pollInFlight = true;
-      let result;
-      try {
-        result = await pollFn();
-      } finally {
-        pollInFlight = false;
-      }
-      const pollOk = Boolean(result && result.ok);
-
-      if (!pollOk) {
-        consecutivePollFailures += 1;
-      } else {
-        consecutivePollFailures = 0;
-      }
-
-      // If we are degraded but polling repeatedly fails, upgrade to DISCONNECTED.
-      if (
-        syncStore &&
-        syncMode === "DEGRADED" &&
-        !pollOk &&
-        consecutivePollFailures >= 3
-      ) {
-        syncStore.mode = "DISCONNECTED";
-      }
-
-      // If we're polling in degraded mode and the backend responds, try to re-establish push sync.
-      if (syncStore && pollOk) {
-        const now = Date.now();
-        const modeNow = typeof syncStore.mode === "string" ? syncStore.mode : null;
-        const kickCooldownMs = 3000;
-        const eligible =
-          modeNow === "DEGRADED" &&
-          syncStore.needsHandshake === true &&
-          typeof syncStore.sendStateRequest === "function" &&
-          now - lastHandshakeKickMs >= kickCooldownMs;
-        if (eligible) {
-          lastHandshakeKickMs = now;
-          syncStore.sendStateRequest({ forceFull: true }).catch(() => { });
-        }
-      }
-
-      const effectiveMode =
-        syncStore && typeof syncStore.mode === "string" ? syncStore.mode : syncMode;
-      nextInterval =
-        effectiveMode === "DEGRADED" || effectiveMode === "HANDSHAKE_PENDING"
-          ? degradedIntervalMs
-          : degradedIntervalMs;
-    } catch (error) {
-      console.error("Error:", error);
-    }
-
-    // Call the function again after the selected interval
-    const elapsedMs = Date.now() - tickStartedAt;
-    const delayMs = Math.max(0, nextInterval - elapsedMs);
-    setTimeout(_doPoll.bind(this), delayMs);
+  if (typeof syncStore?.init === "function") {
+    await syncStore.init();
   }
-
-  _doPoll();
 }
 
 // All initializations and event listeners are now consolidated here
@@ -755,7 +678,7 @@ document.addEventListener("DOMContentLoaded", function () {
   timeDate = document.getElementById("time-date-container");
 
 
-  // Start polling for updates
+  // Start websocket state synchronization
   startPolling();
 });
 

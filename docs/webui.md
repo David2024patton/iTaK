@@ -69,7 +69,7 @@ ws.onmessage = (event) => {
 
 All endpoints return JSON.
 
-- Compatibility/UI endpoints are primarily mounted at root (for example: `/poll`, `/chat_create`, `/launchpad_apps`, `/resource_hub`).
+- Compatibility/UI endpoints are primarily mounted at root (for example: `/message_async`, `/chat_create`, `/launchpad_apps`, `/resource_hub`).
 - Auth-protected API endpoints are mounted under `/api/*` (for example memory stats/search and tool listing).
 
 ### Health & Status

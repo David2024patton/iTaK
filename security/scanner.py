@@ -23,31 +23,31 @@ class SecurityScanner:
     placeholder replacement.
     """
 
-    # Dangerous patterns (regex → severity, description)
-    DANGEROUS_PATTERNS: list[tuple[str, str, str]] = [
+    # Dangerous patterns (regex → severity, description, category)
+    DANGEROUS_PATTERNS: list[tuple[str, str, str, str]] = [
         # Critical - always block
-        (r"os\.system\s*\(", "CRITICAL", "os.system() - use subprocess instead"),
-        (r"subprocess\.call\s*\(.+shell\s*=\s*True", "CRITICAL", "subprocess with shell=True - injection risk"),
-        (r"eval\s*\(", "CRITICAL", "eval() - arbitrary code execution"),
-        (r"exec\s*\(", "CRITICAL", "exec() - arbitrary code execution"),
-        (r"__import__\s*\(", "CRITICAL", "__import__() - dynamic import bypass"),
-        (r"pickle\.loads?\s*\(", "CRITICAL", "pickle deserialization - arbitrary code execution"),
-        (r"yaml\.load\s*\([^)]*\)", "CRITICAL", "yaml.load without SafeLoader - code execution"),
-        (r"shutil\.rmtree\s*\(\s*['\"/]", "CRITICAL", "shutil.rmtree on root paths - data loss"),
-        (r"rm\s+-rf\s+/", "CRITICAL", "rm -rf / - catastrophic data loss"),
+        (r"os\.system\s*\(", "CRITICAL", "os.system() - use subprocess instead", "command_execution"),
+        (r"subprocess\.call\s*\(.+shell\s*=\s*True", "CRITICAL", "subprocess with shell=True - injection risk", "command_execution"),
+        (r"eval\s*\(", "CRITICAL", "eval() - arbitrary code execution", "code_execution"),
+        (r"exec\s*\(", "CRITICAL", "exec() - arbitrary code execution", "code_execution"),
+        (r"__import__\s*\(", "CRITICAL", "__import__() - dynamic import bypass", "code_execution"),
+        (r"pickle\.loads?\s*\(", "CRITICAL", "pickle deserialization - arbitrary code execution", "deserialization"),
+        (r"yaml\.load\s*\([^)]*\)", "CRITICAL", "yaml.load without SafeLoader - code execution", "deserialization"),
+        (r"shutil\.rmtree\s*\(\s*['\"/]", "CRITICAL", "shutil.rmtree on root paths - data loss", "filesystem"),
+        (r"rm\s+-rf\s+/", "CRITICAL", "rm -rf / - catastrophic data loss", "filesystem"),
 
         # Warning - flag but allow
-        (r"subprocess\.\w+\s*\(", "WARNING", "subprocess usage - verify arguments"),
-        (r"requests\.(get|post|put|delete)\s*\(", "WARNING", "HTTP request - verify URL is expected"),
-        (r"open\s*\(.+['\"]w['\"]", "WARNING", "File write operation - verify path"),
-        (r"sqlite3\.connect\s*\(", "WARNING", "Direct SQLite access - use memory manager"),
-        (r"socket\.\w+\s*\(", "WARNING", "Raw socket - verify network access"),
-        (r"ctypes\.\w+", "WARNING", "ctypes usage - low-level system access"),
+        (r"subprocess\.\w+\s*\(", "WARNING", "subprocess usage - verify arguments", "process"),
+        (r"requests\.(get|post|put|delete)\s*\(", "WARNING", "HTTP request - verify URL is expected", "network"),
+        (r"open\s*\(.+['\"]w['\"]", "WARNING", "File write operation - verify path", "filesystem"),
+        (r"sqlite3\.connect\s*\(", "WARNING", "Direct SQLite access - use memory manager", "database"),
+        (r"socket\.\w+\s*\(", "WARNING", "Raw socket - verify network access", "network"),
+        (r"ctypes\.\w+", "WARNING", "ctypes usage - low-level system access", "system"),
 
         # Info - audit trail
-        (r"import\s+os", "INFO", "os module imported"),
-        (r"import\s+sys", "INFO", "sys module imported"),
-        (r"import\s+shutil", "INFO", "shutil module imported"),
+        (r"import\s+os", "INFO", "os module imported", "audit"),
+        (r"import\s+sys", "INFO", "sys module imported", "audit"),
+        (r"import\s+shutil", "INFO", "shutil module imported", "audit"),
     ]
 
     # Secret patterns - things that should never appear in code/logs
@@ -62,13 +62,20 @@ class SecurityScanner:
         (r"(?:secret|token|key)\s*=\s*['\"][^'\"]{8,}", "Hardcoded secret"),
     ]
 
-    SKILL_INJECTION_PATTERNS: list[tuple[str, str, str]] = [
-        (r"ignore\s+all\s+previous\s+instructions", "CRITICAL", "Prompt-injection pattern: instruction override"),
-        (r"reveal\s+all\s+secrets", "CRITICAL", "Prompt-injection pattern: secret exfiltration"),
-        (r"send\s+credentials\s+to", "CRITICAL", "Prompt-injection pattern: credential exfiltration"),
-        (r"disable\s+security", "WARNING", "Security bypass language"),
-        (r"run\s+without\s+confirmation", "WARNING", "Unsafe execution guidance"),
+    SKILL_INJECTION_PATTERNS: list[tuple[str, str, str, str]] = [
+        (r"ignore\s+all\s+previous\s+instructions", "CRITICAL", "Prompt-injection pattern: instruction override", "prompt_injection"),
+        (r"reveal\s+all\s+secrets", "CRITICAL", "Prompt-injection pattern: secret exfiltration", "data_exfiltration"),
+        (r"send\s+credentials\s+to", "CRITICAL", "Prompt-injection pattern: credential exfiltration", "data_exfiltration"),
+        (r"disable\s+security", "WARNING", "Security bypass language", "security_bypass"),
+        (r"run\s+without\s+confirmation", "WARNING", "Unsafe execution guidance", "unsafe_execution"),
     ]
+
+    RISK_WEIGHTS: dict[str, int] = {
+        "CRITICAL": 40,
+        "WARNING": 10,
+        "INFO": 1,
+        "SECRET": 50,
+    }
 
     REQUIRED_SKILL_SECTIONS: list[str] = [
         "## When to Use",
@@ -97,12 +104,13 @@ class SecurityScanner:
         lines = code.split("\n")
 
         # Check dangerous patterns
-        for pattern, severity, description in self.DANGEROUS_PATTERNS:
+        for pattern, severity, description, category in self.DANGEROUS_PATTERNS:
             for i, line in enumerate(lines, 1):
                 if re.search(pattern, line):
                     finding = {
                         "severity": severity,
                         "pattern": description,
+                        "category": category,
                         "line": i,
                         "line_content": line.strip()[:100],
                         "source": source,
@@ -122,19 +130,34 @@ class SecurityScanner:
                     })
                     blocked = True  # Always block if secrets found
 
+        risk_summary = self._build_risk_summary(findings, secrets, blocked)
+
         return {
             "safe": not blocked,
             "findings": findings,
             "secrets_found": secrets,
             "blocked": blocked,
             "source": source,
+            "severity_counts": risk_summary["severity_counts"],
+            "category_counts": risk_summary["category_counts"],
+            "risk_score": risk_summary["risk_score"],
+            "risk_level": risk_summary["risk_level"],
         }
 
     def scan_file(self, filepath: str | Path) -> dict:
         """Scan a file for dangerous patterns."""
         filepath = Path(filepath)
         if not filepath.exists():
-            return {"safe": True, "findings": [], "secrets_found": [], "blocked": False}
+            return {
+                "safe": True,
+                "findings": [],
+                "secrets_found": [],
+                "blocked": False,
+                "severity_counts": {"CRITICAL": 0, "WARNING": 0, "INFO": 0, "SECRETS": 0},
+                "category_counts": {},
+                "risk_score": 0,
+                "risk_level": "LOW",
+            }
 
         try:
             content = filepath.read_text(encoding="utf-8")
@@ -164,14 +187,66 @@ class SecurityScanner:
                 if result["blocked"]:
                     blocked = True
 
+        risk_summary = self._build_risk_summary(all_findings, all_secrets, blocked)
+
         return {
             "safe": not blocked,
             "findings": all_findings,
             "secrets_found": all_secrets,
             "blocked": blocked,
+            "severity_counts": risk_summary["severity_counts"],
+            "category_counts": risk_summary["category_counts"],
+            "risk_score": risk_summary["risk_score"],
+            "risk_level": risk_summary["risk_level"],
             "files_scanned": sum(
                 len(list(directory.rglob(f"*{ext}"))) for ext in extensions
             ),
+        }
+
+    def _build_risk_summary(self, findings: list[dict], secrets: list[dict], blocked: bool) -> dict:
+        """Build normalized severity and risk metadata for scan outputs."""
+        severity_counts = {
+            "CRITICAL": 0,
+            "WARNING": 0,
+            "INFO": 0,
+            "SECRETS": len(secrets),
+        }
+        category_counts: dict[str, int] = {}
+
+        for finding in findings:
+            sev = str(finding.get("severity", "INFO")).upper()
+            if sev not in severity_counts:
+                severity_counts[sev] = 0
+            severity_counts[sev] += 1
+
+            cat = finding.get("category") or "uncategorized"
+            category_counts[cat] = category_counts.get(cat, 0) + 1
+
+        risk_score = (
+            severity_counts.get("CRITICAL", 0) * self.RISK_WEIGHTS["CRITICAL"]
+            + severity_counts.get("WARNING", 0) * self.RISK_WEIGHTS["WARNING"]
+            + min(severity_counts.get("INFO", 0), 25) * self.RISK_WEIGHTS["INFO"]
+            + severity_counts.get("SECRETS", 0) * self.RISK_WEIGHTS["SECRET"]
+        )
+
+        if blocked:
+            risk_score = max(risk_score, 85)
+        risk_score = min(risk_score, 100)
+
+        if risk_score >= 85:
+            risk_level = "CRITICAL"
+        elif risk_score >= 60:
+            risk_level = "HIGH"
+        elif risk_score >= 25:
+            risk_level = "MEDIUM"
+        else:
+            risk_level = "LOW"
+
+        return {
+            "severity_counts": severity_counts,
+            "category_counts": category_counts,
+            "risk_score": risk_score,
+            "risk_level": risk_level,
         }
 
     def scan_python_ast(self, code: str) -> list[dict]:
@@ -233,6 +308,11 @@ class SecurityScanner:
         else:
             lines.append("❌ **BLOCKED** - Critical security issues detected.\n")
 
+        risk_level = scan_result.get("risk_level")
+        risk_score = scan_result.get("risk_score")
+        if risk_level is not None and risk_score is not None:
+            lines.append(f"Risk: **{risk_level}** ({risk_score}/100)\n")
+
         if scan_result["secrets_found"]:
             lines.append("## 🔑 Exposed Secrets\n")
             for s in scan_result["secrets_found"]:
@@ -286,13 +366,14 @@ class SecurityScanner:
         blocked = False
         lines = (content or "").splitlines()
 
-        for pattern, severity, description in self.SKILL_INJECTION_PATTERNS:
+        for pattern, severity, description, category in self.SKILL_INJECTION_PATTERNS:
             regex = re.compile(pattern, re.IGNORECASE)
             for idx, line in enumerate(lines, 1):
                 if regex.search(line):
                     findings.append({
                         "severity": severity,
                         "pattern": description,
+                        "category": category,
                         "line": idx,
                         "line_content": line.strip()[:120],
                         "source": source,
@@ -300,9 +381,15 @@ class SecurityScanner:
                     if severity == "CRITICAL":
                         blocked = True
 
+        risk_summary = self._build_risk_summary(findings, [], blocked)
+
         return {
             "safe": not blocked,
             "blocked": blocked,
             "findings": findings,
             "source": source,
+            "severity_counts": risk_summary["severity_counts"],
+            "category_counts": risk_summary["category_counts"],
+            "risk_score": risk_summary["risk_score"],
+            "risk_level": risk_summary["risk_level"],
         }

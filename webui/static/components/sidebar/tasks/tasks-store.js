@@ -8,10 +8,10 @@ const model = {
   selected: "",
 
   init() {
-    // No-op: data is driven by poll() in index.js; this store provides a stable target
+    // No-op: data is driven by websocket snapshots in index.js; this store provides a stable target
   },
 
-  // Apply tasks coming from poll() and keep them sorted (newest first)
+  // Apply tasks coming from websocket snapshots and keep them sorted (newest first)
   applyTasks(tasksList) {
     try {
       const tasks = Array.isArray(tasksList) ? tasksList : [];
@@ -31,7 +31,7 @@ const model = {
   // Update selected task and persist for tab restore
   setSelected(taskId) {
     this.selected = taskId || "";
-    try { localStorage.setItem("lastSelectedTask", this.selected); } catch {}
+    try { localStorage.setItem("lastSelectedTask", this.selected); } catch { }
   },
 
   // Returns true if a task with the given id exists in the current list

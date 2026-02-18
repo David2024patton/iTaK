@@ -216,7 +216,7 @@ const model = {
       this.testRequestAll.bind(this),
       this.testStateSyncNoPollHealthy.bind(this),
       this.testContextSwitchNoLeak.bind(this),
-      this.testFallbackRecoveryDegraded.bind(this),
+      this.testHandshakeFailureRecovery.bind(this),
       this.testResyncTriggersRuntimeEpochAndSeqGap.bind(this),
     ];
 
@@ -318,16 +318,16 @@ const model = {
       const first = response.results?.[0];
       const ok = Boolean(
         response?.correlationId &&
-          Array.isArray(response.results) &&
-          first?.ok === true &&
-          first?.handlerId &&
-          first?.correlationId === response.correlationId &&
-          first?.data?.echo === 42,
+        Array.isArray(response.results) &&
+        first?.ok === true &&
+        first?.handlerId &&
+        first?.correlationId === response.correlationId &&
+        first?.data?.echo === 42,
       );
       const delayedOk = Boolean(
         Array.isArray(delayedResponse.results) &&
-          delayedResponse.results[0]?.ok === true &&
-          delayedResponse.results[0]?.data?.status === "delayed",
+        delayedResponse.results[0]?.ok === true &&
+        delayedResponse.results[0]?.data?.status === "delayed",
       );
       this.appendLog(`Request-response result: ${JSON.stringify(response)}`);
       this.appendLog(`Request-response (no-timeout) result: ${JSON.stringify(delayedResponse)}`);
@@ -442,17 +442,8 @@ const model = {
 
   async testStateSyncNoPollHealthy() {
     const label = "State sync (state_request/state_push + no poll when HEALTHY)";
-    const originalPoll = globalThis.poll;
-    let pollCalls = 0;
     try {
       this.appendLog("Testing state_request/state_push contract and healthy-mode poll suppression...");
-
-      if (typeof originalPoll === "function") {
-        globalThis.poll = async (...args) => {
-          pollCalls += 1;
-          return await originalPoll(...args);
-        };
-      }
 
       await this.ensureSubscribed("state_push", true);
       this.appendLog("Subscribed to state_push.");
@@ -472,9 +463,9 @@ const model = {
       const first = response?.results?.[0];
       const requestOk = Boolean(
         response?.correlationId &&
-          first?.ok === true &&
-          typeof first?.data?.runtime_epoch === "string" &&
-          typeof first?.data?.seq_base === "number",
+        first?.ok === true &&
+        typeof first?.data?.runtime_epoch === "string" &&
+        typeof first?.data?.seq_base === "number",
       );
       if (!requestOk) {
         this.appendLog(`state_request response invalid: ${JSON.stringify(response)}`);
@@ -519,22 +510,16 @@ const model = {
         return { ok: false, label, error: `syncStore did not reach HEALTHY mode (mode=${mode})` };
       }
 
-      // Reset count after the store is HEALTHY; then observe for >1 poll interval.
-      pollCalls = 0;
+      // In websocket-only mode, there is no global poll fallback hook.
       await new Promise((resolve) => setTimeout(resolve, 600));
-      const noPoll = pollCalls === 0;
-      if (!noPoll) {
-        return { ok: false, label, error: `poll() invoked ${pollCalls}x while HEALTHY` };
+      if (typeof globalThis.poll === "function") {
+        return { ok: false, label, error: "global poll() hook exists in websocket-only mode" };
       }
 
       return { ok: true, label };
     } catch (error) {
       this.appendLog(`${label} failed: ${error.message || error}`);
       return { ok: false, label, error: error.message || error };
-    } finally {
-      if (typeof originalPoll === "function") {
-        globalThis.poll = originalPoll;
-      }
     }
   },
 
@@ -635,9 +620,8 @@ const model = {
     }
   },
 
-  async testFallbackRecoveryDegraded() {
-    const label = "Fallback + recovery (DEGRADED polling, ignore pushes)";
-    const originalPoll = globalThis.poll;
+  async testHandshakeFailureRecovery() {
+    const label = "Handshake failure recovery (DISCONNECTED, no polling fallback)";
     const originalRequest = stateSocket.request;
     try {
       if (typeof syncStore.sendStateRequest !== "function") {
@@ -650,14 +634,7 @@ const model = {
         return { ok: false, label, error: `Expected HEALTHY before test, got ${syncStore.mode}` };
       }
 
-      // Stub poll to avoid network side-effects and track calls.
-      let pollCalls = 0;
-      globalThis.poll = async () => {
-        pollCalls += 1;
-        return { ok: true, updated: false };
-      };
-
-      // Simulate state_request failures to force DEGRADED mode.
+      // Simulate state_request failures to force DISCONNECTED mode.
       stateSocket.request = async (eventType, payload, options) => {
         if (eventType === "state_request") {
           throw new Error("Request timeout");
@@ -675,42 +652,27 @@ const model = {
         return { ok: false, label, error: "Expected state_request failure but request succeeded" };
       }
 
-      if (syncStore.mode !== "DEGRADED") {
-        return { ok: false, label, error: `Expected DEGRADED after failure, got ${syncStore.mode}` };
+      if (syncStore.mode !== "DISCONNECTED") {
+        return { ok: false, label, error: `Expected DISCONNECTED after failure, got ${syncStore.mode}` };
       }
-      this.appendLog("Entered DEGRADED mode after simulated state_request failure.");
+      this.appendLog("Entered DISCONNECTED mode after simulated state_request failure.");
 
-      // Poll fallback should kick in quickly (1Hz idle); wait long enough for at least one tick.
+      // Polling fallback is disabled in websocket-only mode.
       await new Promise((resolve) => setTimeout(resolve, 1200));
-      if (pollCalls < 1) {
-        return { ok: false, label, error: "poll() was not invoked while DEGRADED" };
+      if (typeof globalThis.poll === "function") {
+        return { ok: false, label, error: "global poll() hook exists in websocket-only mode" };
       }
 
-      // While DEGRADED, pushes should be ignored (single-writer arbitration).
-      const lastSeqBefore = typeof syncStore.lastSeq === "number" ? syncStore.lastSeq : 0;
-      await syncStore._handlePush({
-        data: {
-          runtime_epoch: typeof syncStore.runtimeEpoch === "string" ? syncStore.runtimeEpoch : "test-epoch",
-          seq: lastSeqBefore + 1,
-          snapshot: { ignored: true },
-        },
-      });
-      if (syncStore.lastSeq !== lastSeqBefore) {
-        return { ok: false, label, error: "state_push advanced seq while DEGRADED (should be ignored)" };
-      }
-      this.appendLog("Verified state_push ignored while DEGRADED.");
-
-      // Recover: restore request path and confirm we return to HEALTHY and polling stops.
+      // Recover: restore request path and confirm we return to HEALTHY with no polling fallback.
       stateSocket.request = originalRequest;
       await syncStore.sendStateRequest({ forceFull: true });
       if (syncStore.mode !== "HEALTHY") {
         return { ok: false, label, error: `Expected HEALTHY after recovery, got ${syncStore.mode}` };
       }
 
-      pollCalls = 0;
       await new Promise((resolve) => setTimeout(resolve, 600));
-      if (pollCalls !== 0) {
-        return { ok: false, label, error: `poll() invoked ${pollCalls}x after recovery to HEALTHY` };
+      if (typeof globalThis.poll === "function") {
+        return { ok: false, label, error: "global poll() hook exists after recovery" };
       }
 
       return { ok: true, label };
@@ -719,7 +681,6 @@ const model = {
       return { ok: false, label, error: error.message || error };
     } finally {
       stateSocket.request = originalRequest;
-      globalThis.poll = originalPoll;
     }
   },
 
@@ -888,7 +849,7 @@ const model = {
   },
 
   async runManualFallbackRecovery() {
-    await this.manualStep(this.testFallbackRecoveryDegraded.bind(this));
+    await this.manualStep(this.testHandshakeFailureRecovery.bind(this));
   },
 
   async runManualResyncTriggers() {

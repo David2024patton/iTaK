@@ -148,9 +148,44 @@ def create_app(agent: "Agent"):
     sio_push_tasks: dict[str, object] = {}  # sid -> asyncio.Task
     SIO_DEBOUNCE_SECONDS = 0.025  # 25ms debounce matching Agent Zero
     _system_logs: list[dict] = []  # structured log buffer for logs_get endpoint
+    _context_save_handles: dict[str, object] = {}  # ctx_id -> asyncio.TimerHandle
+    CONTEXT_SAVE_DEBOUNCE_SECONDS = 0.2
+    SIDEBAR_CONTEXTS_TTL_SECONDS = 0.35
+    SIDEBAR_TASKS_TTL_SECONDS = 1.0
+    _contexts_sidebar_cache: dict[str, object] = {"expires_at": 0.0, "data": []}
+    _tasks_sidebar_cache: dict[str, object] = {"expires_at": 0.0, "data": []}
+    _telemetry: dict[str, object] = {
+        "snapshot_build_count": 0,
+        "snapshot_build_total_ms": 0.0,
+        "snapshot_build_max_ms": 0.0,
+        "state_request_count": 0,
+        "state_push_count": 0,
+        "state_push_total_ms": 0.0,
+        "state_push_max_ms": 0.0,
+        "state_push_errors": 0,
+        "message_async_count": 0,
+        "message_async_total_ms": 0.0,
+        "message_async_max_ms": 0.0,
+        "message_async_timeouts": 0,
+        "last_updated": time.time(),
+    }
+    try:
+        MESSAGE_MONOLOGUE_TIMEOUT_SECONDS = max(15, int(webui_config.get("message_timeout_seconds", 180) or 180))
+    except Exception:
+        MESSAGE_MONOLOGUE_TIMEOUT_SECONDS = 180
 
     def _to_title(value: str) -> str:
         return str(value or "").replace("_", " ").replace("-", " ").strip().title()
+
+    def _telemetry_record_latency(count_key: str, total_key: str, max_key: str, elapsed_ms: float):
+        _telemetry[count_key] = int(_telemetry.get(count_key, 0) or 0) + 1
+        _telemetry[total_key] = float(_telemetry.get(total_key, 0.0) or 0.0) + max(0.0, float(elapsed_ms))
+        _telemetry[max_key] = max(float(_telemetry.get(max_key, 0.0) or 0.0), max(0.0, float(elapsed_ms)))
+        _telemetry["last_updated"] = time.time()
+
+    def _telemetry_inc(key: str, by: int = 1):
+        _telemetry[key] = int(_telemetry.get(key, 0) or 0) + int(by)
+        _telemetry["last_updated"] = time.time()
 
     def _read_catalog_payload() -> dict:
         root = Path(__file__).parent.parent
@@ -869,9 +904,43 @@ def create_app(agent: "Agent"):
         except Exception as e:
             logger.warning(f"Failed to save context {ctx.get('id')}: {e}")
 
+    def _invalidate_contexts_cache():
+        _contexts_sidebar_cache["expires_at"] = 0.0
+
+    def _invalidate_tasks_cache():
+        _tasks_sidebar_cache["expires_at"] = 0.0
+
+    def _cancel_context_save(ctx_id: str):
+        handle = _context_save_handles.pop(ctx_id, None)
+        if handle is not None and hasattr(handle, "cancel"):
+            handle.cancel()
+
+    def _flush_context_save(ctx_id: str):
+        _context_save_handles.pop(ctx_id, None)
+        ctx = contexts.get(ctx_id)
+        if ctx:
+            _save_context(ctx)
+
+    def _schedule_context_save(ctx: dict):
+        ctx_id = str(ctx.get("id") or "")
+        if not ctx_id:
+            return
+        _cancel_context_save(ctx_id)
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            _save_context(ctx)
+            return
+        _context_save_handles[ctx_id] = loop.call_later(
+            CONTEXT_SAVE_DEBOUNCE_SECONDS,
+            _flush_context_save,
+            ctx_id,
+        )
+
     def _delete_context_file(ctx_id: str):
         """Remove a chat context file from disk."""
         try:
+            _cancel_context_save(ctx_id)
             fp = _chats_dir / f"{ctx_id}.json"
             if fp.exists():
                 fp.unlink()
@@ -901,6 +970,7 @@ def create_app(agent: "Agent"):
         new_ctx = _make_context()
         contexts[new_ctx["id"]] = new_ctx
         _save_context(new_ctx)
+        _invalidate_contexts_cache()
         return new_ctx
 
     def _sio_mark_dirty_all(reason: str = "unknown"):
@@ -953,6 +1023,7 @@ def create_app(agent: "Agent"):
 
     async def _sio_flush_push(sid: str):
         """Build snapshot and emit state_push to a single SID."""
+        started_at = time.perf_counter()
         try:
             proj = sio_projections.get(sid)
             if proj is None or not sio_server:
@@ -998,7 +1069,10 @@ def create_app(agent: "Agent"):
 
             try:
                 await sio_server.emit("state_push", payload, namespace="/state_sync", to=sid)
+                elapsed_ms = (time.perf_counter() - started_at) * 1000.0
+                _telemetry_record_latency("state_push_count", "state_push_total_ms", "state_push_max_ms", elapsed_ms)
             except Exception as e:
+                _telemetry_inc("state_push_errors", by=1)
                 logger.debug(f"Socket.IO push to {sid} failed: {e}")
                 return
 
@@ -1048,14 +1122,34 @@ def create_app(agent: "Agent"):
         ctx["next_no"] += 1
         ctx["logs"].append(entry)
         ctx["log_version"] += 1
-        _save_context(ctx)
+        _schedule_context_save(ctx)
         # Real-time push via Socket.IO
         _sio_push_snapshot(ctx)
         # Structured system log
         _append_system_log("chat", "info", f"[{log_type}] {heading or content[:80]}", ctx.get("id"))
 
+    def _get_progress_context() -> dict | None:
+        """Best-effort context selection for progress events."""
+        if not contexts:
+            return None
+
+        running_contexts = [c for c in contexts.values() if bool(c.get("running"))]
+        if running_contexts:
+            return sorted(running_contexts, key=lambda c: float(c.get("created_at", 0) or 0), reverse=True)[0]
+
+        candidates = sorted(
+            contexts.values(),
+            key=lambda c: (int(c.get("log_version", 0) or 0), float(c.get("created_at", 0) or 0)),
+            reverse=True,
+        )
+        return candidates[0] if candidates else None
+
     def _list_contexts() -> list[dict]:
-        return sorted([
+        now = time.monotonic()
+        if now < float(_contexts_sidebar_cache.get("expires_at", 0.0)):
+            return _contexts_sidebar_cache.get("data", [])
+
+        data = sorted([
             {
                 "id": c["id"],
                 "no": c["no"],
@@ -1068,9 +1162,20 @@ def create_app(agent: "Agent"):
             for c in contexts.values()
         ], key=lambda x: x.get("created_at", 0), reverse=True)
 
+        _contexts_sidebar_cache["data"] = data
+        _contexts_sidebar_cache["expires_at"] = now + SIDEBAR_CONTEXTS_TTL_SECONDS
+        return data
+
     def _list_tasks_for_sidebar() -> list[dict]:
+        now = time.monotonic()
+        if now < float(_tasks_sidebar_cache.get("expires_at", 0.0)):
+            return _tasks_sidebar_cache.get("data", [])
+
         if not (hasattr(agent, "task_board") and agent.task_board):
+            _tasks_sidebar_cache["data"] = []
+            _tasks_sidebar_cache["expires_at"] = now + SIDEBAR_TASKS_TTL_SECONDS
             return []
+
         tasks = agent.task_board.list_all(limit=200)
         output = []
         for idx, task in enumerate(tasks, 1):
@@ -1084,13 +1189,17 @@ def create_app(agent: "Agent"):
                 "created_at": data.get("created_at", 0),
                 "project": None,
             })
+
+        _tasks_sidebar_cache["data"] = output
+        _tasks_sidebar_cache["expires_at"] = now + SIDEBAR_TASKS_TTL_SECONDS
         return output
 
     def _build_poll_snapshot(context_id: str | None, log_from: int = 0, notifications_from: int = 0) -> dict:
+        started_at = time.perf_counter()
         ctx = _ensure_context(context_id) if context_id else None
 
         # Incremental log delivery: return only entries newer than client's cursor.
-        # This keeps fallback polling and push snapshots lightweight for large chats.
+        # This keeps websocket state snapshots lightweight for large chats.
         try:
             safe_log_from = max(0, int(log_from or 0))
         except Exception:
@@ -1116,7 +1225,7 @@ def create_app(agent: "Agent"):
             snapshot_context = ctx["id"]
 
         notifs = [n for n in notifications if n.get("version", 0) > int(notifications_from or 0)]
-        return {
+        snapshot = {
             "ok": True,
             "context": snapshot_context,
             "log_guid": log_guid,
@@ -1132,6 +1241,9 @@ def create_app(agent: "Agent"):
             "notifications_version": notifications_version,
             "deselect_chat": False,
         }
+        elapsed_ms = (time.perf_counter() - started_at) * 1000.0
+        _telemetry_record_latency("snapshot_build_count", "snapshot_build_total_ms", "snapshot_build_max_ms", elapsed_ms)
+        return snapshot
 
     def _add_notification(message: str, ntype: str = "info", title: str = "Notification", priority: int = 10, group: str = ""):
         nonlocal notifications_version
@@ -1191,6 +1303,7 @@ def create_app(agent: "Agent"):
 
         ctx = _ensure_context(context_id)
         ctx["running"] = True
+        _invalidate_contexts_cache()
         _append_system_log("chat", "info", f"Message received: {message[:60]}...", ctx.get("id"))
         _push_log(ctx, "user", message, kvps={"message_id": message_id} if message_id else {})
 
@@ -1199,15 +1312,35 @@ def create_app(agent: "Agent"):
             if not run_ctx:
                 return
 
+            started_at = time.perf_counter()
+
             try:
-                response = await agent.monologue(text)
+                response = await asyncio.wait_for(
+                    agent.monologue(text),
+                    timeout=MESSAGE_MONOLOGUE_TIMEOUT_SECONDS,
+                )
+            except asyncio.TimeoutError:
+                _telemetry_inc("message_async_timeouts", by=1)
+                response = (
+                    f"Request timed out after {MESSAGE_MONOLOGUE_TIMEOUT_SECONDS}s. "
+                    "Try a shorter prompt or check model/provider latency."
+                )
+                _append_system_log(
+                    "error",
+                    "warning",
+                    f"Model call timeout ({MESSAGE_MONOLOGUE_TIMEOUT_SECONDS}s)",
+                    run_ctx.get("id"),
+                )
             except Exception as e:
                 response = f"Error: {e}"
                 _append_system_log("error", "error", f"Model call failed: {e}", run_ctx.get("id"))
             finally:
+                elapsed_ms = (time.perf_counter() - started_at) * 1000.0
+                _telemetry_record_latency("message_async_count", "message_async_total_ms", "message_async_max_ms", elapsed_ms)
                 latest_ctx = contexts.get(ctx_id)
                 if latest_ctx:
                     latest_ctx["running"] = False
+                    _invalidate_contexts_cache()
 
             latest_ctx = contexts.get(ctx_id)
             if latest_ctx:
@@ -1218,14 +1351,6 @@ def create_app(agent: "Agent"):
         task.add_done_callback(_message_tasks.discard)
 
         return {"ok": True, "context": ctx["id"], "accepted": True}
-
-    @app.post("/poll")
-    async def poll(payload: dict):
-        return _build_poll_snapshot(
-            context_id=payload.get("context"),
-            log_from=payload.get("log_from", 0),
-            notifications_from=payload.get("notifications_from", 0),
-        )
 
     @app.post("/interaction_log")
     async def interaction_log(payload: dict | None = None):
@@ -1273,6 +1398,8 @@ def create_app(agent: "Agent"):
     async def chat_create(payload: dict):
         new_ctx = _make_context()
         contexts[new_ctx["id"]] = new_ctx
+        _save_context(new_ctx)
+        _invalidate_contexts_cache()
         return {"ok": True, "ctxid": new_ctx["id"]}
 
     @app.post("/chat_remove")
@@ -1283,6 +1410,7 @@ def create_app(agent: "Agent"):
             _delete_context_file(ctx_id)
         if not contexts:
             _ensure_context(None)
+        _invalidate_contexts_cache()
         return {"ok": True}
 
     @app.post("/chat_reset")
@@ -1292,6 +1420,8 @@ def create_app(agent: "Agent"):
         ctx["log_version"] = 0
         ctx["next_no"] = 1
         ctx["log_guid"] = uuid.uuid4().hex
+        _save_context(ctx)
+        _invalidate_contexts_cache()
         return {"ok": True}
 
     @app.post("/chat_export")
@@ -1498,9 +1628,11 @@ def create_app(agent: "Agent"):
                     new_ctx["log_version"] = len(logs)
                     new_ctx["next_no"] = len(logs) + 1
                 contexts[new_ctx["id"]] = new_ctx
+                _save_context(new_ctx)
                 loaded.append(new_ctx["id"])
             except Exception:
                 continue
+        _invalidate_contexts_cache()
         return {"ok": True, "ctxids": loaded}
 
     @app.post("/pause")
@@ -1540,6 +1672,8 @@ def create_app(agent: "Agent"):
             "attachments": payload.get("attachments", []),
         }
         ctx["message_queue"].append(item)
+        _schedule_context_save(ctx)
+        _invalidate_contexts_cache()
         return {"ok": True, "item": item}
 
     @app.post("/message_queue_remove")
@@ -1550,6 +1684,8 @@ def create_app(agent: "Agent"):
             ctx["message_queue"] = [i for i in ctx["message_queue"] if i.get("id") != item_id]
         else:
             ctx["message_queue"] = []
+        _schedule_context_save(ctx)
+        _invalidate_contexts_cache()
         return {"ok": True}
 
     @app.post("/message_queue_send")
@@ -1567,6 +1703,9 @@ def create_app(agent: "Agent"):
                     to_send = [item]
                     del ctx["message_queue"][idx]
                     break
+        if to_send:
+            _schedule_context_save(ctx)
+            _invalidate_contexts_cache()
         for item in to_send:
             _push_log(ctx, "user", item.get("text", ""), kvps={"queued": True})
         return {"ok": True}
@@ -2801,6 +2940,38 @@ def create_app(agent: "Agent"):
         health_data = {"status": "ok", "timestamp": time.time()}
         if hasattr(agent, "heartbeat") and agent.heartbeat:
             health_data["heartbeat"] = await agent.heartbeat.check_health()
+
+        def _avg(total_key: str, count_key: str) -> float:
+            count = int(_telemetry.get(count_key, 0) or 0)
+            if count <= 0:
+                return 0.0
+            return round(float(_telemetry.get(total_key, 0.0) or 0.0) / count, 2)
+
+        state_push_errors = int(_telemetry.get("state_push_errors", 0) or 0)
+        sync_reason = "push errors detected" if state_push_errors > 0 else "no push errors observed"
+
+        health_data["state_sync"] = {
+            "mode": "degraded" if state_push_errors > 0 else "healthy",
+            "reason": sync_reason,
+            "snapshot_build": {
+                "count": int(_telemetry.get("snapshot_build_count", 0) or 0),
+                "avg_ms": _avg("snapshot_build_total_ms", "snapshot_build_count"),
+                "max_ms": round(float(_telemetry.get("snapshot_build_max_ms", 0.0) or 0.0), 2),
+            },
+            "state_request_count": int(_telemetry.get("state_request_count", 0) or 0),
+            "state_push": {
+                "count": int(_telemetry.get("state_push_count", 0) or 0),
+                "errors": state_push_errors,
+                "avg_ms": _avg("state_push_total_ms", "state_push_count"),
+                "max_ms": round(float(_telemetry.get("state_push_max_ms", 0.0) or 0.0), 2),
+            },
+            "message_async": {
+                "count": int(_telemetry.get("message_async_count", 0) or 0),
+                "timeouts": int(_telemetry.get("message_async_timeouts", 0) or 0),
+                "avg_ms": _avg("message_async_total_ms", "message_async_count"),
+                "max_ms": round(float(_telemetry.get("message_async_max_ms", 0.0) or 0.0), 2),
+            },
+        }
         return health_data
 
     @app.get("/api/stats")
@@ -3182,6 +3353,7 @@ def create_app(agent: "Agent"):
                 priority=payload.get("priority", "medium"),
                 source="dashboard",
             )
+            _invalidate_tasks_cache()
             return task.to_dict()
         return JSONResponse({"error": "Task board not available"}, status_code=503)
 
@@ -3191,6 +3363,7 @@ def create_app(agent: "Agent"):
         if hasattr(agent, "task_board") and agent.task_board:
             task = agent.task_board.complete(task_id)
             if task:
+                _invalidate_tasks_cache()
                 return task.to_dict()
             return JSONResponse({"error": "Task not found"}, status_code=404)
         return JSONResponse({"error": "Task board not available"}, status_code=503)
@@ -3202,6 +3375,7 @@ def create_app(agent: "Agent"):
             error = (payload or {}).get("error", "")
             task = agent.task_board.fail(task_id, error=error)
             if task:
+                _invalidate_tasks_cache()
                 return task.to_dict()
             return JSONResponse({"error": "Task not found"}, status_code=404)
         return JSONResponse({"error": "Task board not available"}, status_code=503)
@@ -3240,6 +3414,7 @@ def create_app(agent: "Agent"):
                     agent.task_board.update(task)
 
             if task:
+                _invalidate_tasks_cache()
                 return task.to_dict()
             return JSONResponse({"error": "Task not found"}, status_code=404)
         return JSONResponse({"error": "Task board not available"}, status_code=503)
@@ -3249,6 +3424,8 @@ def create_app(agent: "Agent"):
         """Delete a task."""
         if hasattr(agent, "task_board") and agent.task_board:
             deleted = agent.task_board.delete(task_id)
+            if deleted:
+                _invalidate_tasks_cache()
             return {"deleted": deleted}
         return JSONResponse({"error": "Task board not available"}, status_code=503)
 
@@ -3440,6 +3617,37 @@ def create_app(agent: "Agent"):
         if sio_server:
             _sio_mark_dirty_all(reason="ws_broadcast")
 
+        try:
+            ctx = _get_progress_context()
+            if ctx:
+                if event_type == "plan":
+                    plan_text = str(data.get("text", "") or "")
+                    if plan_text:
+                        _push_log(
+                            ctx,
+                            "agent",
+                            plan_text,
+                            heading="Plan",
+                            kvps={"step": 0, "thoughts": plan_text},
+                        )
+                elif event_type == "progress":
+                    progress_text = str(data.get("message", "") or "")
+                    if progress_text:
+                        step_no = int(data.get("step", 0) or 0)
+                        _push_log(
+                            ctx,
+                            "agent",
+                            progress_text,
+                            heading=f"Step {step_no}" if step_no > 0 else "Working",
+                            kvps={"step": step_no, "thoughts": progress_text},
+                        )
+                elif event_type == "error":
+                    err_text = str(data.get("message", "") or "")
+                    if err_text:
+                        _push_log(ctx, "error", err_text, heading="Progress Error")
+        except Exception as exc:
+            _append_system_log("error", "debug", f"ws_broadcast chat-log mapping failed: {exc}")
+
         _append_system_log("system", "debug", f"ws_broadcast: {event_type}")
 
     if hasattr(agent, "progress") and agent.progress:
@@ -3562,6 +3770,7 @@ def create_app(agent: "Agent"):
             }
             """
             payload = payload or {}
+            _telemetry_inc("state_request_count", by=1)
             if not isinstance(payload, dict):
                 payload = {}
 

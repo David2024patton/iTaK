@@ -162,15 +162,14 @@ To make the Agent Zero frontend work with iTaK's backend, we need **one** of:
 Agent Zero Frontend Expects:
 
 - `POST /message_async` - Send chat message
-- `POST /poll` - Poll for state updates
-- `Socket.IO events`: `state_request`, `state_response`, `agent_state`, etc.
+- `Socket.IO events`: `state_request`, `state_push`, `server_restart`, etc.
 
 iTaK Currently Provides:
 
-- `POST /api/chat` - Send message to agent
+- `POST /message_async` - Send message to agent
 - `GET /api/stats` - Get agent statistics  
 - `GET /api/logs` - Query logs
-- `WebSocket /ws` - Real-time updates (custom protocol)
+- `Socket.IO /state_sync` - Real-time state sync (Agent Zero contract)
 
 **Mapping Strategy**:
 
@@ -183,7 +182,7 @@ iTaK Currently Provides:
 
 1. **Install Socket.IO**: ✅ Done (`python-socketio` added to requirements)
 2. **Update server.py**: Add Socket.IO server alongside FastAPI
-3. **Implement core events**: `state_request`, `message_async`, `poll`
+3. **Implement core events**: `state_request`, `state_push`, `message_async`
 4. **Test basic chat**: Verify message send/receive works
 
 ### Phase 2: Feature Parity

@@ -251,6 +251,21 @@ if __name__ == "__main__":
         action="store_true",
         help="Run full system diagnostic (like 'openclaw doctor')",
     )
+    parser.add_argument(
+        "--doctor-json",
+        action="store_true",
+        help="Output doctor results as JSON",
+    )
+    parser.add_argument(
+        "--doctor-deep",
+        action="store_true",
+        help="Run deeper doctor scans (broader security + bottleneck sampling)",
+    )
+    parser.add_argument(
+        "--doctor-save-json",
+        action="store_true",
+        help="Save doctor JSON report artifact under logs/",
+    )
     args = parser.parse_args()
 
     # Windows event loop policy
@@ -258,9 +273,15 @@ if __name__ == "__main__":
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     # Doctor mode - run diagnostic and exit
-    if args.doctor:
+    if args.doctor or args.doctor_json or args.doctor_deep or args.doctor_save_json:
         from core.doctor import run_doctor
-        ok = asyncio.run(run_doctor())
+        ok = asyncio.run(
+            run_doctor(
+                output_format="json" if args.doctor_json else "text",
+                deep=args.doctor_deep,
+                save_json=args.doctor_save_json,
+            )
+        )
         sys.exit(0 if ok else 1)
 
     asyncio.run(main(

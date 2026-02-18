@@ -1,29 +1,35 @@
 <html>
+
 <head>
   <title>WebSocket Test Harness</title>
   <script type="module">
     import { store as websocketTesterStore } from "/components/settings/developer/websocket-test-store.js";
   </script>
 </head>
+
 <body>
   <div x-data>
     <template x-if="window.runtimeInfo?.isDevelopment && $store.websocketTesterStore">
-      <div class="ws-tester" x-create="$store.websocketTesterStore.onOpen()" x-destroy="$store.websocketTesterStore.detach()">
+      <div class="ws-tester" x-create="$store.websocketTesterStore.onOpen()"
+        x-destroy="$store.websocketTesterStore.detach()">
         <h2>WebSocket Developer Harness</h2>
         <p class="ws-description">
-          Run automated and manual validations for the WebSocket client. Automatic tests cover fire-and-forget emit, request/response, timeout handling, subscription persistence, and requestAll aggregation.
+          Run automated and manual validations for the WebSocket client. Automatic tests cover fire-and-forget emit,
+          request/response, timeout handling, subscription persistence, and requestAll aggregation.
         </p>
 
         <div class="ws-section">
           <div class="ws-section-header">
             <h3>Automatic Validation Suite</h3>
-            <button class="btn btn-ok" :disabled="$store.websocketTesterStore.running" @click="$store.websocketTesterStore.runAutomaticSuite()">
+            <button class="btn btn-ok" :disabled="$store.websocketTesterStore.running"
+              @click="$store.websocketTesterStore.runAutomaticSuite()">
               <span x-show="!$store.websocketTesterStore.running">Run Full Suite</span>
               <span x-show="$store.websocketTesterStore.running">Running...</span>
             </button>
           </div>
           <p class="ws-section-info">
-            Executes all WebSocket feature tests sequentially. Progress and results appear in the log below and via toasts (5s).
+            Executes all WebSocket feature tests sequentially. Progress and results appear in the log below and via
+            toasts (5s).
           </p>
         </div>
 
@@ -31,19 +37,32 @@
           <div class="ws-section-header">
             <h3>Manual Tests</h3>
             <div class="ws-button-grid">
-              <button class="btn" :disabled="$store.websocketTesterStore.manualRunning" @click="$store.websocketTesterStore.runManualEmit()">Fire-and-forget emit</button>
-              <button class="btn" :disabled="$store.websocketTesterStore.manualRunning" @click="$store.websocketTesterStore.runManualRequest()">Request/Response</button>
-              <button class="btn" :disabled="$store.websocketTesterStore.manualRunning" @click="$store.websocketTesterStore.runManualRequestTimeout()">Request timeout</button>
-              <button class="btn" :disabled="$store.websocketTesterStore.manualRunning" @click="$store.websocketTesterStore.runManualPersistence()">Subscription persistence</button>
-              <button class="btn" :disabled="$store.websocketTesterStore.manualRunning" @click="$store.websocketTesterStore.runManualRequestAll()">requestAll aggregation</button>
-              <button class="btn" :disabled="$store.websocketTesterStore.manualRunning" @click="$store.websocketTesterStore.runManualStateSync()">State sync (no poll when healthy)</button>
-              <button class="btn" :disabled="$store.websocketTesterStore.manualRunning" @click="$store.websocketTesterStore.runManualContextSwitch()">Context switching</button>
-              <button class="btn" :disabled="$store.websocketTesterStore.manualRunning" @click="$store.websocketTesterStore.runManualFallbackRecovery()">Fallback + recovery (DEGRADED)</button>
-              <button class="btn" :disabled="$store.websocketTesterStore.manualRunning" @click="$store.websocketTesterStore.runManualResyncTriggers()">Resync triggers (runtime_epoch/seq gap)</button>
-              <button class="btn" :disabled="$store.websocketTesterStore.manualRunning" @click="$store.websocketTesterStore.triggerBroadcastDemo()">Broadcast demo</button>
+              <button class="btn" :disabled="$store.websocketTesterStore.manualRunning"
+                @click="$store.websocketTesterStore.runManualEmit()">Fire-and-forget emit</button>
+              <button class="btn" :disabled="$store.websocketTesterStore.manualRunning"
+                @click="$store.websocketTesterStore.runManualRequest()">Request/Response</button>
+              <button class="btn" :disabled="$store.websocketTesterStore.manualRunning"
+                @click="$store.websocketTesterStore.runManualRequestTimeout()">Request timeout</button>
+              <button class="btn" :disabled="$store.websocketTesterStore.manualRunning"
+                @click="$store.websocketTesterStore.runManualPersistence()">Subscription persistence</button>
+              <button class="btn" :disabled="$store.websocketTesterStore.manualRunning"
+                @click="$store.websocketTesterStore.runManualRequestAll()">requestAll aggregation</button>
+              <button class="btn" :disabled="$store.websocketTesterStore.manualRunning"
+                @click="$store.websocketTesterStore.runManualStateSync()">State sync (no poll when healthy)</button>
+              <button class="btn" :disabled="$store.websocketTesterStore.manualRunning"
+                @click="$store.websocketTesterStore.runManualContextSwitch()">Context switching</button>
+              <button class="btn" :disabled="$store.websocketTesterStore.manualRunning"
+                @click="$store.websocketTesterStore.runManualFallbackRecovery()">Handshake failure recovery
+                (DISCONNECTED)</button>
+              <button class="btn" :disabled="$store.websocketTesterStore.manualRunning"
+                @click="$store.websocketTesterStore.runManualResyncTriggers()">Resync triggers (runtime_epoch/seq
+                gap)</button>
+              <button class="btn" :disabled="$store.websocketTesterStore.manualRunning"
+                @click="$store.websocketTesterStore.triggerBroadcastDemo()">Broadcast demo</button>
             </div>
             <p class="ws-section-info">
-              Manual tests trigger individual scenarios and show toast results. Open a second browser tab for requestAll/broadcast demos to observe multi-connection behaviour.
+              Manual tests trigger individual scenarios and show toast results. Open a second browser tab for
+              requestAll/broadcast demos to observe multi-connection behaviour.
             </p>
           </div>
         </div>
@@ -70,8 +89,10 @@
             <h3>Recent Broadcast Payloads</h3>
           </div>
           <ul class="ws-list">
-            <template x-for="item in $store.websocketTesterStore.receivedBroadcasts.slice(-10)" :key="item.id || (item.timestamp + item.eventType)">
-              <li><strong x-text="item.eventType"></strong>: <span x-text="JSON.stringify(item.payload)"></span> <em x-text="item.timestamp"></em></li>
+            <template x-for="item in $store.websocketTesterStore.receivedBroadcasts.slice(-10)"
+              :key="item.id || (item.timestamp + item.eventType)">
+              <li><strong x-text="item.eventType"></strong>: <span x-text="JSON.stringify(item.payload)"></span> <em
+                  x-text="item.timestamp"></em></li>
             </template>
           </ul>
         </div>
@@ -185,4 +206,5 @@
     }
   </style>
 </body>
+
 </html>

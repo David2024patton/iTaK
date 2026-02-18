@@ -9,7 +9,8 @@
   width: 100%;
   overflow-y: scroll;
   overflow-x: hidden;
-  scroll-behavior: auto !important; /* avoid infinite scrolling! */
+  scroll-behavior: auto !important;
+  /* avoid infinite scrolling! */
   padding-left: var(--spacing-sm) !important;
   padding-right: var(--spacing-md) !important;
   padding-top: 4rem !important;
@@ -42,7 +43,8 @@
   text-align: end;
   /* margin-bottom: var(--spacing-md); */
   width: 100%;
-  margin-bottom: -2.5rem; /* compensate for action buttons */
+  margin-bottom: -2.5rem;
+  /* compensate for action buttons */
 }
 
 .message-user .message-user-heading {
@@ -60,7 +62,7 @@
   width: auto;
 }
 
-.message-user > div {
+.message-user>div {
   /* padding-top: var(--spacing-xs); */
   /* font-family: "Roboto Mono", monospace; */
   font-optical-sizing: auto;
@@ -95,7 +97,7 @@
   /* border-top-left-radius: var(--spacing-xxs); */
 }
 
-.message-followup + .message-followup {
+.message-followup+.message-followup {
   margin-bottom: 0;
 }
 
@@ -126,8 +128,18 @@
 
 .message-agent-response {
   min-width: 255px;
-  background-color: transparent;
-  opacity: 0.85;
+  background-color: color-mix(in srgb, var(--color-chat-background) 82%, var(--color-border) 18%);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  opacity: 1;
+}
+
+.process-group-response {
+  width: 100%;
+}
+
+.process-group-response .message-agent-response {
+  margin-top: var(--spacing-xs);
 }
 
 .message-agent-delegation {
@@ -233,7 +245,7 @@
   white-space: nowrap;
 }
 
-.message-body .code-block-wrapper{
+.message-body .code-block-wrapper {
   max-width: 100%;
   overflow-x: auto;
   padding: 0.5em;
@@ -241,7 +253,7 @@
   border-radius: var(--border-radius-sm);
 }
 
-.message-body .code-block-wrapper pre{
+.message-body .code-block-wrapper pre {
   max-width: 100%;
 }
 
@@ -330,8 +342,10 @@
 }
 
 .kvps-val pre {
-  white-space: pre-wrap; /* keep \n, collapse no spaces, allow wrapping */
-  word-break: break-word; /* optional – forces really long “words” to break */
+  white-space: pre-wrap;
+  /* keep \n, collapse no spaces, allow wrapping */
+  word-break: break-word;
+  /* optional – forces really long “words” to break */
   font-family: var(--font-family-code);
   font-optical-sizing: auto;
   -webkit-font-optical-sizing: auto;
@@ -450,14 +464,10 @@
 /* Chat width controlled by --chat-max-width CSS variable (set via preferences, default 55em) */
 @media (min-width: 1025px) {
   #chat-history {
-    padding-left: max(
-      var(--spacing-sm),
-      calc((100% - var(--chat-max-width, 55em)) / 2)
-    ) !important;
-    padding-right: max(
-      var(--spacing-sm),
-      calc((100% - var(--chat-max-width, 55em)) / 2)
-    ) !important;
+    padding-left: max(var(--spacing-sm),
+        calc((100% - var(--chat-max-width, 55em)) / 2)) !important;
+    padding-right: max(var(--spacing-sm),
+        calc((100% - var(--chat-max-width, 55em)) / 2)) !important;
   }
 }
 
@@ -537,11 +547,9 @@
   max-width: 30rem;
   max-height: 15rem;
   border-radius: var(--border-radius);
-  background: repeating-linear-gradient(
-    45deg,
-    var(--color-panel) 0 10px,
-    var(--color-chat-background) 10px 20px
-  );
+  background: repeating-linear-gradient(45deg,
+      var(--color-panel) 0 10px,
+      var(--color-chat-background) 10px 20px);
 }
 
 .message-agent-response .msg-content .message-markdown-image-wrap img:hover {
@@ -651,9 +659,11 @@
   gap: var(--spacing-xs);
 }
 
-.message-group > * {
+.message-group>* {
   grid-column: 1;
-} /* both children sit in the same column */
+}
+
+/* both children sit in the same column */
 
 .message-group-right {
   width: 100%;
@@ -668,7 +678,8 @@
   /* margin-bottom: var(--spacing-sm); */
   width: 100%;
   max-width: 100%;
-  scroll-margin-top: 60px; /* Ensure nice spacing when scrolling into view */
+  scroll-margin-top: 60px;
+  /* Ensure nice spacing when scrolling into view */
 }
 
 /* User messages appear instantly */
@@ -739,7 +750,7 @@
 .smooth-render-visible,
 .smooth-render-invisible {
   position: absolute;
-  width:100%;
+  width: 100%;
   inset: 0;
   opacity: 0;
 }
@@ -760,14 +771,17 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
 }
+
 @keyframes smoothFadeOut {
   from {
     opacity: 1;
   }
+
   to {
     opacity: 0;
   }

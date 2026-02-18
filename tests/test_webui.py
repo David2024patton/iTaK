@@ -4,6 +4,7 @@ Verifies that the dashboard can reach all API endpoints when using the correct a
 """
 
 import time
+import json
 import re
 import io
 import zipfile
@@ -64,7 +65,10 @@ class TestWebUIAuth:
         """Health endpoint should be accessible without auth."""
         res = client.get("/api/health")
         assert res.status_code == 200
-        assert res.json()["status"] == "ok"
+        payload = res.json()
+        assert payload["status"] == "ok"
+        assert "state_sync" in payload
+        assert "snapshot_build" in payload["state_sync"]
 
     def test_stats_requires_auth(self, client):
         """Stats endpoint should reject unauthenticated requests."""
@@ -158,8 +162,8 @@ class TestWebUIEndpoints:
         assert res.status_code == 200
         assert "iTaK" in res.text
 
-    def test_poll_respects_log_from_cursor(self, client):
-        """Polling should return only logs newer than log_from cursor."""
+    def test_chat_export_contains_all_logs(self, client):
+        """Chat export should include all logs for a context without polling."""
         create = client.post("/chat_create", json={})
         assert create.status_code == 200
         ctxid = create.json().get("ctxid")
@@ -172,58 +176,23 @@ class TestWebUIEndpoints:
             )
             assert msg.status_code == 200
 
-        full = client.post(
-            "/poll",
-            json={"context": ctxid, "log_from": 0, "notifications_from": 0},
-        )
-        assert full.status_code == 200
-        full_payload = full.json()
-        all_logs = full_payload.get("logs", [])
+        exported = client.post("/chat_export", json={"ctxid": ctxid})
+        assert exported.status_code == 200
+        export_payload = exported.json()
+        assert export_payload.get("ok") is True
+        exported_ctx = json.loads(export_payload.get("content") or "{}")
+        all_logs = exported_ctx.get("logs", [])
         assert isinstance(all_logs, list)
         assert len(all_logs) >= 6  # 3 user + 3 response
-        assert full_payload.get("log_version") == len(all_logs)
+        assert exported_ctx.get("log_version") == len(all_logs)
 
-        incremental = client.post(
-            "/poll",
-            json={
-                "context": ctxid,
-                "log_from": len(all_logs),
-                "notifications_from": 0,
-            },
-        )
-        assert incremental.status_code == 200
-        inc_payload = incremental.json()
-        assert inc_payload.get("logs") == []
-        assert inc_payload.get("log_version") == len(all_logs)
-
-    def test_poll_with_null_context_does_not_create_new_chat(self, client):
-        """Null-context polling should not create a new chat on each request."""
-        first = client.post(
+    def test_poll_endpoint_removed(self, client):
+        """Legacy poll endpoint should be removed in websocket-only mode."""
+        removed = client.post(
             "/poll",
             json={"context": None, "log_from": 0, "notifications_from": 0},
         )
-        assert first.status_code == 200
-        first_payload = first.json()
-        first_contexts = first_payload.get("contexts", [])
-        first_count = len(first_contexts)
-
-        second = client.post(
-            "/poll",
-            json={"context": None, "log_from": 0, "notifications_from": 0},
-        )
-        assert second.status_code == 200
-        second_payload = second.json()
-        second_count = len(second_payload.get("contexts", []))
-
-        assert first_payload.get("context") is None
-        assert first_payload.get("log_guid") == "global"
-        assert first_payload.get("log_version") == 0
-        assert first_payload.get("logs") == []
-        assert second_payload.get("context") is None
-        assert second_payload.get("log_guid") == "global"
-        assert second_payload.get("log_version") == 0
-        assert second_payload.get("logs") == []
-        assert second_count == first_count
+        assert removed.status_code in {404, 405}
 
 
 class TestSettingsParity:
@@ -388,13 +357,12 @@ class TestQueueReliabilityRegression:
         assert payload.get("ok") is True
 
     @staticmethod
-    def _poll(client, ctxid: str) -> dict:
-        res = client.post(
-            "/poll",
-            json={"context": ctxid, "log_from": 0, "notifications_from": 0},
-        )
+    def _chat_export(client, ctxid: str) -> dict:
+        res = client.post("/chat_export", json={"ctxid": ctxid})
         assert res.status_code == 200
-        return res.json()
+        payload = res.json()
+        assert payload.get("ok") is True
+        return json.loads(payload.get("content") or "{}")
 
     def test_send_all_preserves_queue_order_and_flushes(self, client):
         ctxid = self._create_context(client)
@@ -406,11 +374,11 @@ class TestQueueReliabilityRegression:
         assert send.status_code == 200
         assert send.json().get("ok") is True
 
-        snapshot = self._poll(client, ctxid)
+        snapshot = self._chat_export(client, ctxid)
         logs = snapshot.get("logs") or []
         assert [entry.get("content") for entry in logs[-3:]] == ["first", "second", "third"]
         assert all((entry.get("kvps") or {}).get("queued") for entry in logs[-3:])
-        assert snapshot.get("contexts")[0].get("message_queue") == []
+        assert snapshot.get("message_queue") == []
 
     def test_send_single_item_only_removes_target_item(self, client):
         ctxid = self._create_context(client)
@@ -422,11 +390,11 @@ class TestQueueReliabilityRegression:
         assert send.status_code == 200
         assert send.json().get("ok") is True
 
-        snapshot = self._poll(client, ctxid)
+        snapshot = self._chat_export(client, ctxid)
         logs = snapshot.get("logs") or []
         assert logs[-1].get("content") == "second"
 
-        queued_items = snapshot.get("contexts")[0].get("message_queue") or []
+        queued_items = snapshot.get("message_queue") or []
         assert [item.get("id") for item in queued_items] == ["q1", "q3"]
 
     def test_add_is_idempotent_for_same_item_id_across_retries(self, client):
@@ -435,8 +403,8 @@ class TestQueueReliabilityRegression:
         # Simulate reconnect/retry replay with the same item id.
         self._queue_item(client, ctxid, "retry-id", "retry payload")
 
-        snapshot = self._poll(client, ctxid)
-        queued_items = snapshot.get("contexts")[0].get("message_queue") or []
+        snapshot = self._chat_export(client, ctxid)
+        queued_items = snapshot.get("message_queue") or []
         assert len(queued_items) == 1
         assert queued_items[0].get("id") == "retry-id"
 
@@ -444,17 +412,17 @@ class TestQueueReliabilityRegression:
         ctxid = self._create_context(client)
         self._queue_item(client, ctxid, "stable-id", "survives")
 
-        first_poll = self._poll(client, ctxid)
-        second_poll = self._poll(client, ctxid)
+        first_poll = self._chat_export(client, ctxid)
+        second_poll = self._chat_export(client, ctxid)
 
-        first_items = first_poll.get("contexts")[0].get("message_queue") or []
-        second_items = second_poll.get("contexts")[0].get("message_queue") or []
+        first_items = first_poll.get("message_queue") or []
+        second_items = second_poll.get("message_queue") or []
         assert [item.get("id") for item in first_items] == ["stable-id"]
         assert [item.get("id") for item in second_items] == ["stable-id"]
 
 
 class TestChatResponseVisibilityRegression:
-    """Regression coverage for message_async -> poll response visibility."""
+    """Regression coverage for message_async -> websocket snapshot visibility."""
 
     def test_message_async_response_is_present_in_poll_logs(self):
         from webui.server import create_app
@@ -474,13 +442,15 @@ class TestChatResponseVisibilityRegression:
         context_id = send_payload.get("context")
         assert isinstance(context_id, str) and context_id
 
-        snapshot = client.post(
-            "/poll",
-            json={"context": context_id, "log_from": 0, "notifications_from": 0},
-        )
-        assert snapshot.status_code == 200
-        snapshot_payload = snapshot.json()
-        logs = snapshot_payload.get("logs") or []
+        # Background response is async; wait briefly for completion before export.
+        for _ in range(20):
+            snapshot = client.post("/chat_export", json={"ctxid": context_id})
+            assert snapshot.status_code == 200
+            snapshot_payload = snapshot.json()
+            logs = json.loads(snapshot_payload.get("content") or "{}").get("logs") or []
+            if any(entry.get("type") == "response" for entry in logs):
+                break
+            time.sleep(0.05)
 
         user_logs = [entry for entry in logs if entry.get("type") == "user"]
         response_logs = [entry for entry in logs if entry.get("type") == "response"]

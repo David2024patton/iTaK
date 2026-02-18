@@ -3,15 +3,17 @@
  * Data is automatically serialized
  * @param {string} endpoint - The API endpoint to call
  * @param {any} data - The data to send to the API
+ * @param {{timeoutMs?: number}} [options] - Optional request options
  * @returns {Promise<any>} The JSON response from the API
  */
-export async function callJsonApi(endpoint, data) {
+export async function callJsonApi(endpoint, data, options = {}) {
   const response = await fetchApi(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     credentials: "same-origin",
+    timeoutMs: options?.timeoutMs,
     body: JSON.stringify(data),
   });
 
@@ -35,31 +37,56 @@ export async function fetchApi(url, request) {
     // get the CSRF token
     const token = await getCsrfToken();
 
-    // create a new request object if none was provided
-    const finalRequest = request || {};
+    // create a fresh request object to avoid mutating caller-owned objects
+    const baseRequest = request || {};
+    const finalRequest = {
+      ...baseRequest,
+      headers: {
+        ...(baseRequest.headers || {}),
+      },
+    };
 
-    // ensure headers object exists
-    finalRequest.headers = finalRequest.headers || {};
+    const timeoutMs = Number(finalRequest.timeoutMs || 0);
+    delete finalRequest.timeoutMs;
 
     // add the CSRF token to the headers
     finalRequest.headers["X-CSRF-Token"] = token;
 
-    // perform the fetch with the updated request
-    const response = await fetch(url, finalRequest);
+    let timeoutId = null;
+    let timeoutPromise = null;
+    try {
+      if (timeoutMs > 0) {
+        timeoutPromise = new Promise((_, reject) => {
+          timeoutId = setTimeout(() => {
+            reject(new Error(`Request timed out after ${timeoutMs}ms: ${url}`));
+          }, timeoutMs);
+        });
+      }
 
-    // check if there was an CSRF error
-    if (response.status === 403 && retry) {
-      // retry the request with new token
-      csrfToken = null;
-      return await _wrap(false);
-    } else if (response.redirected && response.url.endsWith("/login")) {
-      // redirect to login
-      window.location.href = response.url;
-      return;
+      // perform the fetch with the updated request
+      const fetchPromise = fetch(url, finalRequest);
+      const response = timeoutPromise
+        ? await Promise.race([fetchPromise, timeoutPromise])
+        : await fetchPromise;
+
+      // check if there was an CSRF error
+      if (response.status === 403 && retry) {
+        // retry the request with new token
+        csrfToken = null;
+        return await _wrap(false);
+      } else if (response.redirected && response.url.endsWith("/login")) {
+        // redirect to login
+        window.location.href = response.url;
+        return;
+      }
+
+      // return the response
+      return response;
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
-
-    // return the response
-    return response;
   }
 
   // perform the request
@@ -80,8 +107,8 @@ export function getRuntimeId() {
   if (runtimeIdCache) return runtimeIdCache;
   const injected =
     window.runtimeInfo &&
-    typeof window.runtimeInfo.id === "string" &&
-    window.runtimeInfo.id.length > 0
+      typeof window.runtimeInfo.id === "string" &&
+      window.runtimeInfo.id.length > 0
       ? window.runtimeInfo.id
       : null;
   return injected;
@@ -158,8 +185,8 @@ export async function getCsrfToken() {
       }
       const injectedRuntimeId =
         window.runtimeInfo &&
-        typeof window.runtimeInfo.id === "string" &&
-        window.runtimeInfo.id.length > 0
+          typeof window.runtimeInfo.id === "string" &&
+          window.runtimeInfo.id.length > 0
           ? window.runtimeInfo.id
           : null;
       const cookieRuntimeId = runtimeId || injectedRuntimeId;

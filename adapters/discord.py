@@ -3,6 +3,7 @@ iTaK Discord Adapter - Full Discord bot with threads, progress editing, and slas
 """
 
 import logging
+import asyncio
 from typing import Optional
 
 import discord
@@ -47,6 +48,7 @@ class DiscordAdapter(BaseAdapter):
 
         self._progress_messages: dict[str, discord.Message] = {}
         self._active_channel: Optional[discord.TextChannel] = None
+        self._restart_attempts = 0
 
         # Register event handlers
         if self.bot is not None:
@@ -103,6 +105,24 @@ class DiscordAdapter(BaseAdapter):
                 )
 
             await self.bot.process_commands(message)
+
+    def _is_recoverable_discord_error(self, error: Exception) -> bool:
+        if self._is_recoverable_error(error):
+            return True
+
+        recoverable_types = tuple(
+            cls
+            for cls in (
+                getattr(discord, "GatewayNotFound", None),
+                getattr(discord, "ConnectionClosed", None),
+                getattr(discord, "HTTPException", None),
+            )
+            if isinstance(cls, type)
+        )
+        if recoverable_types and isinstance(error, recoverable_types):
+            return True
+
+        return False
 
     def _setup_commands(self):
         """Register slash/prefix commands."""
@@ -242,18 +262,53 @@ class DiscordAdapter(BaseAdapter):
 
     async def start(self):
         """Start the Discord bot."""
-        self._running = True
         if self.bot is None:
             logger.warning("Discord bot unavailable (initialization failed)")
             return
+
         token = self.config.get("token", "")
         if not token or token.startswith("$"):
             logger.warning("Discord token not configured")
             return
-        await self.bot.start(token)
+
+        self._running = True
+        backoff_initial = float(self.config.get("reconnect_initial_seconds", 2.0) or 2.0)
+        backoff_max = float(self.config.get("reconnect_max_seconds", 30.0) or 30.0)
+        backoff_factor = float(self.config.get("reconnect_factor", 1.8) or 1.8)
+        backoff_jitter = float(self.config.get("reconnect_jitter", 0.25) or 0.25)
+
+        while self._running:
+            try:
+                await self.bot.start(token)
+                self._restart_attempts = 0
+                break
+            except Exception as error:
+                if not self._running:
+                    break
+                if not self._is_recoverable_discord_error(error):
+                    raise
+
+                self._restart_attempts += 1
+                delay = self._compute_backoff_delay_seconds(
+                    attempt=self._restart_attempts,
+                    initial_seconds=backoff_initial,
+                    max_seconds=backoff_max,
+                    factor=backoff_factor,
+                    jitter_ratio=backoff_jitter,
+                )
+                logger.warning(
+                    "Discord adapter transient error (attempt %s): %s; retrying in %.1fs",
+                    self._restart_attempts,
+                    error,
+                    delay,
+                )
+                await self._sleep_backoff(delay)
 
     async def stop(self):
         """Stop the Discord bot."""
         self._running = False
         if self.bot is not None:
-            await self.bot.close()
+            try:
+                await self.bot.close()
+            except Exception as error:
+                logger.debug("Discord close error: %s", error)

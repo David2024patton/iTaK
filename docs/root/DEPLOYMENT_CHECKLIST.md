@@ -225,15 +225,15 @@ Use this when chat output appears in logs but not in the main chat panel.
 
   - [ ] Open browser devtools on your Dokploy URL
   - [ ] Confirm `wss://.../socket.io/...` connects without repeated reconnect loops
-  - [ ] Confirm `/poll` calls succeed (`200`) while chat is active
+  - [ ] Confirm `state_request`/`state_push` traffic is flowing while chat is active
 
 3. Validate app behavior after deploy
 
   - [ ] Send one test prompt in chat
   - [ ] Confirm `/message_async` returns `ok: true`
-  - [ ] Confirm the assistant reply appears in the chat panel within one poll cycle
+  - [ ] Confirm the assistant reply appears in the chat panel after websocket snapshot push
 
-4. Fallback sanity check (current build)
+4. WebSocket-only sanity check (current build)
 
-  - [ ] The frontend triggers an immediate `poll()` after `/message_async`
-  - [ ] Assistant output appears even if websocket push is delayed
+  - [ ] The frontend triggers `state_request` after `/message_async`
+  - [ ] No `/poll` request is required for normal chat visibility

@@ -72,7 +72,11 @@ export function getMessageHandler(type) {
 
 // entrypoint called from poll/WS communication, this is how all messages are rendered and updated
 // input is raw log format
-export function setMessages(messages) {
+export async function setMessages(messages) {
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return;
+  }
+
   // set _massRender flag for handlers to know how to behave
   const history = getChatHistoryEl();
   const historyEmpty = !history || history.childElementCount === 0;
@@ -89,10 +93,28 @@ export function setMessages(messages) {
 
   const results = [];
 
-  // process messages
-  for (let i = 0; i < messages.length; i++) {
-    _massRender = historyEmpty || (isLargeAppend && i < cutoff);
-    results.push(setMessage(messages[i]) || {});
+  // If this is a large render, process in small asynchronous batches so the
+  // UI thread can handle user interactions (clicks, input) while rendering.
+  const BATCH_SIZE = massRender ? 50 : messages.length;
+
+  for (let start = 0; start < messages.length; start += BATCH_SIZE) {
+    const end = Math.min(start + BATCH_SIZE, messages.length);
+
+    for (let i = start; i < end; i++) {
+      _massRender = historyEmpty || (isLargeAppend && i < cutoff);
+      results.push(setMessage(messages[i]) || {});
+    }
+
+    // Yield to the event loop between batches so clicks and other events
+    // are processed promptly during heavy loads.
+    if (massRender) {
+      // Prefer requestIdleCallback when available for better scheduling.
+      if (typeof window.requestIdleCallback === "function") {
+        await new Promise((res) => window.requestIdleCallback(res));
+      } else {
+        await new Promise((res) => setTimeout(res, 0));
+      }
+    }
   }
 
   // reset _massRender flag
@@ -616,28 +638,37 @@ export function _drawMessage({
       //   contentDiv.appendChild(spanElement);
       // }
 
-      let processedContent = content;
-      processedContent = convertImageTags(processedContent);
-      processedContent = convertImgFilePaths(processedContent);
-      processedContent = convertFilePaths(processedContent);
-      processedContent = marked.parse(processedContent, { breaks: true });
-      processedContent = convertPathsToLinks(processedContent);
-      processedContent = addBlankTargetsToLinks(processedContent);
+      const cacheHit =
+        !smoothStream &&
+        contentDiv.dataset.rawContent === content &&
+        contentDiv.dataset.renderMode === "markdown";
 
-      // do a smooth stream if requested
-      if (smoothStream) smoothRender(contentDiv, processedContent);
-      else contentDiv.innerHTML = processedContent;
+      if (!cacheHit) {
+        let processedContent = content;
+        processedContent = convertImageTags(processedContent);
+        processedContent = convertImgFilePaths(processedContent);
+        processedContent = convertFilePaths(processedContent);
+        processedContent = marked.parse(processedContent, { breaks: true });
+        processedContent = convertPathsToLinks(processedContent);
+        processedContent = addBlankTargetsToLinks(processedContent);
 
-      // KaTeX rendering for markdown
-      if (latex) {
-        contentDiv.querySelectorAll("latex").forEach((element) => {
-          katex.render(element.innerHTML, element, {
-            throwOnError: false,
+        // do a smooth stream if requested
+        if (smoothStream) smoothRender(contentDiv, processedContent);
+        else contentDiv.innerHTML = processedContent;
+
+        // KaTeX rendering for markdown
+        if (latex) {
+          contentDiv.querySelectorAll("latex").forEach((element) => {
+            katex.render(element.innerHTML, element, {
+              throwOnError: false,
+            });
           });
-        });
-      }
+        }
 
-      adjustMarkdownRender(contentDiv);
+        adjustMarkdownRender(contentDiv);
+        contentDiv.dataset.rawContent = content;
+        contentDiv.dataset.renderMode = "markdown";
+      }
     } else {
       let preElement = bodyDiv.querySelector(".msg-content");
       if (!preElement) {
@@ -657,8 +688,17 @@ export function _drawMessage({
       //   preElement.appendChild(spanElement);
       // }
 
-      if (smoothStream) smoothRender(preElement, convertHTML(content));
-      else preElement.innerHTML = convertHTML(content);
+      const cacheHit =
+        !smoothStream &&
+        preElement.dataset.rawContent === content &&
+        preElement.dataset.renderMode === "plain";
+
+      if (!cacheHit) {
+        if (smoothStream) smoothRender(preElement, convertHTML(content));
+        else preElement.innerHTML = convertHTML(content);
+        preElement.dataset.rawContent = content;
+        preElement.dataset.renderMode = "plain";
+      }
     }
   } else {
     // Remove content if it exists but content is empty
@@ -1526,6 +1566,17 @@ function drawKvpsIncremental(container, kvps, latex) {
         td.classList.add("kvps-val");
       }
 
+      let serializedValue = "";
+      try {
+        serializedValue = JSON.stringify(value);
+      } catch (error) {
+        serializedValue = String(value);
+      }
+
+      if (td.dataset.rawValue === serializedValue) {
+        return;
+      }
+
       // reapply scroll position or autoscroll
       // no inner scrolling for kvps anymore
       // const scroller = new Scroller(td);
@@ -1540,6 +1591,8 @@ function drawKvpsIncremental(container, kvps, latex) {
       } else {
         addValue(value, td);
       }
+
+      td.dataset.rawValue = serializedValue;
 
       // reapply scroll position or autoscroll
       // scroller.reApplyScroll();

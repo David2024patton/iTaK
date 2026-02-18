@@ -45,8 +45,8 @@ Transcript-driven additions to capture:
 
 | v0.9.8 Capability | iTaK Status | Evidence in iTaK | Action |
 |---|---|---|---|
-| WebSocket-first UI transport | Mostly implemented | `webui/static/components/sync/*`, `webui/static/components/settings/developer/websocket-*`, `webui/server.py` | Keep hardening transport fallback and telemetry |
-| Polling fallback when WebSocket degrades | Implemented | `webui/static/components/sync/sync-store.js` | Keep as safety path |
+| WebSocket-first UI transport | Implemented | `webui/static/components/sync/*`, `webui/static/components/settings/developer/websocket-*`, `webui/server.py` | Keep hardening transport reliability and telemetry |
+| Polling fallback when WebSocket degrades | Removed by design | Websocket-only sync paths in `webui/static/components/sync/sync-store.js` and `webui/static/index.js` | No action (intentional hard-cut) |
 | Process groups with detail modes | Implemented | `webui/static/components/messages/process-group/*`, `webui/static/components/sidebar/bottom/preferences/preferences-store.js` | Add UX polish and metrics badges |
 | Message queue during active run | Implemented | `webui/static/components/chat/message-queue/message-queue-store.js` | Add queue reliability tests |
 | File browser and in-browser file actions | Implemented (basic to medium) | `webui/static/components/modals/file-browser/*` | Expand edit workflows and permissions tests |

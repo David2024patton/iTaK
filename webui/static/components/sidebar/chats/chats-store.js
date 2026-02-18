@@ -11,7 +11,6 @@ import {
 } from "/index.js";
 import { store as notificationStore } from "/components/notifications/notification-store.js";
 import { store as tasksStore } from "/components/sidebar/tasks/tasks-store.js";
-import { store as syncStore } from "/components/sync/sync-store.js";
 
 const model = {
   contexts: [],
@@ -24,7 +23,7 @@ const model = {
     return this.selected;
   },
 
-  getSelectedContext(){
+  getSelectedContext() {
     return this.selectedContext;
   },
 
@@ -66,17 +65,6 @@ const model = {
     // Update selection state (will also persist to localStorage)
     this.setSelected(id);
 
-    // In push mode, context switching triggers a new `state_request` via setContext().
-    // Keep polling only as a degraded-mode fallback.
-    try {
-      const mode = typeof syncStore.mode === "string" ? syncStore.mode : null;
-      const shouldFallbackPoll = mode === "DEGRADED";
-      if (shouldFallbackPoll && typeof globalThis.poll === "function") {
-        globalThis.poll();
-      }
-    } catch (_e) {
-      // no-op
-    }
   },
 
   // Delete a chat
@@ -146,7 +134,7 @@ const model = {
       // Increment reset counter
       if (typeof globalThis.resetCounter === 'number') {
         globalThis.resetCounter = globalThis.resetCounter + 1;
-      }      
+      }
     } catch (e) {
       toastFetchError("Error resetting chat", e);
     }
@@ -171,7 +159,7 @@ const model = {
     }
   },
 
-  deselectChat(){
+  deselectChat() {
     globalThis.deselectChat(); //TODO move here
   },
 
@@ -284,7 +272,7 @@ const model = {
     this.selected = contextId || "";
     this.selectedContext = this.contexts.find((ctx) => ctx.id === this.selected);
     // if not found in contexts, try to find in tasks < not nice, will need refactor later
-    if(!this.selectedContext) this.selectedContext = tasksStore.tasks.find((ctx) => ctx.id === this.selected);
+    if (!this.selectedContext) this.selectedContext = tasksStore.tasks.find((ctx) => ctx.id === this.selected);
     if (this.selected) {
       sessionStorage.setItem("lastSelectedChat", this.selected);
     } else {
@@ -320,7 +308,7 @@ const model = {
       const deadline = Date.now() + 800;
       while (Date.now() < deadline) {
         try {
-          
+
           const stack = Array.isArray(notificationStore.toastStack) ? notificationStore.toastStack : null;
           if (stack && stack.some((toast) => toast && toast.id === notificationId)) {
             break;

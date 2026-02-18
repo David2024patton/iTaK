@@ -3,6 +3,7 @@ iTaK Telegram Adapter - Telegram bot with polling and progress edits.
 """
 
 import logging
+import asyncio
 
 try:
     import telegram  # Backward-compatible patch target for tests
@@ -30,6 +31,40 @@ class TelegramAdapter(BaseAdapter):
         super().__init__(agent, config)
         self._app = None
         self._progress_messages: dict[int, int] = {}  # chat_id -> message_id
+        self._restart_attempts = 0
+
+    def _is_recoverable_telegram_error(self, error: Exception) -> bool:
+        if self._is_recoverable_error(error):
+            return True
+
+        try:
+            from telegram.error import NetworkError, TimedOut, RetryAfter
+            if isinstance(error, (NetworkError, TimedOut, RetryAfter)):
+                return True
+        except Exception:
+            pass
+
+        return False
+
+    async def _stop_app(self):
+        if not self._app:
+            return
+        try:
+            if self._app.updater and self._app.updater.running:
+                await self._app.updater.stop()
+        except Exception:
+            pass
+        try:
+            if self._app.running:
+                await self._app.stop()
+        except Exception:
+            pass
+        try:
+            await self._app.shutdown()
+        except Exception:
+            pass
+        finally:
+            self._app = None
 
     async def start(self):
         """Start the Telegram bot."""
@@ -45,34 +80,68 @@ class TelegramAdapter(BaseAdapter):
             logger.warning("Telegram token not configured")
             return
 
-        self._app = (
-            ApplicationBuilder()
-            .token(token)
-            .build()
-        )
-
-        # Handlers
-        self._app.add_handler(CommandHandler("start", self._cmd_start))
-        self._app.add_handler(CommandHandler("logs", self._cmd_logs))
-        self._app.add_handler(CommandHandler("memory", self._cmd_memory))
-        self._app.add_handler(CommandHandler("forget", self._cmd_forget))
-        self._app.add_handler(
-            MessageHandler(filters.TEXT & ~filters.COMMAND, self._handle_text)
-        )
-
         self._running = True
         logger.info("iTaK Telegram bot starting...")
-        await self._app.initialize()
-        await self._app.start()
-        await self._app.updater.start_polling(drop_pending_updates=True)
+
+        backoff_initial = float(self.config.get("reconnect_initial_seconds", 2.0) or 2.0)
+        backoff_max = float(self.config.get("reconnect_max_seconds", 30.0) or 30.0)
+        backoff_factor = float(self.config.get("reconnect_factor", 1.8) or 1.8)
+        backoff_jitter = float(self.config.get("reconnect_jitter", 0.25) or 0.25)
+
+        while self._running:
+            try:
+                self._app = (
+                    ApplicationBuilder()
+                    .token(token)
+                    .build()
+                )
+
+                self._app.add_handler(CommandHandler("start", self._cmd_start))
+                self._app.add_handler(CommandHandler("logs", self._cmd_logs))
+                self._app.add_handler(CommandHandler("memory", self._cmd_memory))
+                self._app.add_handler(CommandHandler("forget", self._cmd_forget))
+                self._app.add_handler(
+                    MessageHandler(filters.TEXT & ~filters.COMMAND, self._handle_text)
+                )
+
+                await self._app.initialize()
+                await self._app.start()
+                await self._app.updater.start_polling(drop_pending_updates=True)
+
+                self._restart_attempts = 0
+                while self._running:
+                    if not self._app or not self._app.updater or not self._app.updater.running:
+                        raise RuntimeError("telegram updater stopped unexpectedly")
+                    await asyncio.sleep(1.0)
+            except Exception as error:
+                await self._stop_app()
+                if not self._running:
+                    break
+                if not self._is_recoverable_telegram_error(error):
+                    raise
+
+                self._restart_attempts += 1
+                delay = self._compute_backoff_delay_seconds(
+                    attempt=self._restart_attempts,
+                    initial_seconds=backoff_initial,
+                    max_seconds=backoff_max,
+                    factor=backoff_factor,
+                    jitter_ratio=backoff_jitter,
+                )
+                logger.warning(
+                    "Telegram adapter transient error (attempt %s): %s; retrying in %.1fs",
+                    self._restart_attempts,
+                    error,
+                    delay,
+                )
+                await self._sleep_backoff(delay)
+
+        await self._stop_app()
 
     async def stop(self):
         """Stop the Telegram bot."""
         self._running = False
-        if self._app:
-            await self._app.updater.stop()
-            await self._app.stop()
-            await self._app.shutdown()
+        await self._stop_app()
 
     async def _cmd_start(self, update, context):
         """Handle /start command."""

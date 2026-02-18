@@ -68,7 +68,7 @@ const model = {
     this._detailMode = value;
     this._applyDetailMode(value);
   },
-  _detailMode: "current", // Default: show current step only
+  _detailMode: "expanded", // Default: always show thinking/work steps
 
   // Detail mode options for UI sidebar
   detailModeOptions: [
@@ -106,18 +106,12 @@ const model = {
         this._chatWidth = "55"; // Default to standard
       }
 
-      // Load detail mode preference
-      try {
-        const storedDetailMode = localStorage.getItem("detailMode");
-        if (storedDetailMode && this.detailModeOptions.some(opt => opt.value === storedDetailMode)) {
-          this._detailMode = storedDetailMode;
-        }
-      } catch {
-        this._detailMode = "current"; // Default
-      }
+      // Always show full thinking/work details by default.
+      // Users can still manually collapse process groups/steps in the chat UI.
+      this._detailMode = "expanded";
 
       // load utility messages preference
-      try{
+      try {
         const storedShowUtils = localStorage.getItem("showUtils");
         this._showUtils = storedShowUtils === "true";
       } catch {

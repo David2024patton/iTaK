@@ -4,6 +4,8 @@ Discord, Telegram, Slack, CLI all inherit from this.
 """
 
 import inspect
+import random
+import asyncio
 from typing import TYPE_CHECKING, Any
 
 from security.input_guard import sanitize_inbound_text
@@ -43,6 +45,50 @@ class BaseAdapter:
     async def stop(self):
         """Stop the adapter gracefully."""
         self._running = False
+
+    def _compute_backoff_delay_seconds(
+        self,
+        attempt: int,
+        initial_seconds: float = 2.0,
+        max_seconds: float = 30.0,
+        factor: float = 1.8,
+        jitter_ratio: float = 0.25,
+    ) -> float:
+        """Compute exponential backoff with jitter.
+
+        attempt is 1-based. Returned value is clamped to [0, max_seconds].
+        """
+        safe_attempt = max(1, int(attempt))
+        base_delay = float(initial_seconds) * (float(factor) ** max(0, safe_attempt - 1))
+        clamped_delay = min(float(max_seconds), max(0.0, base_delay))
+        jitter_span = max(0.0, clamped_delay * float(jitter_ratio))
+        if jitter_span <= 0:
+            return clamped_delay
+        return max(0.0, clamped_delay + random.uniform(-jitter_span, jitter_span))
+
+    def _is_recoverable_error(self, error: Exception) -> bool:
+        """Best-effort transient network/retryable error detection."""
+        error_text = str(error or "").lower()
+        recoverable_markers = (
+            "timeout",
+            "timed out",
+            "temporarily unavailable",
+            "connection reset",
+            "connection aborted",
+            "connection refused",
+            "network",
+            "too many requests",
+            "rate limit",
+            "gateway",
+            "retry",
+            "server disconnected",
+        )
+        return any(marker in error_text for marker in recoverable_markers)
+
+    async def _sleep_backoff(self, seconds: float):
+        """Sleep helper to keep adapter retry loops concise."""
+        if seconds > 0:
+            await asyncio.sleep(seconds)
 
     def _sanitize_output(self, text: str) -> str:
         """Run text through the Output Guard before it leaves the system.

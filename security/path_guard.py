@@ -37,6 +37,7 @@ def validate_path(
     path: str,
     allowed_roots: list[str | Path] | None = None,
     allow_absolute: bool = False,
+    allow_symlinks: bool = True,
 ) -> tuple[bool, str]:
     """Validate a file path for safety.
 
@@ -82,12 +83,29 @@ def validate_path(
     # 5. Resolve and check against allowed roots
     if allowed_roots:
         try:
-            resolved = Path(path).resolve()
+            candidate = Path(path)
+            resolved = candidate.resolve()
             in_root = False
             for root in allowed_roots:
                 root_resolved = Path(root).resolve()
                 try:
                     resolved.relative_to(root_resolved)
+
+                    if not allow_symlinks:
+                        symlink_candidate = candidate
+                        if not symlink_candidate.is_absolute():
+                            symlink_candidate = (root_resolved / symlink_candidate)
+                        has_symlink, offender = _find_symlink_component(
+                            symlink_candidate,
+                            stop_at=root_resolved,
+                        )
+                        if has_symlink:
+                            logger.warning(
+                                f"PATH_TRAVERSAL symlink component in path: {path} "
+                                f"(component: {offender})"
+                            )
+                            return False, "Path includes symlink component"
+
                     in_root = True
                     break
                 except ValueError:
@@ -140,7 +158,13 @@ def safe_join(root: str | Path, *parts: str) -> Path | None:
             logger.warning(f"PATH_GUARD safe_join rejected component: {part} ({reason})")
             return None
 
-    joined = root_path.joinpath(*parts).resolve()
+    joined_candidate = root_path.joinpath(*parts)
+    has_symlink, offender = _find_symlink_component(joined_candidate, stop_at=root_path)
+    if has_symlink:
+        logger.warning(f"PATH_GUARD safe_join rejected symlink component: {offender}")
+        return None
+
+    joined = joined_candidate.resolve()
 
     try:
         joined.relative_to(root_path)
@@ -148,3 +172,38 @@ def safe_join(root: str | Path, *parts: str) -> Path | None:
     except ValueError:
         logger.warning(f"PATH_GUARD safe_join escaped root: {joined} not under {root_path}")
         return None
+
+
+def _find_symlink_component(path: Path, stop_at: Path | None = None) -> tuple[bool, Path | None]:
+    """Return (True, component) if any existing component is a symlink."""
+    try:
+        absolute = path.resolve(strict=False)
+    except Exception:
+        absolute = Path(path)
+
+    stop_resolved = None
+    if stop_at is not None:
+        try:
+            stop_resolved = Path(stop_at).resolve(strict=False)
+        except Exception:
+            stop_resolved = Path(stop_at)
+
+    parts = list(absolute.parts)
+    if not parts:
+        return False, None
+
+    current = Path(parts[0])
+    for part in parts[1:]:
+        current = current / part
+        try:
+            if stop_resolved is not None:
+                try:
+                    current.relative_to(stop_resolved)
+                except ValueError:
+                    continue
+            if current.exists() and current.is_symlink():
+                return True, current
+        except OSError:
+            continue
+
+    return False, None

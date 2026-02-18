@@ -11,7 +11,6 @@ const SYNC_MODES = {
   DISCONNECTED: "DISCONNECTED",
   HANDSHAKE_PENDING: "HANDSHAKE_PENDING",
   HEALTHY: "HEALTHY",
-  DEGRADED: "DEGRADED",
 };
 
 function isDevelopmentRuntime() {
@@ -55,10 +54,6 @@ const model = {
   _seenFirstConnect: false,
   _lastConnectWasFirst: true,
   _pendingReconnectToast: null,
-  _wasDegraded: false,
-  _degradedToastShown: false,
-  _degradedToastTimer: null,
-  _degradedToastDelayMs: 100,
   _handshakeRetryTimer: null,
   _handshakeRetryAttempt: 0,
   _handshakeRetryBaseMs: 500,
@@ -80,61 +75,6 @@ const model = {
     if (oldMode === newMode) return;
     this.mode = newMode;
     debug("[syncStore] Mode transition:", oldMode, "→", newMode, reason ? `(${reason})` : "");
-
-    if (newMode !== SYNC_MODES.DEGRADED) {
-      if (this._degradedToastTimer) {
-        clearTimeout(this._degradedToastTimer);
-        this._degradedToastTimer = null;
-      }
-    }
-
-    if (newMode === SYNC_MODES.DISCONNECTED) {
-      this._wasDegraded = false;
-      this._degradedToastShown = false;
-    }
-
-    if (newMode === SYNC_MODES.DEGRADED) {
-      this._wasDegraded = true;
-      if (this._degradedToastShown || this._degradedToastTimer) {
-        return;
-      }
-      this._degradedToastTimer = setTimeout(() => {
-        this._degradedToastTimer = null;
-        this._degradedToastShown = true;
-        notificationStore
-          .frontendWarning(
-            "WebSocket connection problems - using polling fallback",
-            "Connection",
-            5,
-            "sync-mode",
-            undefined,
-            true
-          )
-          .catch((error) => {
-            console.error("[syncStore] degraded toast failed:", error);
-          });
-      }, this._degradedToastDelayMs);
-      return;
-    }
-
-    if (newMode === SYNC_MODES.HEALTHY) {
-      if (this._degradedToastShown) {
-        notificationStore
-          .frontendSuccess(
-            "WebSocket connection restored",
-            "Connection",
-            4,
-            "sync-mode",
-            undefined,
-            true
-          )
-          .catch((error) => {
-            console.error("[syncStore] recovery toast failed:", error);
-          });
-      }
-      this._wasDegraded = false;
-      this._degradedToastShown = false;
-    }
   },
 
   _clearHandshakeRetry() {
@@ -400,12 +340,7 @@ const model = {
         response = await stateSocket.request("state_request", payload, { timeoutMs: 2000 });
       } catch (error) {
         this.needsHandshake = true;
-        // If the socket isn't connected, we are disconnected (poll may or may not work).
-        // If the socket is connected but the request failed/timed out, treat as degraded (poll fallback).
-        this._setMode(
-          stateSocket.isConnected() ? SYNC_MODES.DEGRADED : SYNC_MODES.DISCONNECTED,
-          "state_request failed",
-        );
+        this._setMode(SYNC_MODES.DISCONNECTED, "state_request failed");
         this._handleHandshakeFailure("state_request failed");
         throw error;
       }
@@ -416,7 +351,7 @@ const model = {
           first && first.error && typeof first.error.code === "string"
             ? first.error.code
             : "HANDSHAKE_FAILED";
-        this._setMode(SYNC_MODES.DEGRADED, `handshake failed: ${code}`);
+        this._setMode(SYNC_MODES.DISCONNECTED, `handshake failed: ${code}`);
         this.needsHandshake = true;
         this._handleHandshakeFailure(`handshake failed: ${code}`);
         throw new Error(`state_request failed: ${code}`);
@@ -459,11 +394,6 @@ const model = {
   },
 
   async _handlePush(envelope) {
-    if (this.mode === SYNC_MODES.DEGRADED) {
-      debug("[syncStore] ignoring state_push while DEGRADED");
-      return;
-    }
-
     const data = envelope && envelope.data ? envelope.data : null;
     if (!data || typeof data !== "object") return;
 
