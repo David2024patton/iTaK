@@ -3345,6 +3345,7 @@ def create_app(agent: "Agent"):
                 "pushed_version": 0,
                 "dirty_reason": None,
                 "connected_at": time.time(),
+                "last_state_request": None,
             }
             _append_system_log("connection", "info", f"Socket.IO client connected: {sid}")
             return True
@@ -3415,14 +3416,45 @@ def create_app(agent: "Agent"):
                     "request": None, "seq": 0, "seq_base": 0,
                     "dirty_version": 0, "pushed_version": 0,
                     "dirty_reason": None, "connected_at": time.time(),
+                    "last_state_request": None,
                 }
                 sio_projections[sid] = proj
+
+            # Guard against rapid duplicate handshakes from stale or misbehaving clients.
+            # If the same cursor/context request is repeated too quickly, acknowledge it
+            # without resetting projection state or scheduling another snapshot flush.
+            now = time.time()
+            last_req = proj.get("last_state_request") or {}
+            is_duplicate = (
+                last_req.get("context") == context_id
+                and int(last_req.get("log_from", -1)) == log_from
+                and int(last_req.get("notifications_from", -1)) == notifications_from
+                and (now - float(last_req.get("at", 0.0))) < 0.9
+            )
+            if is_duplicate:
+                seq_base = int(proj.get("seq_base") or 1)
+                return {
+                    "correlationId": correlation_id,
+                    "results": [{
+                        "ok": True,
+                        "data": {
+                            "runtime_epoch": sio_runtime_epoch,
+                            "seq_base": seq_base,
+                        },
+                    }],
+                }
 
             proj["request"] = {
                 "context": context_id,
                 "log_from": log_from,
                 "notifications_from": notifications_from,
                 "timezone": timezone,
+            }
+            proj["last_state_request"] = {
+                "context": context_id,
+                "log_from": log_from,
+                "notifications_from": notifications_from,
+                "at": now,
             }
             proj["seq_base"] = seq_base
             proj["seq"] = seq_base
