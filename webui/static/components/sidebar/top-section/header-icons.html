@@ -1,19 +1,22 @@
 <html>
+
 <head>
   <script type="module">
     import { store as sidebarStore } from "/components/sidebar/sidebar-store.js";
     import { store as chatsStore } from "/components/sidebar/chats/chats-store.js";
   </script>
 </head>
+
 <body>
   <div class="icons-section" id="hide-button" x-data>
     <!-- Sidebar Toggle Button -->
-    <button id="toggle-sidebar" class="toggle-sidebar-button" @click="$store.sidebar.toggle()" aria-label="Toggle Sidebar" aria-expanded="false">
+    <button id="toggle-sidebar" class="toggle-sidebar-button" @click="$store.sidebar.toggle()"
+      aria-label="Toggle Sidebar" aria-expanded="false">
       <span class="material-symbols-outlined" aria-hidden="true">menu</span>
     </button>
 
     <div id="logo-container" aria-label="iTaK">
-      <img src="./public/splash.png" alt="iTaK" width="22" height="22">
+      <img src="/public/splash.png" alt="iTaK" width="22" height="22">
     </div>
   </div>
 
@@ -37,14 +40,26 @@
       -webkit-transition: all var(--transition-speed) ease-in-out;
       transition: all var(--transition-speed) ease-in-out;
     }
-    .toggle-sidebar-button:hover { background-color: var(--color-background-hover); opacity: 1; }
-    .toggle-sidebar-button:active { opacity: 0.5; }
-    .toggle-sidebar-button .material-symbols-outlined { 
-      font-size: 22px;
-      -webkit-transition: all var(--transition-speed) ease; 
-      transition: all var(--transition-speed) ease; 
+
+    .toggle-sidebar-button:hover {
+      background-color: var(--color-background-hover);
+      opacity: 1;
     }
-    .toggle-sidebar-button:active .material-symbols-outlined { -webkit-transform: scaleY(0.8); transform: scaleY(0.8); }
+
+    .toggle-sidebar-button:active {
+      opacity: 0.5;
+    }
+
+    .toggle-sidebar-button .material-symbols-outlined {
+      font-size: 22px;
+      -webkit-transition: all var(--transition-speed) ease;
+      transition: all var(--transition-speed) ease;
+    }
+
+    .toggle-sidebar-button:active .material-symbols-outlined {
+      -webkit-transform: scaleY(0.8);
+      transform: scaleY(0.8);
+    }
 
     #logo-container {
       display: -webkit-flex;
@@ -58,16 +73,34 @@
       -webkit-transition: margin-left var(--transition-speed) ease-in-out;
       transition: margin-left var(--transition-speed) ease-in-out;
     }
-    #logo-container img { border-radius: var(--spacing-xs); width: auto; height: 2.6rem; -webkit-transition: filter 0.3s ease; transition: filter 0.3s ease; }
 
-    .light-mode #logo-container img { -webkit-filter: invert(100%) grayscale(100%); filter: invert(100%) grayscale(100%); }
+    #logo-container img {
+      border-radius: var(--spacing-xs);
+      width: auto;
+      height: 2.6rem;
+      -webkit-transition: filter 0.3s ease;
+      transition: filter 0.3s ease;
+    }
+
+    .light-mode #logo-container img {
+      -webkit-filter: invert(100%) grayscale(100%);
+      filter: invert(100%) grayscale(100%);
+    }
 
     @media (max-width: 768px) {
-      .toggle-sidebar-button { position: fixed; left: var(--spacing-md); z-index: 1004; }
-      #logo-container { -webkit-transition: all 0.3s ease; transition: all 0.3s ease; z-index: 1004; }
+      .toggle-sidebar-button {
+        position: fixed;
+        left: var(--spacing-md);
+        z-index: 1004;
+      }
+
+      #logo-container {
+        -webkit-transition: all 0.3s ease;
+        transition: all 0.3s ease;
+        z-index: 1004;
+      }
     }
   </style>
 </body>
+
 </html>
-
-
